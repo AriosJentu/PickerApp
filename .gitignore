@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+**/__pycache__/
+*.py[cod]
+*.pyo
+
+# Caches
+*.cache
+*.pytest_cache/
+
+# Virtual environment
+venv/
+.env
+
+# Alembic migrations
+alembic/versions/
+
+# Database files
+*.db
+*.sqlite3
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# OS-specific files
+**/.DS_Store
+**/Thumbs.db
