@@ -8,7 +8,7 @@ class UserRead(BaseModel):
     id: int
     username: str
     email: str
-    external_id: Optional[str]
+    external_id: Optional[str] = None
     role: UserRole
 
     @field_validator("role")

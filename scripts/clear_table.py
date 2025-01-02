@@ -1,8 +1,8 @@
 import os
 import sys
-from sqlalchemy import create_engine, inspect, text
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from sqlalchemy import create_engine, inspect, text
 
 from app.core.config import settings
 from app.db.base import Base
