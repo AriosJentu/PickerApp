@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_serializer
 from typing import Optional
 
 from app.enums.user import UserRole
@@ -11,8 +11,8 @@ class UserRead(BaseModel):
     external_id: Optional[str] = None
     role: UserRole
 
-    @field_validator("role")
-    def serialize_role(cls, value: UserRole) -> str:
+    @field_serializer("role")
+    def serialize_role(self, value: UserRole) -> str:
         return str(value)
 
 
