@@ -8,24 +8,17 @@ from app.enums.user import UserRole
 from app.schemas.user import UserCreate, UserRead 
 
 
-def test_user_create_schema_valid():
-    data = {
-        "username": "testuser",
-        "password": "SecurePassword1!",
-        "email": "some_email@user.com"
-    }
-    user = UserCreate(**data)
-    assert user.username == "testuser"
-    assert user.password == "SecurePassword1!"
-    assert user.email == "some_email@user.com"
+def test_user_create_schema_valid(default_user_data):
+    user = UserCreate(**default_user_data)
+    assert user.username == "defaultuser"
+    assert user.password == "DefaultPassword1!"
+    assert user.email == "defaultuser@example.com"
 
 
-def test_user_create_schema_invalid_username():
-    data = {
-        "username": "t",
-        "password": "SecurePassword1!",
-        "email": "some_email@user.com"
-    }
+@pytest.mark.parametrize("invalid_username", ["t", "12", ""])
+def test_user_create_schema_invalid_username(default_user_data, invalid_username):
+    data = default_user_data.copy()
+    data["username"] = invalid_username
 
     with pytest.raises(ValidationError) as exception:
         UserCreate(**data)
@@ -33,12 +26,10 @@ def test_user_create_schema_invalid_username():
     assert "username" in str(exception.value)
 
 
-def test_user_create_schema_invalid_password():
-    data = {
-        "username": "testuser",
-        "password": "securepassword",
-        "email": "some_email@user.com"
-    }
+@pytest.mark.parametrize("invalid_password", ["t", "12", "securepassword"])
+def test_user_create_schema_invalid_password(default_user_data, invalid_password):
+    data = default_user_data.copy()
+    data["password"] = invalid_password
 
     with pytest.raises(ValidationError) as exception:
         UserCreate(**data)
@@ -46,12 +37,10 @@ def test_user_create_schema_invalid_password():
     assert "password" in str(exception.value)
 
 
-def test_user_create_schema_invalid_email():
-    data = {
-        "username": "testuser",
-        "password": "securepassword",
-        "email": "some_email.com"
-    }
+@pytest.mark.parametrize("invalid_email", ["t", "12", "some_email", "data.com", "@gmail.com", "email@abc"])
+def test_user_create_schema_invalid_email(default_user_data, invalid_email):
+    data = default_user_data.copy()
+    data["email"] = invalid_email
 
     with pytest.raises(ValidationError) as exception:
         UserCreate(**data)

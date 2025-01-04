@@ -4,6 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from typing import AsyncGenerator
 
+import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 
@@ -54,3 +55,12 @@ async def client_async(db_async):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
+
+
+@pytest.fixture
+def default_user_data():
+    return {
+        "username": "defaultuser",
+        "password": "DefaultPassword1!",
+        "email": "defaultuser@example.com"
+    }
