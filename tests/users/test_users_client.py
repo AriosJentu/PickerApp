@@ -7,7 +7,7 @@ async def test_create_user(client_async):
     data = {
         "username": "testuser",
         "email": "testuser@example.com",
-        "password": "securepassword"
+        "password": "SecurePassword1!"
     }
 
     response: Response = await client_async.post("/api/v1/auth/register", json=data)

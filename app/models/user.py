@@ -22,10 +22,6 @@ class User(Base):
 
     @classmethod
     def from_create(cls, user_create: UserCreate, get_password_hash: Callable[[str], str]) -> Self:
-        return cls(
-            username=user_create.username,
-            email=user_create.email,
-            password=get_password_hash(user_create.password),
-            role=UserRole.USER,
-            external_id=user_create.external_id
-        )
+        dump = user_create.model_dump()
+        dump["password"] = get_password_hash(user_create.password)
+        return cls(**dump)

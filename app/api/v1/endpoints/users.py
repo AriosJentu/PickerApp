@@ -121,11 +121,10 @@ async def delete_user_from_base(
     
     await delete_user(db, user)
     
+    response = user.to_dict()
+    response["role"] = str(user.role)
     return UserResponce(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        role=user.role,
+        **response,
         detail=f"User with ID {user.id} has been deleted"
     )
 
@@ -147,10 +146,9 @@ async def clear_user_tokens(
     
     await deactivate_old_tokens_user(db, user)
 
+    response = user.to_dict()
+    response["role"] = str(user.role)
     return UserResponce(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        role=user.role,
+        **response,
         detail=f"Tokens for user with ID {user.id} has been deactivated"
     )
