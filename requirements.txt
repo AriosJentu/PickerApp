@@ -3,6 +3,7 @@ asyncpg
 psycopg2
 fastapi
 uvicorn[standard]
+httpx
 sqlalchemy
 pydantic
 pydantic-settings
@@ -10,3 +11,4 @@ python-jose[cryptography]
 python-multipart
 argon2-cffi
 pytest
+pytest_asyncio
