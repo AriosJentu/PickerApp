@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -34,8 +34,6 @@ class Settings(BaseSettings):
     def DATABASE_URL_TEST_ASYNC(self) -> str:
         return self.__get_database_url__(self.DB_NAME_TEST, "asyncpg")
 
-    class Config:
-        env_file = ".env"
-        extra = "allow" 
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 settings = Settings()

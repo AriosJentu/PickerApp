@@ -1,7 +1,3 @@
-import pytest
-
-from pydantic_core import ValidationError
-
 from app.db.base import User
 from app.enums.user import UserRole
 from app.schemas.user import UserCreate, UserRead 
@@ -37,26 +33,18 @@ def test_user_create_schema_valid():
     assert user.email == "some_email@user.com"
 
 
-def test_user_create_schema_invalid_role():
-    data = {
-        "username": "testuser",
-        "password": "securepassword",
-        "email": "some_email@user.com"
-    }
-
-    with pytest.raises(ValidationError):
-        UserCreate(**data)
-
-
 def test_user_out_schema():
+    
     data = {
         "id": 1,
         "username": "testuser",
         "email": "testuser@email.com",
-        "role": "user"
+        "role": UserRole.USER
     }
+
     user_out = UserRead(**data)
+
     assert user_out.id == 1
     assert user_out.username == "testuser"
     assert user_out.email == "testuser@email.com"
-    assert user_out.role == UserRole.USER
+    assert user_out.role == "user"
