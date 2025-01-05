@@ -55,12 +55,3 @@ async def client_async(db_async):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
-
-
-@pytest.fixture
-def default_user_data():
-    return {
-        "username": "defaultuser",
-        "password": "DefaultPassword1!",
-        "email": "defaultuser@example.com"
-    }
