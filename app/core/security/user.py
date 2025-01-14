@@ -17,8 +17,8 @@ from app.core.security.token import (
     drop_inactive_tokens
 )
 
-from app.crud.crud_token import db_get_users_last_token
-from app.crud.crud_user import (
+from app.crud.token import db_get_users_last_token
+from app.crud.user import (
     db_create_user, 
     db_get_user_by_key_value, 
     db_is_user_exist, 
