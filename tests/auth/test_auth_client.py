@@ -99,3 +99,71 @@ async def test_login_user(client_async, db_async, data, expected_status, expecte
         assert json_data["token_type"] == expected_response["token_type"]
     else:
         assert expected_response["detail"] in str(json_data)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        ({"username": "defaultuser",     "email": "defaultuser@example.com",     "password": "SecurePassword1!"}),
+    ],
+)
+@pytest.mark.asyncio
+async def test_logout_user(client_async, db_async, data):
+
+    user_create = UserCreate(**data)
+    await db_create_user(
+        db_async,
+        User.from_create(user_create, get_password_hash)
+    )
+
+    response: Response = await client_async.post(
+        "/api/v1/auth/login",
+        data=data,
+    )
+    assert response.status_code == 200
+    tokens = response.json()
+
+    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+    response: Response = await client_async.post("/api/v1/auth/logout", headers=headers)
+    assert response.status_code == 200
+    assert "Successfully logout" in str(response.json())
+
+    response: Response = await client_async.post("/api/v1/auth/logout", headers=headers)
+    assert response.status_code == 401
+    assert "Authorization token is invalid or expired" in str(response.json())
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        ({"username": "defaultuser",     "email": "defaultuser@example.com",     "password": "SecurePassword1!"}),
+    ],
+)
+@pytest.mark.asyncio
+async def test_refresh_token(client_async, db_async, data):
+    
+    user_create = UserCreate(**data)
+    await db_create_user(
+        db_async,
+        User.from_create(user_create, get_password_hash)
+    )
+
+    response: Response = await client_async.post(
+        "/api/v1/auth/login",
+        data=data,
+    )
+    assert response.status_code == 200
+    tokens = response.json()
+
+    headers = {"Authorization": f"Bearer {tokens['refresh_token']}"}
+    response: Response = await client_async.post("/api/v1/auth/refresh", headers=headers)
+    assert response.status_code == 200
+    
+    new_tokens = response.json()
+    assert "access_token" in new_tokens
+    assert "refresh_token" in new_tokens
+
+    headers = {"Authorization": "Bearer invalid_refresh_token"}
+    response = await client_async.post("/api/v1/auth/refresh", headers=headers)
+    assert response.status_code == 401
+    assert "Invalid authorization token" in str(response.json())
