@@ -11,4 +11,5 @@ python-jose[cryptography]
 python-multipart
 argon2-cffi
 pytest
+pytest-cov
 pytest_asyncio

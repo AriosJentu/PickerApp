@@ -3,7 +3,6 @@ import pytest
 from httpx import AsyncClient
 
 from app.db.base import User
-from app.enums.user import UserRole
 
 
 @pytest.mark.asyncio
