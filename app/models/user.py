@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
 from app.enums.user import UserRole
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserUpdate, UserUpdateSecure
 
 
 class User(Base):
@@ -21,7 +21,7 @@ class User(Base):
     tokens = relationship("Token", back_populates="user", cascade="all, delete-orphan")
 
     @classmethod
-    def from_create(cls, user_create: UserCreate, get_password_hash: Callable[[str], str]) -> Self:
+    def from_create(cls, user_create: UserCreate | UserUpdate | UserUpdateSecure, get_password_hash: Callable[[str], str]) -> Self:
         dump = user_create.model_dump()
         dump["password"] = get_password_hash(user_create.password)
         return cls(**dump)

@@ -19,7 +19,7 @@ async def clear_inactive_tokens(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):
-    print("Current user: ", current_user.role, current_user)
+    # print("Current user: ", current_user.role, current_user)
     count = await drop_all_inactive_tokens(db)
     
     return TokenCleanResponse(detail=f"Removed {count} inactive tokens from base")
