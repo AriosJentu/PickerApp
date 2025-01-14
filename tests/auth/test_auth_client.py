@@ -114,16 +114,16 @@ async def test_logout_user(client_async, db_async, default_user_data):
         "/api/v1/auth/login",
         data=default_user_data,
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Expected 200 for Login, got {response.status_code}"
     tokens = response.json()
 
     headers = {"Authorization": f"Bearer {tokens['access_token']}"}
     response: Response = await client_async.post("/api/v1/auth/logout", headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Expected 200 for Logout, got {response.status_code}"
     assert "Successfully logout" in str(response.json())
 
     response: Response = await client_async.post("/api/v1/auth/logout", headers=headers)
-    assert response.status_code == 401
+    assert response.status_code == 401, f"Expected 401, got {response.status_code}"
     assert "Authorization token is invalid or expired" in str(response.json())
 
 
@@ -140,12 +140,12 @@ async def test_refresh_token(client_async, db_async, default_user_data):
         "/api/v1/auth/login",
         data=default_user_data,
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Expected 200 for Login, got {response.status_code}"
     tokens = response.json()
 
     headers = {"Authorization": f"Bearer {tokens['refresh_token']}"}
     response: Response = await client_async.post("/api/v1/auth/refresh", headers=headers)
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Expected 200 for Refresh, got {response.status_code}"
     
     new_tokens = response.json()
     assert "access_token" in new_tokens
@@ -153,5 +153,5 @@ async def test_refresh_token(client_async, db_async, default_user_data):
 
     headers = {"Authorization": "Bearer invalid_refresh_token"}
     response = await client_async.post("/api/v1/auth/refresh", headers=headers)
-    assert response.status_code == 401
+    assert response.status_code == 401, f"Expected 401, got {response.status_code}"
     assert "Invalid authorization token" in str(response.json())

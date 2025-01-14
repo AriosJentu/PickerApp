@@ -8,15 +8,19 @@ import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 
+from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
-from app.db.session import get_async_session
+from app.crud.crud_user import db_create_user
+from app.core.security.password import get_password_hash
 from app.core.config import settings
-from app.db.base import Base
+from app.db.session import get_async_session
+from app.db.base import Base, User
+from app.schemas.user import UserUpdate
 
 load_dotenv()
 
@@ -64,3 +68,37 @@ def default_user_data():
         "email": "defaultuser@example.com",
         "password": "SecurePassword1!"
     }
+
+
+@pytest.fixture
+def default_admin_data():
+    return {
+        "username": "adminuser",
+        "email": "admin@example.com",
+        "password": "SecureAdminPassword1!",
+        "role": 3
+    }
+
+
+@pytest.fixture
+async def access_token(client_async, default_user_data):
+    await client_async.post("/api/v1/auth/register", json=default_user_data)
+
+    response: Response = await client_async.post("/api/v1/auth/login", data=default_user_data)
+    assert response.status_code == 200, f"Login failed: {response.json()}"
+    
+    json_data = response.json()
+    return json_data["access_token"]
+
+
+@pytest.fixture
+async def admin_access_token(client_async, db_async, default_admin_data):
+    admin_user_create = UserUpdate(**default_admin_data)
+    admin_user = User.from_create(admin_user_create, get_password_hash)
+    await db_create_user(db_async, admin_user)
+
+    response: Response = await client_async.post("/api/v1/auth/login", data=default_admin_data)
+    assert response.status_code == 200, f"Login failed: {response.json()}"
+    
+    json_data = response.json()
+    return json_data["access_token"]
