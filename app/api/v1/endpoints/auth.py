@@ -21,6 +21,8 @@ from app.core.security.user import (
     create_user,
 )
 
+from app.core.security.validators import validate_username
+
 from app.core.security.decorators import regular
 
 from app.models.user import User
@@ -32,6 +34,7 @@ from app.exceptions.user import (
     HTTPUserExceptionUsernameAlreadyExists, 
     HTTPUserExceptionEmailAlreadyExists,
     HTTPUserExceptionIncorrectData,
+    HTTPUserExceptionIncorrectFormData,
     HTTPUserExceptionAlreadyLoggedIn
 )
 
@@ -59,6 +62,12 @@ async def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    try:
+        validate_username(form_data.username)
+    except ValueError:
+        raise HTTPUserExceptionIncorrectFormData()
+
     user = await get_user_by_username(db, form_data.username)
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPUserExceptionIncorrectData()

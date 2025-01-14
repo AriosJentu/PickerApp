@@ -52,6 +52,14 @@ class HTTPUserExceptionIncorrectData(HTTPUserException):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"}
+        ) 
+        
+        
+class HTTPUserExceptionIncorrectFormData(HTTPUserException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Username must be at least 3 characters long"
         )    
 
 
