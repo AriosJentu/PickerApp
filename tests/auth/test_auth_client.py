@@ -1,11 +1,15 @@
 import pytest
 
 from fastapi import Response
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from httpx import AsyncClient
 
 from app.core.security.password import get_password_hash
 from app.crud.crud_user import db_create_user
 from app.db.base import User
 from app.schemas.user import UserCreate
+from app.enums.user import UserRole
 
 
 @pytest.mark.parametrize(
@@ -34,7 +38,12 @@ from app.schemas.user import UserCreate
     ],
 )
 @pytest.mark.asyncio
-async def test_create_user(client_async, data, expected_status, expected_response):
+async def test_create_user(
+        client_async: AsyncClient, 
+        data: dict[str, str], 
+        expected_status: int, 
+        expected_response: dict[str, str]
+):
 
     response: Response = await client_async.post("/api/v1/auth/register", json=data)
 
@@ -75,7 +84,13 @@ async def test_create_user(client_async, data, expected_status, expected_respons
     ],
 )
 @pytest.mark.asyncio
-async def test_login_user(client_async, db_async, data, expected_status, expected_response):
+async def test_login_user(
+        client_async: AsyncClient, 
+        db_async: AsyncSession, 
+        data: dict[str, str], 
+        expected_status: int, 
+        expected_response: dict[str, str]
+):
 
     creation_data = {"username": "defaultuser",  "email": "defaultuser@example.com", "password": "SecurePassword1!"}
 
@@ -102,7 +117,11 @@ async def test_login_user(client_async, db_async, data, expected_status, expecte
 
 
 @pytest.mark.asyncio
-async def test_logout_user(client_async, db_async, default_user_data):
+async def test_logout_user(
+        client_async: AsyncClient, 
+        db_async: AsyncSession, 
+        default_user_data: dict[str, str | UserRole]
+):
 
     user_create = UserCreate(**default_user_data)
     await db_create_user(
@@ -128,7 +147,11 @@ async def test_logout_user(client_async, db_async, default_user_data):
 
 
 @pytest.mark.asyncio
-async def test_refresh_token(client_async, db_async, default_user_data):
+async def test_refresh_token(
+        client_async: AsyncClient, 
+        db_async: AsyncSession, 
+        default_user_data: dict[str, str | UserRole]
+):
     
     user_create = UserCreate(**default_user_data)
     await db_create_user(

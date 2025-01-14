@@ -1,8 +1,11 @@
 import pytest
 
+from typing import Optional
+
 from pydantic_core import ValidationError
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError, NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.base import User
 from app.enums.user import UserRole
@@ -24,7 +27,11 @@ from app.schemas.user import UserCreate, UserRead
         ({"username": "validuser",   "email": "valid@example.com",    "password": "strongpasswd123"},  False,  "password"),
     ]
 )
-def test_user_create_schema_valid(user_data, is_valid, where):
+def test_user_create_schema_valid(
+        user_data: dict[str, str], 
+        is_valid: bool, 
+        where: str
+):
 
 
     if is_valid:
@@ -53,7 +60,11 @@ def test_user_create_schema_valid(user_data, is_valid, where):
         ({"id": 0,      "username": "testuser",     "email": "some_email@example.com",  "role": "user"},             False,  "role"),
     ]
 )
-def test_user_out_schema(user_data, is_valid, where):
+def test_user_out_schema(
+        user_data: dict[str, str | int | UserRole], 
+        is_valid: bool, 
+        where: str
+):
 
     if is_valid:
         user_out = UserRead(**user_data)
@@ -78,7 +89,11 @@ def test_user_out_schema(user_data, is_valid, where):
     ],
 )
 @pytest.mark.asyncio
-async def test_user_creation(db_async, user_data, expected_error):
+async def test_user_creation(
+        db_async: AsyncSession, 
+        user_data: dict[str, str], 
+        expected_error: Optional[str]
+):
 
     if expected_error is None:
         
@@ -124,7 +139,12 @@ async def test_user_creation(db_async, user_data, expected_error):
     ],
 )
 @pytest.mark.asyncio
-async def test_user_unique_constraints(db_async, user_data_original, user_data_duplicate, where):
+async def test_user_unique_constraints(
+        db_async: AsyncSession, 
+        user_data_original: dict[str, str], 
+        user_data_duplicate: dict[str, str], 
+        where: str
+):
 
     user1 = User(**user_data_original)
     db_async.add(user1)
@@ -156,7 +176,12 @@ async def test_user_unique_constraints(db_async, user_data_original, user_data_d
     ],
 )
 @pytest.mark.asyncio
-async def test_user_deletion(db_async, user_data, delete_username, expected_deleted):
+async def test_user_deletion(
+        db_async: AsyncSession, 
+        user_data: dict[str, str], 
+        delete_username: str, 
+        expected_deleted: bool
+):
 
     user = User(**user_data)
     db_async.add(user)
@@ -205,7 +230,13 @@ async def test_user_deletion(db_async, user_data, delete_username, expected_dele
     ],
 )
 @pytest.mark.asyncio
-async def test_user_update(db_async, initial_data, update_data, expected_username, expected_email):
+async def test_user_update(
+        db_async: AsyncSession, 
+        initial_data: dict[str, str], 
+        update_data: dict[str, str], 
+        expected_username: str, 
+        expected_email: str
+):
     
     if initial_data:
         user = User(**initial_data)
@@ -257,7 +288,12 @@ async def test_user_update(db_async, initial_data, update_data, expected_usernam
     ],
 )
 @pytest.mark.asyncio
-async def test_user_role_assignment(db_async, input_data, expected_role):
+async def test_user_role_assignment(
+        db_async: AsyncSession, 
+        input_data: dict[str, str], 
+        expected_role: UserRole
+):
+    
     user = User(**input_data)
     db_async.add(user)
     await db_async.commit()
@@ -267,7 +303,6 @@ async def test_user_role_assignment(db_async, input_data, expected_role):
 
     assert user_from_db is not None, "User was not found in the database"
     assert user_from_db.role == expected_role, f"Expected role {expected_role}, but got {user_from_db.role}"
-
 
 
 @pytest.mark.parametrize(
@@ -285,7 +320,12 @@ async def test_user_role_assignment(db_async, input_data, expected_role):
     ],
 )
 @pytest.mark.asyncio
-async def test_user_role_change(db_async, initial_role, new_role):
+async def test_user_role_change(
+        db_async: AsyncSession, 
+        initial_role: UserRole, 
+        new_role: UserRole
+):
+    
     data = {
         "username": "someuser",
         "password": "SecurePassword1!",

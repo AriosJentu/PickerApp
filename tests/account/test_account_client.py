@@ -2,11 +2,19 @@ import pytest
 
 from fastapi import Response
 
+from httpx import AsyncClient
+
+from app.enums.user import UserRole
+
 
 @pytest.mark.asyncio
-async def test_check_token(client_async, default_user_data, access_token):
+async def test_check_token(
+        client_async: AsyncClient, 
+        default_user_data: dict[str, str | UserRole], 
+        user_access_token: str
+):
 
-    headers = {"Authorization": f"Bearer {access_token}"}
+    headers = {"Authorization": f"Bearer {user_access_token}"}
     response: Response = await client_async.get("/api/v1/account/check-token", headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
@@ -18,9 +26,13 @@ async def test_check_token(client_async, default_user_data, access_token):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user(client_async, default_user_data, access_token):
+async def test_get_current_user(
+        client_async: AsyncClient, 
+        default_user_data: dict[str, str | UserRole], 
+        user_access_token: str
+):
 
-    headers = {"Authorization": f"Bearer {access_token}"}
+    headers = {"Authorization": f"Bearer {user_access_token}"}
     response: Response = await client_async.get("/api/v1/account/", headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
@@ -35,7 +47,11 @@ async def test_get_current_user(client_async, default_user_data, access_token):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_admin(client_async, default_admin_data, admin_access_token):
+async def test_get_current_user_admin(
+        client_async: AsyncClient, 
+        default_admin_data: dict[str, str | UserRole], 
+        admin_access_token: str
+):
 
     headers = {"Authorization": f"Bearer {admin_access_token}"}
     response: Response = await client_async.get("/api/v1/account/", headers=headers)
@@ -52,9 +68,12 @@ async def test_get_current_user_admin(client_async, default_admin_data, admin_ac
 
 
 @pytest.mark.asyncio
-async def test_delete_current_user(client_async, access_token):
+async def test_delete_current_user(
+        client_async: AsyncClient, 
+        user_access_token: str
+):
 
-    headers = {"Authorization": f"Bearer {access_token}"}
+    headers = {"Authorization": f"Bearer {user_access_token}"}
     response: Response = await client_async.delete("/api/v1/account/", headers=headers)
     assert response.status_code == 204, f"Expected 204, got {response.status_code}"
 
@@ -64,8 +83,12 @@ async def test_delete_current_user(client_async, access_token):
 
 
 @pytest.mark.asyncio
-async def test_update_current_user(client_async, access_token):
-    headers = {"Authorization": f"Bearer {access_token}"}
+async def test_update_current_user(
+        client_async: AsyncClient, 
+        user_access_token: str
+):
+    
+    headers = {"Authorization": f"Bearer {user_access_token}"}
     update_data = {"email": "updated_email@example.com"}
 
     response: Response = await client_async.put("/api/v1/account/", headers=headers, json=update_data)

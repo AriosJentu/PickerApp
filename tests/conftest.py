@@ -8,25 +8,27 @@ import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 
-from fastapi import Response
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
-from app.crud.crud_user import db_create_user
+from app.core.security.user import create_user_tokens
 from app.core.security.password import get_password_hash
 from app.core.config import settings
+from app.crud.crud_user import db_create_user
 from app.db.session import get_async_session
 from app.db.base import Base, User
 from app.schemas.user import UserUpdate
+from app.enums.user import UserRole
+
 
 load_dotenv()
 
 
 TEST_DATABASE_URL_ASYNC = settings.DATABASE_URL_TEST_ASYNC
-def get_engine_and_session_async(echo: bool = False):
+def get_engine_and_session_async(echo: bool = False) -> tuple[AsyncEngine, AsyncSession]:
     engine_async = create_async_engine(TEST_DATABASE_URL_ASYNC, echo=echo)
     SessionLocalAsync = sessionmaker(
         bind=engine_async, 
@@ -50,7 +52,7 @@ async def db_async() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture
-async def client_async(db_async):
+async def client_async(db_async: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     async def override_get_async_session():
         return db_async
     
@@ -62,43 +64,71 @@ async def client_async(db_async):
 
 
 @pytest.fixture
-def default_user_data():
+def default_user_data() -> dict[str, str | UserRole]:
     return {
         "username": "defaultuser",
         "email": "defaultuser@example.com",
-        "password": "SecurePassword1!"
+        "password": "SecurePassword1!",
+        "role": UserRole.USER
     }
 
 
 @pytest.fixture
-def default_admin_data():
+def default_moderator_data() -> dict[str, str | UserRole]:
+    return {
+        "username": "moderatoruser",
+        "email": "moderator@example.com",
+        "password": "ModeratorPassword1!",
+        "role": UserRole.MODERATOR
+    }
+
+
+@pytest.fixture
+def default_admin_data() -> dict[str, str | UserRole]:
     return {
         "username": "adminuser",
         "email": "admin@example.com",
         "password": "SecureAdminPassword1!",
-        "role": 3
+        "role": UserRole.ADMIN
     }
 
 
-@pytest.fixture
-async def access_token(client_async, default_user_data):
-    await client_async.post("/api/v1/auth/register", json=default_user_data)
-
-    response: Response = await client_async.post("/api/v1/auth/login", data=default_user_data)
-    assert response.status_code == 200, f"Login failed: {response.json()}"
+@pytest_asyncio.fixture
+async def create_test_users(
+        db_async: AsyncSession,
+        default_user_data: dict[str, str | UserRole], 
+        default_moderator_data: dict[str, str | UserRole], 
+        default_admin_data: dict[str, str | UserRole]
+) -> list[User]:
     
-    json_data = response.json()
-    return json_data["access_token"]
+    users = [default_user_data, default_moderator_data, default_admin_data]
+
+    user_objects = []
+    for user_data in users:
+        user_create = UserUpdate(**user_data)
+        user = User.from_create(user_create, get_password_hash)
+        await db_create_user(db_async, user)
+        user_objects.append(user)
+
+    return user_objects
 
 
-@pytest.fixture
-async def admin_access_token(client_async, db_async, default_admin_data):
-    admin_user_create = UserUpdate(**default_admin_data)
-    admin_user = User.from_create(admin_user_create, get_password_hash)
-    await db_create_user(db_async, admin_user)
+@pytest_asyncio.fixture
+async def user_access_token(db_async: AsyncSession, create_test_users: list[User]) -> str:
+    regular_user = next(user for user in create_test_users if user.role == UserRole.USER)
+    access_token, _ = await create_user_tokens(db_async, regular_user)
+    return access_token.token
 
-    response: Response = await client_async.post("/api/v1/auth/login", data=default_admin_data)
-    assert response.status_code == 200, f"Login failed: {response.json()}"
-    
-    json_data = response.json()
-    return json_data["access_token"]
+
+@pytest_asyncio.fixture
+async def moderator_access_token(db_async: AsyncSession, create_test_users: list[User]):
+    moderator_user = next(user for user in create_test_users if user.role == UserRole.MODERATOR)
+    access_token, _ = await create_user_tokens(db_async, moderator_user)
+    return access_token.token
+
+
+@pytest_asyncio.fixture
+async def admin_access_token(db_async: AsyncSession, create_test_users: list[User]) -> str:
+    admin_user = next(user for user in create_test_users if user.role == UserRole.ADMIN)
+    access_token, _ = await create_user_tokens(db_async, admin_user)
+    return access_token.token
