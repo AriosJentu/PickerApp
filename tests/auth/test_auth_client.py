@@ -101,16 +101,10 @@ async def test_login_user(client_async, db_async, data, expected_status, expecte
         assert expected_response["detail"] in str(json_data)
 
 
-@pytest.mark.parametrize(
-    "data",
-    [
-        ({"username": "defaultuser",     "email": "defaultuser@example.com",     "password": "SecurePassword1!"}),
-    ],
-)
 @pytest.mark.asyncio
-async def test_logout_user(client_async, db_async, data):
+async def test_logout_user(client_async, db_async, default_user_data):
 
-    user_create = UserCreate(**data)
+    user_create = UserCreate(**default_user_data)
     await db_create_user(
         db_async,
         User.from_create(user_create, get_password_hash)
@@ -118,7 +112,7 @@ async def test_logout_user(client_async, db_async, data):
 
     response: Response = await client_async.post(
         "/api/v1/auth/login",
-        data=data,
+        data=default_user_data,
     )
     assert response.status_code == 200
     tokens = response.json()
@@ -133,16 +127,10 @@ async def test_logout_user(client_async, db_async, data):
     assert "Authorization token is invalid or expired" in str(response.json())
 
 
-@pytest.mark.parametrize(
-    "data",
-    [
-        ({"username": "defaultuser",     "email": "defaultuser@example.com",     "password": "SecurePassword1!"}),
-    ],
-)
 @pytest.mark.asyncio
-async def test_refresh_token(client_async, db_async, data):
+async def test_refresh_token(client_async, db_async, default_user_data):
     
-    user_create = UserCreate(**data)
+    user_create = UserCreate(**default_user_data)
     await db_create_user(
         db_async,
         User.from_create(user_create, get_password_hash)
@@ -150,7 +138,7 @@ async def test_refresh_token(client_async, db_async, data):
 
     response: Response = await client_async.post(
         "/api/v1/auth/login",
-        data=data,
+        data=default_user_data,
     )
     assert response.status_code == 200
     tokens = response.json()
