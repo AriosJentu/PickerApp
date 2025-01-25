@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.base import User
 from app.enums.user import UserRole
-from app.schemas.user import UserCreate, UserRead 
+from app.schemas.auth.user import UserCreate, UserRead 
 
 
 @pytest.mark.parametrize(

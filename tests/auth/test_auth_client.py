@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from httpx import AsyncClient
 
 from app.core.security.password import get_password_hash
-from app.crud.user import db_create_user
+from app.crud.auth.user import db_create_user
 from app.db.base import User
-from app.schemas.user import UserCreate
+from app.schemas.auth.user import UserCreate
 from app.enums.user import UserRole
 
 

@@ -25,10 +25,10 @@ from app.core.security.validators import validate_username
 
 from app.core.security.decorators import regular
 
-from app.models.user import User
-from app.schemas.user import UserCreate, UserRead
-from app.schemas.auth import LogoutResponse
-from app.schemas.token import TokenResponse
+from app.models.auth.user import User
+from app.schemas.auth.user import UserCreate, UserRead
+from app.schemas.auth.auth import LogoutResponse
+from app.schemas.auth.token import TokenResponse
 
 from app.exceptions.user import (
     HTTPUserExceptionUsernameAlreadyExists, 

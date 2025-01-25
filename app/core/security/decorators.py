@@ -1,7 +1,7 @@
 from functools import wraps
 
 from app.enums.user import UserRole
-from app.models.user import User
+from app.models.auth.user import User
 from app.exceptions.user import (
     HTTPUserUnauthorized, 
     HTTPUserExceptionAccessDenied

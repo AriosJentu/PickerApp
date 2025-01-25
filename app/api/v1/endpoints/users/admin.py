@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.token import TokenCleanResponse
+from app.schemas.auth.token import TokenCleanResponse
 
-from app.models.user import User
+from app.models.auth.user import User
 from app.core.security.user import get_current_user
 from app.core.security.decorators import administrator
 from app.db.session import get_async_session

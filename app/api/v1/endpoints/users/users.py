@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security.password import get_password_hash
-from app.models.user import User
-from app.schemas.user import (
+from app.models.auth.user import User
+from app.schemas.auth.user import (
     UserRead,
     UserUpdate, 
     UserResponce, 

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import User, Token
 from app.db.session import get_async_session
 from app.core.dependencies import get_oauth2_scheme
-from app.schemas.user import UserCreate, UserUpdateSecure, UserUpdate
+from app.schemas.auth.user import UserCreate, UserUpdateSecure, UserUpdate
 from app.enums.user import UserRole
 
 from app.core.security.token import (
@@ -17,8 +17,8 @@ from app.core.security.token import (
     drop_inactive_tokens
 )
 
-from app.crud.token import db_get_users_last_token
-from app.crud.user import (
+from app.crud.auth.token import db_get_users_last_token
+from app.crud.auth.user import (
     db_create_user, 
     db_get_user_by_key_value, 
     db_is_user_exist, 

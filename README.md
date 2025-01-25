@@ -43,4 +43,6 @@ python -m alembic history
 python scripts/drop_create_db.py --drop main
 python scripts/drop_create_db.py --create main
 python -m alembic stamp head
+python -m alembic revision --autogenerate -m "Update models"
+python -m alembic upgrade head
 ```

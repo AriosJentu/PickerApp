@@ -1,6 +1,11 @@
 from enum import Enum
 
 
-class LobbyUserRole(Enum):
+class LobbyParticipantRole(str, Enum):
     PLAYER      = "player"
     SPECTATOR   = "spectator"
+
+
+class LobbyStatus(str, Enum):
+    ACTIVE      = "active"
+    ARCHIVED    = "archived"

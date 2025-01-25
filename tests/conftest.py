@@ -17,10 +17,10 @@ from app.main import app
 from app.core.security.user import create_user_tokens
 from app.core.security.password import get_password_hash
 from app.core.config import settings
-from app.crud.user import db_create_user
+from app.crud.auth.user import db_create_user
 from app.db.session import get_async_session
 from app.db.base import Base, User
-from app.schemas.user import UserUpdate
+from app.schemas.auth.user import UserUpdate
 from app.enums.user import UserRole
 
 

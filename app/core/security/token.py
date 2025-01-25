@@ -9,14 +9,14 @@ from app.db.base import User, Token
 from app.db.session import get_async_session
 from app.core.config import settings
 from app.core.dependencies import get_oauth2_scheme
-from app.crud.token import (
+from app.crud.auth.token import (
     db_create_token, 
     db_deactivate_tokens,
     db_drop_inactive_tokens,
     db_drop_all_inactive_tokens
 )
 
-from app.crud.token import (
+from app.crud.auth.token import (
     db_is_token_exist,
 )
 

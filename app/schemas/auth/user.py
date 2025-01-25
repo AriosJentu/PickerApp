@@ -1,7 +1,6 @@
-import re
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, field_serializer, field_validator
-from typing import Optional
 
 from app.enums.user import UserRole
 from app.core.security.validators import (

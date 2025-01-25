@@ -6,7 +6,7 @@ from sqlalchemy import update, delete, func, asc, desc
 
 from app.db.base import User
 from app.enums.user import UserRole
-from app.schemas.user import UserCreate, UserUpdateSecure, UserUpdate
+from app.schemas.auth.user import UserCreate, UserUpdateSecure, UserUpdate
 
 type UserExistType = tuple[bool, bool]
 type UserTupleType = tuple[User, User]
@@ -19,7 +19,7 @@ async def db_create_user(db: AsyncSession, user: User) -> User:
     return user
 
 
-async def db_get_user_by_key_value(db: AsyncSession, key: str, value: str) -> Optional[User]:
+async def db_get_user_by_key_value(db: AsyncSession, key: str, value: str | int) -> Optional[User]:
     result = await db.execute(select(User).filter(getattr(User, key) == value))
     return result.scalars().first()
 

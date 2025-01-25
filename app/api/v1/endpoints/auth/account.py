@@ -12,9 +12,9 @@ from app.core.security.user import (
 )
 from app.core.security.decorators import regular
 
-from app.models.user import User
-from app.schemas.user import UserRead, UserUpdateSecure
-from app.schemas.token import TokenResponse, TokenStatus
+from app.models.auth.user import User
+from app.schemas.auth.user import UserRead, UserUpdateSecure
+from app.schemas.auth.token import TokenResponse, TokenStatus
 
 from app.exceptions.user import (
     HTTPUserExceptionUsernameAlreadyExists,
