@@ -6,7 +6,7 @@ from app.db.session import get_async_session
 from app.core.dependencies import get_oauth2_scheme
 from app.core.security.password import (
     get_password_hash, 
-    verify_password
+    verify_password,
 )
 
 from app.core.security.user import (
@@ -35,7 +35,7 @@ from app.exceptions.user import (
     HTTPUserExceptionEmailAlreadyExists,
     HTTPUserExceptionIncorrectData,
     HTTPUserExceptionIncorrectFormData,
-    HTTPUserExceptionAlreadyLoggedIn
+    HTTPUserExceptionAlreadyLoggedIn,
 )
 
 

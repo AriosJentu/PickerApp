@@ -12,7 +12,6 @@ class LobbyParticipant(Base):
     lobby_id = Column(Integer, ForeignKey("lobby.id"), nullable=False)
     team_id = Column(Integer, ForeignKey("team.id"), nullable=True)
     role = Column(SQLAlchemyEnum(LobbyParticipantRole), nullable=False, default=LobbyParticipantRole.SPECTATOR)
-    team = Column(String, nullable=True)
 
     user = relationship("User", back_populates="participants")
     lobby = relationship("Lobby", back_populates="participants")

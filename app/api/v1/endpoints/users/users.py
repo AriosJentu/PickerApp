@@ -9,7 +9,7 @@ from app.schemas.auth.user import (
     UserRead,
     UserUpdate, 
     UserResponce, 
-    UserListCountResponse
+    UserListCountResponse,
 )
 from app.enums.user import UserRole
 
@@ -20,13 +20,13 @@ from app.core.security.user import (
     ensure_user_identifier,
     update_user,
     delete_user,
-    get_list_of_users
+    get_list_of_users,
 )
 from app.core.security.decorators import regular, administrator
 from app.db.session import get_async_session
 
 from app.exceptions.user import (
-    HTTPUserExceptionNotFound
+    HTTPUserExceptionNotFound,
 )
 
 

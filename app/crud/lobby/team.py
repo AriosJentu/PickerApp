@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete
+from sqlalchemy import update, delete, asc, desc
 
 from app.models.lobby.team import Team
 from app.models.lobby.lobby import Lobby
@@ -43,11 +43,32 @@ async def db_delete_team(db: AsyncSession, team: Team):
     await db.commit()
 
 
-async def db_get_list_of_teams(db: AsyncSession, lobby: Optional[Lobby]) -> list[Team]:
+async def db_get_list_of_teams(
+    db: AsyncSession,
+    id: Optional[int] = None,
+    name: Optional[str] = None,
+    sort_by: Optional[str] = "id",
+    sort_order: Optional[str] = "asc",
+    limit: Optional[int] = 10,
+    offset: Optional[int] = 0,
+    lobby: Optional[Lobby] = None
+) -> list[Team]:
     query = select(Team)
+
+    if id:
+        query = query.where(Team.id == id)
+
+    if name:
+        query = query.where(Team.name.ilike(f"%{name}%"))
     
     if lobby:
         query.where(Team.lobby_id == lobby.id)
+
+    sort_field = getattr(Team, sort_by, None)
+    if sort_field:
+        query = query.order_by(asc(sort_field) if sort_order == "asc" else desc(sort_field))
+    
+    query = query.offset(offset).limit(limit)
 
     result = await db.execute(query)
     return result.scalars().all()

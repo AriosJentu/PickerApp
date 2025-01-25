@@ -129,6 +129,7 @@ async def get_current_user_by_token_type(
 
     return user
 
+
 async def get_current_user(
     db: AsyncSession = Depends(get_async_session),
     token_str: str = Depends(get_oauth2_scheme()),
@@ -194,6 +195,6 @@ async def get_list_of_users(
     sort_order: Optional[str] = "asc",
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
-    only_count: bool = False
+    only_count: Optional[bool] = False
 ) -> list[Optional[User]] | int:
     return await db_get_list_of_users(db, id, role, username, email, external_id, sort_by, sort_order, limit, offset, only_count)

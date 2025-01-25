@@ -72,7 +72,7 @@ async def db_get_list_of_users(
     sort_order: Optional[str] = "asc",
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
-    only_count: bool = False
+    only_count: Optional[bool] = False
 ) -> list[Optional[User]] | int:
     
     query = select(User)

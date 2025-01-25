@@ -3,14 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_async_session
 from app.core.security.password import get_password_hash
+from app.core.security.decorators import regular
 from app.core.security.user import (
     get_current_user, 
     get_user_by_username, 
     get_user_by_email,
     update_user,
-    delete_user
+    delete_user,
 )
-from app.core.security.decorators import regular
 
 from app.models.auth.user import User
 from app.schemas.auth.user import UserRead, UserUpdateSecure

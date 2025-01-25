@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete
+from sqlalchemy import update, delete, asc, desc
 
 from app.models.lobby.algorithm import Algorithm
 from app.schemas.lobby.algorithm import AlgorithmUpdate
@@ -41,7 +41,36 @@ async def db_delete_algorithm(db: AsyncSession, algorithm: Algorithm):
     await db.commit()
 
 
-async def db_get_list_of_algorithms(db: AsyncSession) -> list[Algorithm]:
+async def db_get_list_of_algorithms(
+    db: AsyncSession,
+    id: Optional[int] = None,
+    name: Optional[str] = None,
+    algorithm: Optional[str] = None,
+    teams_count: Optional[int] = None,
+    sort_by: Optional[str] = "id",
+    sort_order: Optional[str] = "asc",
+    limit: Optional[int] = None,
+    offset: Optional[int] = 0,
+) -> list[Algorithm]:
     query = select(Algorithm)
+
+    if id:
+        query = query.where(Algorithm.id == id)
+
+    if name:
+        query = query.where(Algorithm.name.ilike(f"%{name}%"))
+
+    if name:
+        query = query.where(Algorithm.name.ilike(f"%{algorithm}%"))
+
+    if teams_count:
+        query = query.where(Algorithm.teams_count == teams_count)
+
+    sort_field = getattr(Algorithm, sort_by, None)
+    if sort_field:
+        query = query.order_by(asc(sort_field) if sort_order == "asc" else desc(sort_field))
+    
+    query = query.offset(offset).limit(limit)
+
     result = await db.execute(query)
     return result.scalars().all()
