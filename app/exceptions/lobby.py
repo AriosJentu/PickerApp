@@ -27,3 +27,27 @@ class HTTPLobbyAccessDenied(HTTPLobbyException):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Lobby not found",
         )
+
+
+class HTTPTeamCreatingFailed(HTTPLobbyException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to create team",
+        )
+
+
+class HTTPTeamNotFound(HTTPLobbyException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Team not found",
+        )
+
+
+class HTTPLobbyInternalError(HTTPLobbyException):
+    def __init__(self, description: str):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process lobby operation: {description}"
+        )

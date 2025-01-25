@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete, asc, desc
+from sqlalchemy import update, delete, func, asc, desc
 from sqlalchemy.orm import joinedload
 
 from app.enums.lobby import LobbyStatus
@@ -42,9 +42,10 @@ async def db_update_lobby(db: AsyncSession, lobby: Lobby, update_data: LobbyUpda
     return lobby
 
 
-async def db_delete_lobby(db: AsyncSession, lobby: Lobby):
+async def db_delete_lobby(db: AsyncSession, lobby: Lobby) -> bool:
     await db.execute(delete(Lobby).where(Lobby.id == lobby.id))
     await db.commit()
+    return True
 
 
 async def db_get_list_of_lobbies(
@@ -57,7 +58,8 @@ async def db_get_list_of_lobbies(
     sort_order: Optional[str] = "asc",
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
-    only_active: Optional[bool] = True
+    only_active: Optional[bool] = True,
+    only_count: Optional[bool] = False
 ) -> list[Lobby]:
     query = select(Lobby)
 
@@ -75,6 +77,11 @@ async def db_get_list_of_lobbies(
 
     if only_active:
         query = query.where(Lobby.status == LobbyStatus.ACTIVE)
+
+    if only_count:
+        count_query = select(func.count()).select_from(query.subquery())
+        result = await db.execute(count_query)
+        return result.scalar()
 
     sort_field = getattr(Lobby, sort_by, None)
     if sort_field:

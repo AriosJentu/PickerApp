@@ -26,7 +26,7 @@ async def update_team(db: AsyncSession, team: Team, update_data: TeamUpdate) -> 
     return await db_update_team(db, team, update_data)
 
 
-async def delete_team(db: AsyncSession, team: Team):
+async def delete_team(db: AsyncSession, team: Team) -> bool:
     return await db_delete_team(db, team)
 
 
@@ -34,10 +34,11 @@ async def get_list_of_teams(
     db: AsyncSession, 
     id: Optional[int] = None,
     name: Optional[str] = None,
+    lobby: Optional[Lobby] = None,
     sort_by: Optional[str] = "id",
     sort_order: Optional[str] = "asc",
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
-    lobby: Optional[Lobby] = None
+    only_count: Optional[bool] = False
 ) -> list[Team]:
-    return await db_get_list_of_teams(db, id, name, sort_by, sort_order, limit, offset, lobby)
+    return await db_get_list_of_teams(db, id, name, lobby, sort_by, sort_order, limit, offset, only_count)

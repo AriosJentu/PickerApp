@@ -11,7 +11,7 @@ from app.crud.lobby.lobby import (
     db_create_lobby,
     db_update_lobby,
     db_delete_lobby,
-    db_get_list_of_lobbies
+    db_get_list_of_lobbies,
 )
 
 
@@ -31,7 +31,7 @@ async def close_lobby(db: AsyncSession, lobby: Lobby) -> Lobby:
     return await update_lobby(db, lobby, LobbyUpdate(status=LobbyStatus.ARCHIVED))
 
 
-async def delete_lobby(db: AsyncSession, lobby: Lobby):
+async def delete_lobby(db: AsyncSession, lobby: Lobby) -> bool:
     return await db_delete_lobby(db, lobby)
 
 
@@ -45,6 +45,7 @@ async def get_list_of_lobbies(
     sort_order: Optional[str] = "asc",
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
-    only_active: Optional[bool] = True
+    only_active: Optional[bool] = True,
+    only_count: Optional[bool] = False
 ) -> list[Lobby]:
-    return await db_get_list_of_lobbies(db, id, name, host_id, status, sort_by, sort_order, limit, offset, only_active)
+    return await db_get_list_of_lobbies(db, id, name, host_id, status, sort_by, sort_order, limit, offset, only_active, only_count)

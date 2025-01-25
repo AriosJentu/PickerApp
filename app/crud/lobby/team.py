@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete, asc, desc
+from sqlalchemy import update, delete, func, asc, desc
 
 from app.models.lobby.team import Team
 from app.models.lobby.lobby import Lobby
@@ -38,20 +38,22 @@ async def db_update_team(db: AsyncSession, team: Team, update_data: TeamUpdate) 
     return team
 
 
-async def db_delete_team(db: AsyncSession, team: Team):
+async def db_delete_team(db: AsyncSession, team: Team) -> bool:
     await db.execute(delete(Team).where(Team.id == team.id))
     await db.commit()
+    return True
 
 
 async def db_get_list_of_teams(
     db: AsyncSession,
     id: Optional[int] = None,
     name: Optional[str] = None,
+    lobby: Optional[Lobby] = None,
     sort_by: Optional[str] = "id",
     sort_order: Optional[str] = "asc",
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
-    lobby: Optional[Lobby] = None
+    only_count: Optional[bool] = False
 ) -> list[Team]:
     query = select(Team)
 
@@ -63,6 +65,11 @@ async def db_get_list_of_teams(
     
     if lobby:
         query.where(Team.lobby_id == lobby.id)
+
+    if only_count:
+        count_query = select(func.count()).select_from(query.subquery())
+        result = await db.execute(count_query)
+        return result.scalar()
 
     sort_field = getattr(Team, sort_by, None)
     if sort_field:

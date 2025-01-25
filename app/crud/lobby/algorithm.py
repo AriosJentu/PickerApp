@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete, asc, desc
+from sqlalchemy import update, delete, func, asc, desc
 
 from app.models.lobby.algorithm import Algorithm
 from app.schemas.lobby.algorithm import AlgorithmUpdate
@@ -36,9 +36,10 @@ async def db_update_algorithm(db: AsyncSession, algorithm: Algorithm, update_dat
     return algorithm
 
 
-async def db_delete_algorithm(db: AsyncSession, algorithm: Algorithm):
+async def db_delete_algorithm(db: AsyncSession, algorithm: Algorithm) -> bool:
     await db.execute(delete(Algorithm).where(Algorithm.id == algorithm.id))
     await db.commit()
+    return True
 
 
 async def db_get_list_of_algorithms(
@@ -51,6 +52,7 @@ async def db_get_list_of_algorithms(
     sort_order: Optional[str] = "asc",
     limit: Optional[int] = None,
     offset: Optional[int] = 0,
+    only_count: Optional[bool] = False
 ) -> list[Algorithm]:
     query = select(Algorithm)
 
@@ -65,6 +67,11 @@ async def db_get_list_of_algorithms(
 
     if teams_count:
         query = query.where(Algorithm.teams_count == teams_count)
+
+    if only_count:
+        count_query = select(func.count()).select_from(query.subquery())
+        result = await db.execute(count_query)
+        return result.scalar()
 
     sort_field = getattr(Algorithm, sort_by, None)
     if sort_field:

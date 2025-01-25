@@ -19,6 +19,7 @@ from app.schemas.auth.token import TokenResponse, TokenStatus
 from app.exceptions.user import (
     HTTPUserExceptionUsernameAlreadyExists,
     HTTPUserExceptionEmailAlreadyExists,
+    HTTPUserInternalError
 )
 
 
@@ -61,7 +62,9 @@ async def delete_current_user_(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):
-    await delete_user(db, current_user)
+    result = await delete_user(db, current_user)
+    if not result:
+        raise HTTPUserInternalError("Delete user error")
 
 
 @router.get("/check-token", response_model=TokenStatus)

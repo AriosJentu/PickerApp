@@ -56,9 +56,10 @@ async def db_update_user(db: AsyncSession, user: User, update_data: UserUpdateSe
     return user
 
 
-async def db_delete_user(db: AsyncSession, user: User):
+async def db_delete_user(db: AsyncSession, user: User) -> bool:
     await db.execute(delete(User).where(User.id == user.id))
     await db.commit()
+    return True
 
 
 async def db_get_list_of_users(

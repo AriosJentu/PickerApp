@@ -27,6 +27,7 @@ from app.db.session import get_async_session
 
 from app.exceptions.user import (
     HTTPUserExceptionNotFound,
+    HTTPUserInternalError
 )
 
 
@@ -119,7 +120,9 @@ async def delete_user_from_base(
     if not user:
         raise HTTPUserExceptionNotFound()
     
-    await delete_user(db, user)
+    result = await delete_user(db, user)
+    if not result:
+        raise HTTPUserInternalError("Delete user from base error")
     
     response = user.to_dict()
     response["role"] = str(user.role)

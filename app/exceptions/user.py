@@ -77,3 +77,11 @@ class HTTPUserExceptionAccessDenied(HTTPUserException):
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Access denied: {role.name.lower()} role required"
         )
+
+
+class HTTPUserInternalError(HTTPUserException):
+    def __init__(self, description: str):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process user operation: {description}"
+        )

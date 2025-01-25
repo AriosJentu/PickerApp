@@ -1,5 +1,4 @@
 from typing import Optional
-from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -17,8 +16,10 @@ class LobbyBase(BaseModel):
 
 class LobbyParticipantBase(BaseModel):
     user_id: int
+    lobby_id: Optional[int] = None
+    team_id: Optional[int] = None
     role: Optional[LobbyParticipantRole] = LobbyParticipantRole.SPECTATOR
-    team: Optional[str] = None
+    is_active: Optional[bool] = True
 
 
 class LobbyCreate(LobbyBase):
@@ -38,18 +39,6 @@ class LobbyRead(BaseModel):
     status: LobbyStatus
 
 
-class LobbyParticipantRead(BaseModel):
-    id: int
-    user: UserRead
-    lobby: LobbyRead
-    role: LobbyParticipantRole
-    team: str
-
-
-class LobbyWithParticipants(LobbyRead):
-    participants: list[LobbyParticipantRead]
-
-
 class LobbyUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
@@ -60,11 +49,15 @@ class LobbyUpdate(BaseModel):
 
 class LobbyParticipantUpdate(BaseModel):
     user_id: Optional[int] = None
-    lobby_id: Optional[int] = None
-    role: Optional[LobbyParticipantRole] = LobbyParticipantRole.SPECTATOR
+    role: Optional[LobbyParticipantRole] = None
     team: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 class LobbyResponse(BaseModel):
     id: int
     description: str
+
+
+class LobbyParticipantsCountResponse(BaseModel):
+    total_count: int

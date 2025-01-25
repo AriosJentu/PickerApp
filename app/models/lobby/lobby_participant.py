@@ -1,9 +1,12 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum as SQLAlchemyEnum
+from typing import Self
+
+from sqlalchemy import Column, Integer, Boolean, ForeignKey, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
 from app.enums.lobby import LobbyParticipantRole
 
+from app.schemas.lobby.lobby import LobbyParticipantCreate, LobbyParticipantUpdate
 
 class LobbyParticipant(Base):
 
@@ -12,7 +15,13 @@ class LobbyParticipant(Base):
     lobby_id = Column(Integer, ForeignKey("lobby.id"), nullable=False)
     team_id = Column(Integer, ForeignKey("team.id"), nullable=True)
     role = Column(SQLAlchemyEnum(LobbyParticipantRole), nullable=False, default=LobbyParticipantRole.SPECTATOR)
+    is_active = Column(Boolean, nullable=False, default=True)
 
     user = relationship("User", back_populates="participants")
     lobby = relationship("Lobby", back_populates="participants")
     team = relationship("Team", back_populates="participants")
+
+    @classmethod
+    def from_create(cls, participant_create: LobbyParticipantCreate | LobbyParticipantUpdate) -> Self:
+        dump = participant_create.model_dump()
+        return cls(**dump)

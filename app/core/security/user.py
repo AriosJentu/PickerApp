@@ -178,7 +178,7 @@ async def update_user(
     return user
 
 
-async def delete_user(db: AsyncSession, user: User):
+async def delete_user(db: AsyncSession, user: User) -> bool:
     await deactivate_old_tokens_user(db, user)
     await drop_inactive_tokens(db, user)
     return await db_delete_user(db, user)

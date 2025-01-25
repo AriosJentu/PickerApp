@@ -26,7 +26,7 @@ async def update_algorithm(db: AsyncSession, algorithm: Algorithm, update_data: 
     return await db_update_algorithm(db, algorithm, update_data)
 
 
-async def delete_algorithm(db: AsyncSession, algorithm: Algorithm):
+async def delete_algorithm(db: AsyncSession, algorithm: Algorithm) -> bool:
     return await db_delete_algorithm(db, algorithm)
 
 
@@ -38,7 +38,8 @@ async def get_list_of_algorithms(
     teams_count: Optional[int] = None,
     sort_by: Optional[str] = "id",
     sort_order: Optional[str] = "asc",
-    limit: Optional[int] = 10,
+    limit: Optional[int] = None,
     offset: Optional[int] = 0,
+    only_count: Optional[bool] = False
 ) -> list[Algorithm]:
-    return await db_get_list_of_algorithms(db, id, name, algorithm, teams_count, sort_by, sort_order, limit, offset)
+    return await db_get_list_of_algorithms(db, id, name, algorithm, teams_count, sort_by, sort_order, limit, offset, only_count)
