@@ -6,6 +6,7 @@ from app.enums.user import UserRole
 class HTTPUserException(HTTPException):
     pass
 
+
 class HTTPUserExceptionUsernameAlreadyExists(HTTPUserException):
     def __init__(self):
         super().__init__(

@@ -14,7 +14,7 @@ from app.core.security.token import (
     create_refresh_token,
     verify_token, 
     deactivate_old_tokens,
-    drop_inactive_tokens
+    drop_inactive_tokens,
 )
 
 from app.crud.auth.token import db_get_users_last_token
@@ -25,15 +25,13 @@ from app.crud.auth.user import (
     db_update_user, 
     db_delete_user,
     db_get_list_of_users,
-    UserExistType
+    UserExistType,
 )
 
-from app.exceptions.token import (
-    HTTPTokenExceptionInvalid, 
-)
+from app.exceptions.token import HTTPTokenExceptionInvalid
 from app.exceptions.user import (
     HTTPUserExceptionNotFound,
-    HTTPUserExceptionNoDataProvided
+    HTTPUserExceptionNoDataProvided,
 )
 
 

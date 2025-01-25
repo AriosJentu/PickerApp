@@ -13,7 +13,7 @@ from app.crud.auth.token import (
     db_create_token, 
     db_deactivate_tokens,
     db_drop_inactive_tokens,
-    db_drop_all_inactive_tokens
+    db_drop_all_inactive_tokens,
 )
 
 from app.crud.auth.token import (
@@ -23,7 +23,7 @@ from app.crud.auth.token import (
 from app.exceptions.token import (
     HTTPTokenExceptionInvalid, 
     HTTPTokenExceptionInvalidType,
-    HTTPTokenExceptionInvalidOrExpired
+    HTTPTokenExceptionInvalidOrExpired,
 )
 
 
@@ -74,6 +74,7 @@ def decode_token(token_str: str) -> dict:
         return payload
     except JWTError:
         raise HTTPTokenExceptionInvalid()
+    
     
 async def verify_token(
     db: AsyncSession = Depends(get_async_session),

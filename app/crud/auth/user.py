@@ -8,6 +8,7 @@ from app.db.base import User
 from app.enums.user import UserRole
 from app.schemas.auth.user import UserCreate, UserUpdateSecure, UserUpdate
 
+
 type UserExistType = tuple[bool, bool]
 type UserTupleType = tuple[User, User]
 

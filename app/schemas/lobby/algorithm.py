@@ -4,6 +4,7 @@ from pydantic import BaseModel, field_validator, ValidationInfo
 
 from app.core.lobby.validators import validate_algorithm, validate_teams_count
 
+
 class AlgorithmBase(BaseModel):
     name: str
     description: Optional[str] = None

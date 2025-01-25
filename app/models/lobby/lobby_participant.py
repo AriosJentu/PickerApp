@@ -5,8 +5,8 @@ from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
 from app.enums.lobby import LobbyParticipantRole
-
 from app.schemas.lobby.lobby import LobbyParticipantCreate, LobbyParticipantUpdate
+
 
 class LobbyParticipant(Base):
 

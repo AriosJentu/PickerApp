@@ -4,8 +4,9 @@ from app.enums.user import UserRole
 from app.models.auth.user import User
 from app.exceptions.user import (
     HTTPUserUnauthorized, 
-    HTTPUserExceptionAccessDenied
+    HTTPUserExceptionAccessDenied,
 )
+
 
 def role_required(required_role: UserRole):
     
