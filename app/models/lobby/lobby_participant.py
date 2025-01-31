@@ -21,6 +21,7 @@ class LobbyParticipant(Base):
     lobby = relationship("Lobby", back_populates="participants")
     team = relationship("Team", back_populates="participants")
 
+
     @classmethod
     def from_create(cls, participant_create: LobbyParticipantCreate | LobbyParticipantUpdate) -> Self:
         dump = participant_create.model_dump()

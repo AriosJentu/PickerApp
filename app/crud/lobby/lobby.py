@@ -3,10 +3,11 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete, func, asc, desc
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.enums.lobby import LobbyStatus
 from app.models.lobby.lobby import Lobby
+from app.models.lobby.algorithm import Algorithm
 from app.schemas.lobby.lobby import LobbyUpdate
 
 
@@ -20,8 +21,11 @@ async def db_create_lobby(db: AsyncSession, lobby: Lobby) -> Lobby:
 async def db_get_lobby_by_key_value(db: AsyncSession, key: str, value: str | int) -> Optional[Lobby]:
     result = await db.execute(
         select(Lobby)
+        .options(
+            selectinload(Lobby.host), 
+            selectinload(Lobby.algorithm).selectinload(Algorithm.creator),
+        )
         .filter(getattr(Lobby, key) == value)
-        .options(joinedload(Lobby.host), joinedload(Lobby.algorithm))
     )
     return result.scalars().first()
 
@@ -53,6 +57,7 @@ async def db_get_list_of_lobbies(
     id: Optional[int] = None,
     name: Optional[str] = None,
     host_id: Optional[int] = None,
+    algorithm_id: Optional[int] = None,
     status: Optional[LobbyStatus] = None,
     sort_by: Optional[str] = "id",
     sort_order: Optional[str] = "asc",
@@ -71,6 +76,9 @@ async def db_get_list_of_lobbies(
 
     if host_id:
         query = query.where(Lobby.host_id == host_id)
+
+    if algorithm_id:
+        query = query.where(Lobby.algorithm_id == algorithm_id)
 
     if status:
         query = query.where(Lobby.status == status)

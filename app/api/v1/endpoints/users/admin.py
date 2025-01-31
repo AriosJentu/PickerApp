@@ -15,7 +15,7 @@ router = APIRouter()
 
 @router.delete("/clear-tokens", response_model=TokenCleanResponse)
 @administrator
-async def clear_inactive_tokens(
+async def clear_inactive_tokens_(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):

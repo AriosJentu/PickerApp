@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.base import Algorithm
-from app.schemas.lobby.algorithm import AlgorithmUpdate
+from app.schemas.lobby.algorithm import AlgorithmCreate, AlgorithmUpdate
 
 from app.crud.lobby.algorithm import (
     db_get_algorithm_by_id,
@@ -18,8 +18,9 @@ async def get_algorithm_by_id(db: AsyncSession, algorithm_id: int) -> Optional[A
     return await db_get_algorithm_by_id(db, algorithm_id)
 
 
-async def create_algorithm(db: AsyncSession, algorithm: Algorithm) -> Algorithm:
-    return await db_create_algorithm(db, algorithm)
+async def create_algorithm(db: AsyncSession, algorithm: AlgorithmCreate) -> Algorithm:
+    new_algorithm = Algorithm.from_create(algorithm)
+    return await db_create_algorithm(db, new_algorithm)
 
 
 async def update_algorithm(db: AsyncSession, algorithm: Algorithm, update_data: AlgorithmUpdate) -> Algorithm:

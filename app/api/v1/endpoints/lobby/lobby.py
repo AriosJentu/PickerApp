@@ -13,6 +13,7 @@ from app.schemas.lobby.lobby import (
     LobbyUpdate, 
     LobbyResponse,
     LobbyParticipantUpdate,
+    LobbiesListCountResponse,
     LobbyParticipantsCountResponse,
 )
 from app.schemas.lobby.lobby_participant import (
@@ -25,7 +26,7 @@ from app.core.security.user import (
     get_current_user, 
     get_user_by_id,
 )
-from app.core.security.decorators import regular
+from app.core.security.decorators import regular, process_has_access_or
 
 from app.core.lobby.lobby import (
     get_lobby_by_id,
@@ -71,12 +72,29 @@ async def create_lobby_(
     return await create_lobby(db, lobby)
 
 
-@router.get("/", response_model=list[LobbyRead])
+@router.get("/list-count", response_model=LobbiesListCountResponse)
+@regular
+async def get_lobbies_count_(
+    id: Optional[int] = Query(default=None),
+    name: Optional[str] = Query(default=None),
+    host_id: Optional[int] = Query(default=None),
+    algorithm_id: Optional[int] = Query(default=None),
+    status: Optional[LobbyStatus] = Query(default=None),
+    only_active: Optional[bool] = Query(default=True),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_session)
+):
+    count = await get_list_of_lobbies(db, id, name, host_id, algorithm_id, status, only_active=only_active, only_count=True)
+    return LobbiesListCountResponse(total_count=count)
+
+
+@router.get("/list", response_model=list[LobbyRead])
 @regular
 async def get_lobbies_list_(
     id: Optional[int] = Query(default=None),
     name: Optional[str] = Query(default=None),
     host_id: Optional[int] = Query(default=None),
+    algorithm_id: Optional[int] = Query(default=None),
     status: Optional[LobbyStatus] = Query(default=None),
     sort_by: Optional[str] = Query(default="id"),
     sort_order: Optional[str] = Query(default="asc"),
@@ -86,8 +104,22 @@ async def get_lobbies_list_(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):
-    lobbies = await get_list_of_lobbies(db, id, name, host_id, status, sort_by, sort_order, limit, offset, only_active)
+    lobbies = await get_list_of_lobbies(db, id, name, host_id, algorithm_id, status, sort_by, sort_order, limit, offset, only_active)
     return lobbies
+
+
+@router.get("/{lobby_id}", response_model=LobbyRead)
+@regular
+async def get_lobby_info_(
+    lobby_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    lobby = await get_lobby_by_id(db, lobby_id)
+    if not lobby:
+        raise HTTPLobbyNotFound()
+    
+    return lobby
 
 
 @router.put("/{lobby_id}", response_model=LobbyRead)
@@ -103,9 +135,7 @@ async def update_lobby_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    if lobby.host_id != current_user.id or current_user.role == UserRole.USER:
-        raise HTTPLobbyAccessDenied()
-
+    process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
     return await update_lobby(db, lobby, lobby_data)
 
 
@@ -121,9 +151,7 @@ async def close_lobby_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    if lobby.host_id != current_user.id or current_user.role == UserRole.USER:
-        raise HTTPLobbyAccessDenied()
-
+    process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
     return await close_lobby(db, lobby)
 
 
@@ -139,10 +167,9 @@ async def delete_lobby_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    if lobby.host_id != current_user.id or current_user.role == UserRole.USER:
-        raise HTTPLobbyAccessDenied()
+    process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
     
-    result = await delete_lobby(db, lobby_id)
+    result = await delete_lobby(db, lobby)
     if not result: 
         raise HTTPLobbyInternalError("Delete lobby error")
     
@@ -208,8 +235,7 @@ async def add_participant_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    if lobby.host_id != current_user.id or current_user.role == UserRole.USER:
-        raise HTTPLobbyAccessDenied()
+    process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
     
     user = get_user_by_id(db, user_id)
 
@@ -233,8 +259,7 @@ async def edit_participant_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    if lobby.host_id != current_user.id or current_user.role == UserRole.USER:
-        raise HTTPLobbyAccessDenied()
+    process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
     
     participant = await get_lobby_participant_by_id(db, lobby, participant_id)
     return await update_lobby_participant(db, participant, update_data)
@@ -285,8 +310,7 @@ async def kick_from_lobby_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    if lobby.host_id != current_user.id or current_user.role == UserRole.USER:
-        raise HTTPLobbyAccessDenied()
+    process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
     
     participant = get_lobby_participant_by_id(db, lobby, participant_id)
     return await leave_lobby_participant(db, participant)

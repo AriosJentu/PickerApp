@@ -62,7 +62,7 @@ async def db_get_list_of_algorithms(
     if name:
         query = query.where(Algorithm.name.ilike(f"%{name}%"))
 
-    if name:
+    if algorithm:
         query = query.where(Algorithm.name.ilike(f"%{algorithm}%"))
 
     if teams_count:

@@ -22,10 +22,18 @@ class HTTPLobbyNotFound(HTTPLobbyException):
 
 
 class HTTPLobbyAccessDenied(HTTPLobbyException):
-    def __init__(self):
+    def __init__(self, data=None):
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Lobby not found",
+            detail="No access to control lobby",
+        )
+
+
+class HTTPLobbyTeamAccessDenied(HTTPLobbyException):
+    def __init__(self, data=None):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No access to control team",
         )
 
 
@@ -34,6 +42,14 @@ class HTTPTeamCreatingFailed(HTTPLobbyException):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to create team",
+        )
+        
+
+class HTTPAlgorithmCreatingFailed(HTTPLobbyException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to create algorithm",
         )
 
 
@@ -50,4 +66,12 @@ class HTTPLobbyInternalError(HTTPLobbyException):
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process lobby operation: {description}"
+        )
+
+
+class HTTPLobbyAlgorithmAccessDenied(HTTPLobbyException):
+    def __init__(self, data=None):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No access to control algorithm",
         )

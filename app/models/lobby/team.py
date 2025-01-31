@@ -1,7 +1,10 @@
+from typing import Self
+
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
+from app.schemas.lobby.team import TeamCreate, TeamUpdate
 
 
 class Team(Base):
@@ -11,3 +14,9 @@ class Team(Base):
 
     lobby = relationship("Lobby", back_populates="teams")
     participants = relationship("LobbyParticipant", back_populates="team")
+
+
+    @classmethod
+    def from_create(cls, create: TeamCreate | TeamUpdate) -> Self:
+        dump = create.model_dump()
+        return cls(**dump)

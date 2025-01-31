@@ -21,6 +21,7 @@ class User(Base):
     tokens = relationship("Token", back_populates="user", cascade="all, delete-orphan")
     participants = relationship("LobbyParticipant", back_populates="user", cascade="all, delete-orphan")
     lobbies = relationship("Lobby", back_populates="host", cascade="all, delete-orphan")
+    algorithms = relationship("Algorithm", back_populates="creator", cascade="all, delete-orphan")
 
     @classmethod
     def from_create(cls, user_create: UserCreate | UserUpdate | UserUpdateSecure, get_password_hash: Callable[[str], str]) -> Self:

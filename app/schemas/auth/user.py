@@ -10,16 +10,19 @@ from app.core.security.validators import (
 )
 
 
-class UserRead(BaseModel):
+class UserReadRegular(BaseModel):
     id: int
     username: str
-    email: EmailStr
-    external_id: Optional[str] = None
     role: UserRole
 
     @field_serializer("role")
     def serialize_role(self, value: UserRole) -> str:
         return str(value)
+    
+
+class UserRead(UserReadRegular):
+    email: EmailStr
+    external_id: Optional[str] = None
 
 
 class UserCreate(BaseModel):

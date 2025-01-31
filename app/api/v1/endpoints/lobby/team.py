@@ -5,11 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enums.user import UserRole
 from app.models.auth.user import User
-from app.models.lobby.lobby import Lobby
-from app.models.lobby.team import Team
+# from app.models.lobby.lobby import Lobby
+# from app.models.lobby.team import Team
 
 from app.schemas.lobby.lobby import LobbyResponse
-from app.schemas.lobby.lobby_participant import LobbyParticipantRead
+# from app.schemas.lobby.lobby_participant import LobbyParticipantRead
 from app.schemas.lobby.team import TeamCreate, TeamUpdate, TeamRead
 
 from app.db.session import get_async_session
@@ -22,12 +22,12 @@ from app.core.lobby.team import (
     delete_team,
     get_list_of_teams,
 )
-from app.core.security.decorators import regular
+from app.core.security.decorators import regular, process_has_access_or
 from app.core.security.user import get_current_user
 
 from app.exceptions.lobby import (
     HTTPLobbyNotFound,
-    HTTPLobbyAccessDenied,
+    HTTPLobbyTeamAccessDenied,
     HTTPLobbyInternalError,
     HTTPTeamCreatingFailed,
     HTTPTeamNotFound,
@@ -48,8 +48,7 @@ async def create_team_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    if lobby.host_id != current_user.id or current_user.role == UserRole.USER:
-        raise HTTPLobbyAccessDenied()
+    process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyTeamAccessDenied)
     
     team = await create_team(db, team_data)
     if not team:
@@ -58,40 +57,7 @@ async def create_team_(
     return team
 
 
-@router.put("/{team_id}", response_model=TeamRead)
-@regular
-async def update_team_(
-    team_id: int,
-    update_data: TeamUpdate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_session),
-):
-    team = await get_team_by_id(db, team_id)
-    updated_team = await update_team(db, team, update_data)
-
-    if not updated_team:
-        raise HTTPTeamNotFound()
-    
-    return updated_team
-
-
-@router.delete("/{team_id}", response_model=LobbyResponse)
-@regular
-async def delete_team_(
-    team_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_session),
-):
-    team = await get_team_by_id(db, team_id)
-
-    result = await delete_team(db, team)
-    if not result:
-        raise HTTPLobbyInternalError("Delete team error")
-    
-    return LobbyResponse(id=team_id, description=f"Team '{team.name}' deleted successfully")
-
-
-@router.get("/count", response_model=list[TeamRead])
+@router.get("/list-count", response_model=list[TeamRead])
 @regular
 async def get_count_of_teams_(
     id: Optional[int] = Query(default=None),
@@ -109,7 +75,7 @@ async def get_count_of_teams_(
     return teams
 
 
-@router.get("/", response_model=list[TeamRead])
+@router.get("/list", response_model=list[TeamRead])
 @regular
 async def get_list_of_teams_(
     id: Optional[int] = Query(default=None),
@@ -129,6 +95,59 @@ async def get_list_of_teams_(
     
     teams = await get_list_of_teams(db, id, name, lobby, sort_by, sort_order, limit, offset)
     return teams
+
+
+@router.get("/{team_id}", response_model=TeamRead)
+@regular
+async def update_team_(
+    team_id: int,
+    update_data: TeamUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    team = await get_team_by_id(db, team_id)
+    if not team:
+        raise HTTPTeamNotFound()
+    
+    return team
+
+
+@router.put("/{team_id}", response_model=TeamRead)
+@regular
+async def update_team_(
+    team_id: int,
+    update_data: TeamUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    team = await get_team_by_id(db, team_id)
+    if not team:
+        raise HTTPTeamNotFound()
+    
+    updated_team = await update_team(db, team, update_data)
+
+    if not updated_team:
+        raise HTTPTeamNotFound()
+    
+    return updated_team
+
+
+@router.delete("/{team_id}", response_model=LobbyResponse)
+@regular
+async def delete_team_(
+    team_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    team = await get_team_by_id(db, team_id)
+    if not team:
+        raise HTTPTeamNotFound()
+    
+    result = await delete_team(db, team)
+    if not result:
+        raise HTTPLobbyInternalError("Delete team error")
+    
+    return LobbyResponse(id=team_id, description=f"Team '{team.name}' deleted successfully")
 
 
 # @router.get("/{team_id}/participants", response_model=list[LobbyParticipantRead])

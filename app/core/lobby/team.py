@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.base import Lobby, Team
-from app.schemas.lobby.team import TeamUpdate
+from app.schemas.lobby.team import TeamCreate, TeamUpdate
 
 from app.crud.lobby.team import (
     db_get_team_by_id,
@@ -18,8 +18,9 @@ async def get_team_by_id(db: AsyncSession, team_id: int) -> Optional[Team]:
     return await db_get_team_by_id(db, team_id)
 
 
-async def create_team(db: AsyncSession, team: Team) -> Team:
-    return await db_create_team(db, team)
+async def create_team(db: AsyncSession, team: TeamCreate) -> Team:
+    new_team = Team.from_create(team)
+    return await db_create_team(db, new_team)
 
 
 async def update_team(db: AsyncSession, team: Team, update_data: TeamUpdate) -> Team:

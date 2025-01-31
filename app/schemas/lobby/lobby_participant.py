@@ -2,14 +2,14 @@ from pydantic import BaseModel
 
 from app.enums.lobby import LobbyParticipantRole
 
-from app.schemas.auth.user import UserRead
+from app.schemas.auth.user import UserReadRegular
 from app.schemas.lobby.lobby import LobbyRead
 from app.schemas.lobby.team import TeamRead
 
 
 class LobbyParticipantRead(BaseModel):
     id: int
-    user: UserRead
+    user: UserReadRegular
     team: TeamRead
     role: LobbyParticipantRole
     is_active: bool

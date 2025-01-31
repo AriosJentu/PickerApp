@@ -35,7 +35,8 @@ async def add_lobby_participant(db: AsyncSession, user: User, lobby: Lobby) -> L
         role=LobbyParticipantRole.SPECTATOR,
         is_active=True
     )
-    return await create_lobby_participant(db, LobbyParticipant.from_create(participant_scheme))
+    participant = LobbyParticipant.from_create(participant_scheme)
+    return await create_lobby_participant(db, participant)
 
 
 async def leave_lobby_participant(db: AsyncSession, participant: LobbyParticipant) -> LobbyParticipant:

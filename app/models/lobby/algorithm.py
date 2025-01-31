@@ -1,8 +1,10 @@
-from sqlalchemy import Column, Integer, String
+from typing import Self
+
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
-
+from app.schemas.lobby.algorithm import AlgorithmCreate, AlgorithmUpdate
 
 class Algorithm(Base):
 
@@ -11,5 +13,13 @@ class Algorithm(Base):
     description = Column(String, nullable=True)
     algorithm = Column(String, nullable=False)
     teams_count = Column(Integer, nullable=False, default=2)
+    creator_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
-    lobbies = relationship("Lobby", back_populates="algorithm", cascade="all, delete-orphan")
+    lobbies = relationship("Lobby", back_populates="algorithm")
+    creator = relationship("User", back_populates="algorithms")
+
+
+    @classmethod
+    def from_create(cls, create: AlgorithmCreate | AlgorithmUpdate) -> Self:
+        dump = create.model_dump()
+        return cls(**dump)

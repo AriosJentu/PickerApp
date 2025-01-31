@@ -3,8 +3,8 @@ from typing import Optional
 from pydantic import BaseModel
 
 from app.enums.lobby import LobbyStatus, LobbyParticipantRole
-from app.schemas.auth.user import UserRead
-from app.schemas.lobby.algorithm import AlgorithmRead
+from app.schemas.auth.user import UserReadRegular
+from app.schemas.lobby.algorithm import AlgorithmReadSimple
 
 
 class LobbyBase(BaseModel):
@@ -34,8 +34,8 @@ class LobbyRead(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
-    host: UserRead
-    algorithm: AlgorithmRead
+    host: UserReadRegular
+    algorithm: AlgorithmReadSimple
     status: LobbyStatus
 
 
@@ -57,6 +57,10 @@ class LobbyParticipantUpdate(BaseModel):
 class LobbyResponse(BaseModel):
     id: int
     description: str
+
+
+class LobbiesListCountResponse(BaseModel):
+    total_count: int
 
 
 class LobbyParticipantsCountResponse(BaseModel):

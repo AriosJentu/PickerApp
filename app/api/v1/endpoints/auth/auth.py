@@ -42,7 +42,7 @@ from app.exceptions.user import (
 router = APIRouter()
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def register_user(
+async def register_user_(
     user: UserCreate,
     db: AsyncSession = Depends(get_async_session)
 ):
@@ -58,7 +58,7 @@ async def register_user(
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login_user(
+async def login_user_(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_async_session),
 ):
@@ -81,7 +81,7 @@ async def login_user(
 
 @router.post("/logout", response_model=LogoutResponse)
 @regular
-async def logout_user(
+async def logout_user_(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):
@@ -91,7 +91,7 @@ async def logout_user(
 
 @router.post("/refresh", response_model=TokenResponse)
 @regular
-async def refresh_tokens(
+async def refresh_tokens_(
     current_user: User = Depends(get_current_user_refresh),
     refresh_token: str = Depends(get_oauth2_scheme()),
     db: AsyncSession = Depends(get_async_session)
