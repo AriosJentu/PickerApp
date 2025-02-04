@@ -38,19 +38,26 @@ from app.core.lobby.lobby import (
 )
 from app.core.lobby.lobby_participant import (
     get_lobby_participant_by_id,
-    get_lobby_participant_by_user_id,
+    get_lobby_participant_by_user,
     update_lobby_participant,
     get_list_of_lobby_participants,
+    is_participant_already_in_lobby,
     add_lobby_participant,
     leave_lobby_participant,
 )
 from app.core.lobby.algorithm import get_algorithm_by_id
+from app.core.lobby.team import (
+    get_team_by_id,
+)
 
 from app.exceptions.lobby import (
     HTTPLobbyAlgorithmNotFound,
     HTTPLobbyNotFound,
     HTTPLobbyAccessDenied,
     HTTPLobbyInternalError,
+    HTTPLobbyUserAlreadyIn,
+    HTTPLobbyParticipantNotFound,
+    HTTPTeamNotFound,
 )
 
 from app.exceptions.user import HTTPUserExceptionNotFound
@@ -131,7 +138,6 @@ async def update_lobby_(
     db: AsyncSession = Depends(get_async_session),
 ):
     lobby = await get_lobby_by_id(db, lobby_id)
-
     if not lobby:
         raise HTTPLobbyNotFound()
     
@@ -147,7 +153,6 @@ async def close_lobby_(
     db: AsyncSession = Depends(get_async_session),
 ):
     lobby = await get_lobby_by_id(db, lobby_id)
-
     if not lobby:
         raise HTTPLobbyNotFound()
     
@@ -163,7 +168,6 @@ async def delete_lobby_(
     db: AsyncSession = Depends(get_async_session),
 ):
     lobby = await get_lobby_by_id(db, lobby_id)
-
     if not lobby:
         raise HTTPLobbyNotFound()
     
@@ -189,12 +193,11 @@ async def get_lobby_participants_count_(
     db: AsyncSession = Depends(get_async_session)
 ):
     lobby = await get_lobby_by_id(db, lobby_id)
-
     if not lobby:
         raise HTTPLobbyNotFound()
     
     participants_count = await get_list_of_lobby_participants(db, id, user_id, team_id, lobby, role, is_active, only_count=True)
-    return participants_count
+    return LobbyParticipantsCountResponse(total_count=participants_count)
 
 
 @router.get("/{lobby_id}/participants", response_model=list[LobbyParticipantRead])
@@ -214,7 +217,6 @@ async def get_lobby_participants_(
     db: AsyncSession = Depends(get_async_session)
 ):
     lobby = await get_lobby_by_id(db, lobby_id)
-
     if not lobby:
         raise HTTPLobbyNotFound()
     
@@ -227,6 +229,7 @@ async def get_lobby_participants_(
 async def add_participant_(
     lobby_id: int,
     user_id: int,
+    team_id: Optional[int] = Query(default=None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session),
 ):
@@ -236,13 +239,26 @@ async def add_participant_(
         raise HTTPLobbyNotFound()
     
     process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
-    
-    user = get_user_by_id(db, user_id)
 
+    team = None
+    if team_id is not None:
+        team = await get_team_by_id(db, team_id)
+        if not team:
+            raise HTTPTeamNotFound()
+    
+    user = await get_user_by_id(db, user_id)
     if not user:
         raise HTTPUserExceptionNotFound()
+    
+    if not await is_participant_already_in_lobby(db, user, lobby):
+        return await add_lobby_participant(db, user, lobby, team)
 
-    return await add_lobby_participant(db, user, lobby)
+    participant = await get_lobby_participant_by_user(db, user, lobby)
+    if participant and participant.is_active:
+        raise HTTPLobbyUserAlreadyIn()
+    
+    updated_data = LobbyParticipantUpdate(is_active=True)
+    return await update_lobby_participant(db, participant, updated_data)
 
 
 @router.put("/{lobby_id}/participants/{participant_id}", response_model=LobbyParticipantWithLobbyRead)
@@ -262,6 +278,9 @@ async def edit_participant_(
     process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
     
     participant = await get_lobby_participant_by_id(db, lobby, participant_id)
+    if not participant:
+        raise HTTPLobbyParticipantNotFound()
+    
     return await update_lobby_participant(db, participant, update_data)
 
 
@@ -277,7 +296,15 @@ async def connect_to_lobby_(
     if not lobby:
         raise HTTPLobbyNotFound()        
     
-    return await add_lobby_participant(db, current_user, lobby)
+    if not await is_participant_already_in_lobby(db, current_user, lobby):
+        return await add_lobby_participant(db, current_user, lobby)
+
+    participant = await get_lobby_participant_by_user(db, current_user, lobby)
+    if participant and participant.is_active:
+        raise HTTPLobbyUserAlreadyIn()
+    
+    updated_data = LobbyParticipantUpdate(is_active=True)
+    return await update_lobby_participant(db, participant, updated_data)
 
 
 @router.delete("/{lobby_id}/leave", response_model=LobbyParticipantWithLobbyRead)
@@ -292,7 +319,10 @@ async def leave_lobby(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    participant = get_lobby_participant_by_user_id(db, lobby, current_user.id)
+    participant = await get_lobby_participant_by_user(db, current_user, lobby, True)
+    if not participant:
+        raise HTTPLobbyParticipantNotFound()
+    
     return await leave_lobby_participant(db, participant)
 
 
@@ -312,5 +342,8 @@ async def kick_from_lobby_(
     
     process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
     
-    participant = get_lobby_participant_by_id(db, lobby, participant_id)
+    participant = await get_lobby_participant_by_id(db, lobby, participant_id)
+    if not (participant and participant.is_active):
+        raise HTTPLobbyParticipantNotFound()
+    
     return await leave_lobby_participant(db, participant)

@@ -17,8 +17,8 @@ class LobbyParticipant(Base):
     role = Column(SQLAlchemyEnum(LobbyParticipantRole), nullable=False, default=LobbyParticipantRole.SPECTATOR)
     is_active = Column(Boolean, nullable=False, default=True)
 
-    user = relationship("User", back_populates="participants")
-    lobby = relationship("Lobby", back_populates="participants")
+    user = relationship("User", back_populates="participants", lazy="selectin")
+    lobby = relationship("Lobby", back_populates="participants", lazy="selectin")
     team = relationship("Team", back_populates="participants")
 
 

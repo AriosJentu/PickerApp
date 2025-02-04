@@ -41,5 +41,5 @@ async def get_list_of_teams(
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
     only_count: Optional[bool] = False
-) -> list[Team]:
+) -> list[Optional[Team]] | int:
     return await db_get_list_of_teams(db, id, name, lobby, sort_by, sort_order, limit, offset, only_count)

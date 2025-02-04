@@ -48,10 +48,13 @@ class LobbyUpdate(BaseModel):
 
 
 class LobbyParticipantUpdate(BaseModel):
-    user_id: Optional[int] = None
     role: Optional[LobbyParticipantRole] = None
-    team: Optional[str] = None
+    team_id: Optional[int] = None
     is_active: Optional[bool] = None
+
+
+class LobbyParticipantUpdateWithUser(LobbyParticipantUpdate):
+    user_id: Optional[int] = None
 
 
 class LobbyResponse(BaseModel):

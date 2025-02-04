@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete, func, asc, desc
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 
 from app.enums.lobby import LobbyStatus
 from app.models.lobby.lobby import Lobby
@@ -65,7 +65,7 @@ async def db_get_list_of_lobbies(
     offset: Optional[int] = 0,
     only_active: Optional[bool] = True,
     only_count: Optional[bool] = False
-) -> list[Lobby]:
+) -> list[Optional[Lobby]] | int:
     query = select(Lobby)
 
     if id:

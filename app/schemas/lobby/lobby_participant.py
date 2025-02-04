@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 from app.enums.lobby import LobbyParticipantRole
@@ -10,7 +11,7 @@ from app.schemas.lobby.team import TeamRead
 class LobbyParticipantRead(BaseModel):
     id: int
     user: UserReadRegular
-    team: TeamRead
+    team: Optional[TeamRead] = None
     role: LobbyParticipantRole
     is_active: bool
 

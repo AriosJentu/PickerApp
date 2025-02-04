@@ -49,5 +49,5 @@ async def get_list_of_lobbies(
     offset: Optional[int] = 0,
     only_active: Optional[bool] = True,
     only_count: Optional[bool] = False
-) -> list[Lobby]:
+) -> list[Optional[Lobby]] | int:
     return await db_get_list_of_lobbies(db, id, name, host_id, algorithm_id, status, sort_by, sort_order, limit, offset, only_active, only_count)

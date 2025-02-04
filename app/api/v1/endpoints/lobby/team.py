@@ -10,7 +10,7 @@ from app.models.auth.user import User
 
 from app.schemas.lobby.lobby import LobbyResponse
 # from app.schemas.lobby.lobby_participant import LobbyParticipantRead
-from app.schemas.lobby.team import TeamCreate, TeamUpdate, TeamRead
+from app.schemas.lobby.team import TeamCreate, TeamUpdate, TeamRead, TeamReadWithLobby
 
 from app.db.session import get_async_session
 
@@ -36,7 +36,7 @@ from app.exceptions.lobby import (
 
 router = APIRouter()
 
-@router.post("/", response_model=TeamRead)
+@router.post("/", response_model=TeamReadWithLobby)
 @regular
 async def create_team_(
     team_data: TeamCreate,
@@ -57,7 +57,7 @@ async def create_team_(
     return team
 
 
-@router.get("/list-count", response_model=list[TeamRead])
+@router.get("/list-count", response_model=list[TeamReadWithLobby])
 @regular
 async def get_count_of_teams_(
     id: Optional[int] = Query(default=None),
@@ -75,7 +75,7 @@ async def get_count_of_teams_(
     return teams
 
 
-@router.get("/list", response_model=list[TeamRead])
+@router.get("/list", response_model=list[TeamReadWithLobby])
 @regular
 async def get_list_of_teams_(
     id: Optional[int] = Query(default=None),
@@ -97,7 +97,7 @@ async def get_list_of_teams_(
     return teams
 
 
-@router.get("/{team_id}", response_model=TeamRead)
+@router.get("/{team_id}", response_model=TeamReadWithLobby)
 @regular
 async def update_team_(
     team_id: int,
@@ -112,7 +112,7 @@ async def update_team_(
     return team
 
 
-@router.put("/{team_id}", response_model=TeamRead)
+@router.put("/{team_id}", response_model=TeamReadWithLobby)
 @regular
 async def update_team_(
     team_id: int,

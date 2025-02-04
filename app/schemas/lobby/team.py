@@ -15,6 +15,9 @@ class TeamCreate(TeamBase):
 
 class TeamRead(TeamBase):
     id: int
+
+
+class TeamReadWithLobby(TeamRead):
     lobby: LobbyRead
 
 

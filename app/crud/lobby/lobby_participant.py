@@ -3,10 +3,12 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete, func, asc, desc
+from sqlalchemy.orm import selectinload
 
 from app.enums.lobby import LobbyParticipantRole
 from app.models.lobby.lobby import Lobby
 from app.models.lobby.lobby_participant import LobbyParticipant
+from app.models.lobby.team import Team
 from app.schemas.lobby.lobby import LobbyParticipantUpdate
 
 
@@ -20,6 +22,10 @@ async def db_create_lobby_participant(db: AsyncSession, participant: LobbyPartic
 async def db_get_lobby_participant_by_key_value(db: AsyncSession, lobby: Lobby, key: str, value: str | int) -> Optional[LobbyParticipant]:
     result = await db.execute(
         select(LobbyParticipant)
+        .options(
+            selectinload(LobbyParticipant.lobby), 
+            selectinload(LobbyParticipant.team),
+        )
         .filter(
             getattr(LobbyParticipant, key) == value,
             LobbyParticipant.lobby_id == lobby.id
@@ -32,15 +38,17 @@ async def db_get_lobby_participant_by_id(db: AsyncSession, lobby: Lobby, partici
     return await db_get_lobby_participant_by_key_value(db, lobby, "id", participant_id)
 
 
-async def db_get_lobby_participant_by_user_id(db: AsyncSession, lobby: Lobby, user_id: int) -> Optional[LobbyParticipant]:
-    result = await db.execute(
-        select(LobbyParticipant)
-        .filter(
-            LobbyParticipant.user_id == user_id, 
-            LobbyParticipant.is_active == True,
-            LobbyParticipant.lobby_id == lobby.id
-        )
+async def db_get_lobby_participant_by_user_id(db: AsyncSession, lobby: Lobby, user_id: int, is_active: Optional[bool] = None) -> Optional[LobbyParticipant]:
+    
+    query = select(LobbyParticipant).filter(
+        LobbyParticipant.user_id == user_id,
+        LobbyParticipant.lobby_id == lobby.id
     )
+    
+    if is_active is not None:
+        query = query.filter(LobbyParticipant.is_active == is_active)
+
+    result = await db.execute(query)
     return result.scalars().first()
 
 
@@ -76,8 +84,8 @@ async def db_get_list_of_lobby_participants(
     offset: Optional[int] = 0,
     all_db_participants: Optional[bool] = False,
     only_count: Optional[bool] = False
-) -> list[LobbyParticipant]:
-    query = select(LobbyParticipant)
+) -> list[Optional[LobbyParticipant]] | int:
+    query = select(LobbyParticipant).options(selectinload(LobbyParticipant.user))
 
     if id:
         query = query.where(LobbyParticipant.id == id)

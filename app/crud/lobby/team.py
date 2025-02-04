@@ -54,7 +54,7 @@ async def db_get_list_of_teams(
     limit: Optional[int] = 10,
     offset: Optional[int] = 0,
     only_count: Optional[bool] = False
-) -> list[Team]:
+) -> list[Optional[Team]] | int:
     query = select(Team)
 
     if id:

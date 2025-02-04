@@ -53,7 +53,7 @@ async def db_get_list_of_algorithms(
     limit: Optional[int] = None,
     offset: Optional[int] = 0,
     only_count: Optional[bool] = False
-) -> list[Algorithm]:
+) -> list[Optional[Algorithm]] | int:
     query = select(Algorithm)
 
     if id:

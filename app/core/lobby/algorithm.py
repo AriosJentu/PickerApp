@@ -42,5 +42,5 @@ async def get_list_of_algorithms(
     limit: Optional[int] = None,
     offset: Optional[int] = 0,
     only_count: Optional[bool] = False
-) -> list[Algorithm]:
+) -> list[Optional[Algorithm]] | int:
     return await db_get_list_of_algorithms(db, id, name, algorithm, teams_count, sort_by, sort_order, limit, offset, only_count)

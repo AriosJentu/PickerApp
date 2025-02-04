@@ -75,3 +75,19 @@ class HTTPLobbyAlgorithmAccessDenied(HTTPLobbyException):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No access to control algorithm",
         )
+
+
+class HTTPLobbyUserAlreadyIn(HTTPLobbyException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already in lobby"
+        )
+
+
+class HTTPLobbyParticipantNotFound(HTTPLobbyException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Participant not found"
+        )
