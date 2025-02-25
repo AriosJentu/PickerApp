@@ -5,7 +5,7 @@ def validate_algorithm(algorithm: Optional[str], teams_count: Optional[int]) -> 
     if algorithm is None:
         return None
     
-    if len(algorithm) < 1:
+    if not algorithm.strip():
         raise ValueError("Algorithm should contain at least one step")
 
     if teams_count < 2:
@@ -30,7 +30,7 @@ def validate_algorithm(algorithm: Optional[str], teams_count: Optional[int]) -> 
     return algorithm
 
 
-def validate_teams_count(teams_count: int) -> Optional[int]:
+def validate_teams_count(teams_count: Optional[int]) -> Optional[int]:
     if teams_count is None:
         return None
 
@@ -38,3 +38,13 @@ def validate_teams_count(teams_count: int) -> Optional[int]:
         raise ValueError(f"Teams count should be in between 2 and 16 ({teams_count=})")
     
     return teams_count
+
+
+def validate_name(name: Optional[str]) -> Optional[str]:
+    if name is None:
+        return None
+    
+    if not name.strip():
+        raise ValueError("Lobby name cannot be empty")
+    
+    return name

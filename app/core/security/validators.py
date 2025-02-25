@@ -6,7 +6,7 @@ def validate_username(username: Optional[str]) -> Optional[str]:
     if username is None:
         return None
     
-    if len(username) < 3:
+    if len(username) < 3 or not username.strip():
         raise ValueError("Username must be at least 3 characters long.")
     
     return username
@@ -16,7 +16,7 @@ def validate_password(password: Optional[str]) -> Optional[str]:
     if password is None:
         return None
     
-    if len(password) < 8:
+    if len(password) < 8 or not password.strip():
         raise ValueError("Password must be at least 8 characters long.")
     
     if not re.search(r"[A-Z]", password):
@@ -37,7 +37,7 @@ def validate_password(password: Optional[str]) -> Optional[str]:
 def validate_email(email: str) -> str:
     email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
-    if not email:
+    if not email or not email.strip():
         raise ValueError("Email cannot be empty.")
 
     if not re.match(email_regex, email):
