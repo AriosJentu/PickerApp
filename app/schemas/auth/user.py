@@ -33,17 +33,17 @@ class UserCreate(BaseModel):
 
 
     @field_validator("username")
-    def validate_username(cls, username):
+    def validate_username(cls, username: str):
         return validate_username(username)
 
     
     @field_validator("password")
-    def validate_password(cls, password):
+    def validate_password(cls, password: str):
         return validate_password(password)
 
     
     @field_validator("email")
-    def validate_email(cls, email):
+    def validate_email(cls, email: EmailStr):
         return validate_email(email)
     
 
@@ -55,17 +55,17 @@ class UserUpdateSecure(BaseModel):
     
     
     @field_validator("username", mode="before")
-    def validate_username(cls, username):
+    def validate_username(cls, username: Optional[str]):
         return validate_username(username)
     
     
     @field_validator("password", mode="before")
-    def validate_password(cls, password):
+    def validate_password(cls, password: Optional[str]):
         return validate_password(password)
     
     
     @field_validator("email", mode="before")
-    def validate_email(cls, email):
+    def validate_email(cls, email: Optional[EmailStr]):
         return validate_email(email)
     
 

@@ -2,7 +2,7 @@ from typing import Optional, Self
 
 from pydantic import BaseModel, model_validator, field_validator
 
-from app.core.lobby.validators import validate_algorithm, validate_teams_count
+from app.core.lobby.validators import validate_algorithm, validate_teams_count, validate_name
 
 from app.schemas.auth.user import UserReadRegular
 
@@ -15,8 +15,13 @@ class AlgorithmBase(BaseModel):
     creator_id: int
     
 
+    @field_validator("name")
+    def validate_name(cls, name: str):
+        return validate_name(name)
+    
+
     @field_validator("teams_count")
-    def validate_teams_count(cls, teams_count):
+    def validate_teams_count(cls, teams_count: int):
         return validate_teams_count(teams_count)
     
 
@@ -55,8 +60,13 @@ class AlgorithmUpdate(BaseModel):
     teams_count: int
 
 
+    @field_validator("name", mode="before")
+    def validate_name(cls, name: Optional[str]):
+        return validate_name(name)
+    
+
     @field_validator("teams_count", mode="before")
-    def validate_teams_count(cls, teams_count):
+    def validate_teams_count(cls, teams_count: Optional[int]):
         return validate_teams_count(teams_count)
     
     

@@ -1,6 +1,8 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+from app.core.lobby.validators import validate_name
 
 from app.enums.lobby import LobbyStatus, LobbyParticipantRole
 from app.schemas.auth.user import UserReadRegular
@@ -12,6 +14,11 @@ class LobbyBase(BaseModel):
     description: Optional[str] = None
     host_id: int
     algorithm_id: int
+
+
+    @field_validator("name")
+    def validate_name(cls, name: str):
+        return validate_name(name)
 
 
 class LobbyParticipantBase(BaseModel):
@@ -46,6 +53,11 @@ class LobbyUpdate(BaseModel):
     algorithm_id: Optional[int] = None
     status: Optional[LobbyStatus] = None
 
+
+    @field_validator("name", mode="before")
+    def validate_name(cls, name: Optional[str]):
+        return validate_name(name)
+    
 
 class LobbyParticipantUpdate(BaseModel):
     role: Optional[LobbyParticipantRole] = None
