@@ -3,11 +3,11 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete, func, asc, desc
+from sqlalchemy.orm import selectinload
 
 from app.models.lobby.team import Team
 from app.models.lobby.lobby import Lobby
 from app.schemas.lobby.team import TeamUpdate
-
 
 
 async def db_create_team(db: AsyncSession, team: Team) -> Team:
@@ -18,7 +18,13 @@ async def db_create_team(db: AsyncSession, team: Team) -> Team:
 
 
 async def db_get_team_by_key_value(db: AsyncSession, key: str, value: str | int) -> Optional[Team]:
-    result = await db.execute(select(Team).filter(getattr(Team, key) == value))
+    result = await db.execute(
+        select(Team)
+        .options(
+            selectinload(Team.lobby), 
+        )
+        .filter(getattr(Team, key) == value)
+    )
     return result.scalars().first()
 
 

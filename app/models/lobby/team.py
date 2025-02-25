@@ -12,7 +12,7 @@ class Team(Base):
     name = Column(String, nullable=False)
     lobby_id = Column(Integer, ForeignKey("lobby.id"), nullable=False)
 
-    lobby = relationship("Lobby", back_populates="teams")
+    lobby = relationship("Lobby", back_populates="teams", lazy="selectin")
     participants = relationship("LobbyParticipant", back_populates="team")
 
 

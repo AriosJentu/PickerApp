@@ -5,12 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enums.user import UserRole
 from app.models.auth.user import User
-# from app.models.lobby.lobby import Lobby
-# from app.models.lobby.team import Team
 
 from app.schemas.lobby.lobby import LobbyResponse
-# from app.schemas.lobby.lobby_participant import LobbyParticipantRead
-from app.schemas.lobby.team import TeamCreate, TeamUpdate, TeamRead, TeamReadWithLobby
+from app.schemas.lobby.team import (
+    TeamCreate, 
+    TeamUpdate, 
+    TeamReadWithLobby, 
+    TeamListCountResponse,
+)
 
 from app.db.session import get_async_session
 
@@ -57,7 +59,7 @@ async def create_team_(
     return team
 
 
-@router.get("/list-count", response_model=list[TeamReadWithLobby])
+@router.get("/list-count", response_model=TeamListCountResponse)
 @regular
 async def get_count_of_teams_(
     id: Optional[int] = Query(default=None),
@@ -66,13 +68,16 @@ async def get_count_of_teams_(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session),
 ):
-    lobby = await get_lobby_by_id(db, lobby_id)
-
-    if not lobby:
-        raise HTTPLobbyNotFound()
     
-    teams = await get_list_of_teams(db, id, name, lobby, only_count=True)
-    return teams
+    lobby = None
+    if lobby_id:
+        lobby = await get_lobby_by_id(db, lobby_id)
+
+        if not lobby:
+            raise HTTPLobbyNotFound()
+    
+    teams_count = await get_list_of_teams(db, id, name, lobby, only_count=True)
+    return TeamListCountResponse(total_count=teams_count)
 
 
 @router.get("/list", response_model=list[TeamReadWithLobby])
@@ -88,10 +93,13 @@ async def get_list_of_teams_(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session),
 ):
-    lobby = await get_lobby_by_id(db, lobby_id)
+    
+    lobby = None
+    if lobby_id:
+        lobby = await get_lobby_by_id(db, lobby_id)
 
-    if not lobby:
-        raise HTTPLobbyNotFound()
+        if not lobby:
+            raise HTTPLobbyNotFound()
     
     teams = await get_list_of_teams(db, id, name, lobby, sort_by, sort_order, limit, offset)
     return teams
@@ -99,9 +107,8 @@ async def get_list_of_teams_(
 
 @router.get("/{team_id}", response_model=TeamReadWithLobby)
 @regular
-async def update_team_(
+async def get_team_info_(
     team_id: int,
-    update_data: TeamUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session),
 ):

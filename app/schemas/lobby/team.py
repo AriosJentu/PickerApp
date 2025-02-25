@@ -17,6 +17,10 @@ class TeamRead(TeamBase):
     id: int
 
 
+class TeamListCountResponse(BaseModel):
+    total_count: int
+
+
 class TeamReadWithLobby(TeamRead):
     lobby: LobbyRead
 

@@ -19,7 +19,7 @@ class LobbyParticipant(Base):
 
     user = relationship("User", back_populates="participants", lazy="selectin")
     lobby = relationship("Lobby", back_populates="participants", lazy="selectin")
-    team = relationship("Team", back_populates="participants")
+    team = relationship("Team", back_populates="participants", lazy="selectin")
 
 
     @classmethod
