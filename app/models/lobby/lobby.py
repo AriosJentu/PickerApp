@@ -16,7 +16,7 @@ class Lobby(Base):
     algorithm_id = Column(Integer, ForeignKey("algorithm.id"), nullable=False)
     status = Column(SQLAlchemyEnum(LobbyStatus), nullable=False, default=LobbyStatus.ACTIVE)
 
-    host = relationship("User", back_populates="lobbies")
+    host = relationship("User", back_populates="lobbies", lazy="selectin")
     algorithm = relationship("Algorithm", back_populates="lobbies", lazy="selectin")
     participants = relationship("LobbyParticipant", back_populates="lobby")
     teams = relationship("Team", back_populates="lobby", cascade="all, delete-orphan")
