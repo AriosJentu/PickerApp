@@ -53,7 +53,7 @@ def test_user_create_schema_valid(
         ({"id": 1,      "username": "testuser",     "email": "some_email@example.com",  "role": UserRole.MODERATOR}, True,   ""),
         ({"id": "1",    "username": "testuser",     "email": "some_email@example.com",  "role": UserRole.USER},      True,   ""),
         ({"id": -1,     "username": "testuser",     "email": "some_email@example.com",  "role": 2},                  True,   ""),
-        ({"id": 1,      "username": "testuser",     "email": "some_email@example.com",  "role": "1"},                True,  "role"),
+        ({"id": 1,      "username": "testuser",     "email": "some_email@example.com",  "role": "1"},                True,   ""),
         ({"id": 1,      "username": "12",           "email": "123@123",                 "role": UserRole.USER},      False,  "email"),
         ({"id": 1,      "username": "12",           "email": "123@123",                 "role": 0},                  False,  "role"),
         ({"id": 123,    "username": "12",           "email": "123@123",                 "role": -1},                 False,  "role"),
