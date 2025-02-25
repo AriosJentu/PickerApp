@@ -7,7 +7,7 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 async def test_unable_clear_inactive_tokens(
-        client_async: AsyncClient, 
+        client_async: AsyncClient,
         user_access_token: str
 ):
     
