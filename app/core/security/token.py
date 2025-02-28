@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from jose import jwt, JWTError
+from uuid import uuid4
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,7 +33,11 @@ async def create_token(db: AsyncSession, data: dict, delta: timedelta, token_typ
     expire = datetime.now(timezone.utc) + delta
     
     to_encode = data.copy()
-    to_encode.update({"exp": expire, "token_type": token_type})
+    to_encode.update({
+        "exp": expire, 
+        "token_type": token_type,
+        "jti": str(uuid4())
+    })
     
     token_str = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     token = Token(

@@ -15,15 +15,16 @@ from app.core.security.user import (
     deactivate_old_tokens_user,
     create_user_tokens,
     refresh_user_tokens,
-    get_current_user,
-    get_current_user_refresh,
     is_user_exist,
     create_user,
 )
 
 from app.core.security.validators import validate_username
 
-from app.core.security.decorators import regular
+from app.core.security.access import (
+    check_user_regular_role, 
+    check_user_regular_role_refresh,
+)
 
 from app.models.auth.user import User
 from app.schemas.auth.user import UserCreate, UserRead
@@ -80,9 +81,8 @@ async def login_user_(
 
 
 @router.post("/logout", response_model=LogoutResponse)
-@regular
 async def logout_user_(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session)
 ):
     await deactivate_old_tokens_user(db, current_user)
@@ -90,9 +90,8 @@ async def logout_user_(
 
 
 @router.post("/refresh", response_model=TokenResponse)
-@regular
 async def refresh_tokens_(
-    current_user: User = Depends(get_current_user_refresh),
+    current_user: User = Depends(check_user_regular_role_refresh),
     refresh_token: str = Depends(get_oauth2_scheme()),
     db: AsyncSession = Depends(get_async_session)
 ):

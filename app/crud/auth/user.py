@@ -25,7 +25,7 @@ async def db_get_user_by_key_value(db: AsyncSession, key: str, value: str | int)
     return result.scalars().first()
 
 
-async def db_get_user_by_keys_values(db: AsyncSession, keys: tuple[str], values: tuple[str]) -> Optional[User]:
+async def db_get_user_by_keys_values(db: AsyncSession, keys: tuple[str, ...], values: tuple[str | int, ...]) -> Optional[User]:
     query = select(User)
     for key, value in zip(keys, values):
         query = query.filter(getattr(User, key) == value)

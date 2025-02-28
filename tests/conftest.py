@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from typing import AsyncGenerator, Callable, Awaitable
+from typing import AsyncGenerator, Callable, Awaitable, Optional
 
 import pytest
 import pytest_asyncio
@@ -21,22 +21,24 @@ from app.core.config import settings
 from app.crud.auth.user import db_create_user
 from app.crud.lobby.algorithm import db_create_algorithm
 from app.crud.lobby.lobby import db_create_lobby
+from app.crud.lobby.team import db_create_team
 
 from app.db.session import get_async_session
-from app.db.base import Base, User, Algorithm, Lobby
+from app.db.base import Base, User, Algorithm, Lobby, Team
 from app.schemas.auth.user import UserUpdate
 from app.enums.user import UserRole
+from app.enums.lobby import LobbyParticipantRole
+
+from tests.factories.user_factory import UserFactory
+from tests.factories.algorithm_factory import AlgorithmFactory
+from tests.factories.lobby_factory import LobbyFactory
+from tests.factories.team_factory import TeamFactory
+from tests.factories.token_factory import TokenFactory
+
+from tests.utils.user_utils import create_user_with_tokens
 
 
 load_dotenv()
-
-type UserData = dict[str, str | UserRole]
-type AlgorithmData = dict[str, str | int]
-type LobbyData = dict[str, str | int]
-type CallableUser = Callable[[UserData], Awaitable[User]]
-type CallableUserData = Callable[[str], UserData]
-type CallableLobbyData = Callable[[int], Awaitable[LobbyData]]
-
 
 TEST_DATABASE_URL_ASYNC = settings.DATABASE_URL_TEST_ASYNC
 def get_engine_and_session_async(echo: bool = False) -> tuple[AsyncEngine, AsyncSession]:
@@ -75,145 +77,106 @@ async def client_async(db_async: AsyncSession) -> AsyncGenerator[AsyncClient, No
 
 
 @pytest.fixture
-def default_user_data() -> CallableUserData:
-    def _generate_user_data(suffix: str = "") -> UserData:
-        return {
-            "username": f"defaultuser{suffix}",
-            "email": f"defaultuser{suffix}@example.com",
-            "password": "SecurePassword1!",
-            "role": UserRole.USER
-        }
-    return _generate_user_data
+def user_factory(db_async: AsyncSession) -> UserFactory:
+    return UserFactory(db_async)
 
 
 @pytest.fixture
-def default_moderator_data() -> CallableUserData:
-    def _generate_user_data(suffix: str = "") -> UserData:
-        return {
-            "username": f"moderatoruser{suffix}",
-            "email": f"moderator{suffix}@example.com",
-            "password": "ModeratorPassword1!",
-            "role": UserRole.MODERATOR
-        }
-    return _generate_user_data
+def algorithm_factory(db_async: AsyncSession) -> AlgorithmFactory:
+    return AlgorithmFactory(db_async)
 
 
 @pytest.fixture
-def default_admin_data() -> CallableUserData:
-    def _generate_user_data(suffix: str = "") -> UserData:
-        return {
-            "username": f"adminuser{suffix}",
-            "email": f"admin{suffix}@example.com",
-            "password": "SecureAdminPassword1!",
-            "role": UserRole.ADMIN
-        }
-    return _generate_user_data
+def lobby_factory(db_async: AsyncSession) -> LobbyFactory:
+    return LobbyFactory(db_async)
 
 
 @pytest.fixture
-def test_user(db_async: AsyncSession) -> CallableUser:
-    async def _generate_user(data: UserData):
-        user_create = UserUpdate(**data)
-        user = User.from_create(user_create, get_password_hash)
-        return await db_create_user(db_async, user)
-    return _generate_user
+def team_factory(db_async: AsyncSession) -> TeamFactory:
+    return TeamFactory(db_async)
+
+
+@pytest.fixture
+def token_factory(db_async: AsyncSession) -> TokenFactory:
+    return TokenFactory(db_async)
 
 
 @pytest_asyncio.fixture
-async def create_test_users(
-        test_user: CallableUser,
-        default_user_data: CallableUserData, 
-        default_moderator_data: CallableUserData, 
-        default_admin_data: CallableUserData
-) -> list[User]:
-    
+async def create_test_users(user_factory: UserFactory) -> list[User]:
     return [
-        await test_user(default_user_data()), 
-        await test_user(default_moderator_data()), 
-        await test_user(default_admin_data())
+        await user_factory.create(prefix="default",     role=UserRole.USER),
+        await user_factory.create(prefix="moderator",   role=UserRole.MODERATOR),
+        await user_factory.create(prefix="admin",       role=UserRole.ADMIN),
     ]
 
 
 @pytest_asyncio.fixture
-async def user_access_token(db_async: AsyncSession, create_test_users: list[User]) -> str:
-    regular_user = next(user for user in create_test_users if user.role == UserRole.USER)
-    access_token, _ = await create_user_tokens(db_async, regular_user)
-    return access_token.token
+async def create_multiple_test_users_with_tokens(
+        user_factory: UserFactory, 
+        token_factory: TokenFactory
+) -> list[tuple[User, str]]:
+    
+    users_count = 3
+    users = []
+    for i in range(users_count):
+        user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, prefix=f"testuser{i+1}")
+        users.append((user, access_token))
+
+    return users
 
 
 @pytest_asyncio.fixture
-async def moderator_access_token(db_async: AsyncSession, create_test_users: list[User]):
-    moderator_user = next(user for user in create_test_users if user.role == UserRole.MODERATOR)
-    access_token, _ = await create_user_tokens(db_async, moderator_user)
-    return access_token.token
-
-
-@pytest_asyncio.fixture
-async def admin_access_token(db_async: AsyncSession, create_test_users: list[User]) -> str:
-    admin_user = next(user for user in create_test_users if user.role == UserRole.ADMIN)
-    access_token, _ = await create_user_tokens(db_async, admin_user)
-    return access_token.token
-
-
-@pytest.fixture
-async def default_algorithm_data(
-        test_user: CallableUser,
-        default_user_data: CallableUserData, 
-) -> AlgorithmData:
-    user = await test_user(default_user_data("0"))
-    return {
-        "name": "Test Algorithm",
-        "description": "Test algorithm for lobby",
-        "algorithm": "BB PP T",
-        "teams_count": 2,
-        "creator_id": user.id
-    }
-
-
-@pytest.fixture
-async def test_algorithm_id(db_async: AsyncSession, default_algorithm_data: AlgorithmData) -> int:
-    algorithm = Algorithm(**default_algorithm_data)
-    algorithm = await db_create_algorithm(db_async, algorithm)
-    return algorithm.id
-
-
-@pytest.fixture
-def default_lobby_data(
-        test_algorithm_id: int,
-        test_user: CallableUser,
-        default_user_data: CallableUserData
-) -> CallableLobbyData:
-    
-    async def _generate_lobby_data(i: int = 1) -> LobbyData:
-        user = await test_user(default_user_data(str(i)))
-        return {
-            "name": f"Test Lobby {i}",
-            "description": f"Test Lobby {i} for API testing",
-            "host_id": user.id,
-            "algorithm_id": test_algorithm_id
-        }
-    
-    return _generate_lobby_data
-
-
-@pytest.fixture
-async def test_lobby_id(db_async: AsyncSession, default_lobby_data: CallableLobbyData) -> int:
-    lobby_data = await default_lobby_data(1)
-    lobby = Lobby(**lobby_data)
-    lobby = await db_create_lobby(db_async, lobby)
-    return lobby.id
-
-
-@pytest.fixture
-async def create_test_lobbies(db_async: AsyncSession, default_lobby_data: CallableLobbyData) -> list[Lobby]:
+async def create_test_lobbies(
+        user_factory: UserFactory, 
+        algorithm_factory: AlgorithmFactory, 
+        lobby_factory: LobbyFactory
+) -> list[Lobby]:
     
     lobbies_count = 5
+    user = await user_factory.create()
+    algorithm = await algorithm_factory.create(user)
     lobbies = []
-    
+
     for i in range(lobbies_count):
-        lobby_data = await default_lobby_data(i+1)
-        lobby = Lobby(**lobby_data)
-        lobby = await db_create_lobby(db_async, lobby)
+        lobby = await lobby_factory.create(user, algorithm, i+1)
         lobbies.append(lobby)
 
     return lobbies
+
+
+@pytest_asyncio.fixture
+async def test_algorithm_id(
+        user_factory: UserFactory, 
+        algorithm_factory: AlgorithmFactory, 
+) -> int:
+    
+    user = await user_factory.create()
+    algorithm = await algorithm_factory.create(user)
+    return algorithm.id
+
+
+@pytest_asyncio.fixture
+async def test_lobby_id(
+        user_factory: UserFactory, 
+        algorithm_factory: AlgorithmFactory, 
+        lobby_factory: LobbyFactory
+) -> int:
+    
+    user = await user_factory.create()
+    algorithm = await algorithm_factory.create(user)
+    lobby = await lobby_factory.create(user, algorithm)
+    return lobby.id
+
+
+@pytest_asyncio.fixture
+async def test_team_id(
+        user_factory: UserFactory, 
+        algorithm_factory: AlgorithmFactory, 
+        lobby_factory: LobbyFactory, 
+        team_factory: TeamFactory
+) -> int:
+    user = await user_factory.create()
+    algorithm = await algorithm_factory.create(user)
+    lobby = await lobby_factory.create(user, algorithm)
+    team = await team_factory.create(lobby)
+    return team.id

@@ -1,0 +1,33 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.base import User
+from app.enums.user import UserRole
+
+from app.schemas.auth.user import UserUpdate
+from app.core.security.password import get_password_hash
+from app.crud.auth.user import db_create_user
+
+
+class UserFactory:
+
+    def __init__(self, db_async: AsyncSession):
+        self.db_async = db_async
+
+    async def create_from_data(self, data: dict[str, str | UserRole]) -> User:
+        user_create = UserUpdate(**data)
+        user = User.from_create(user_create, get_password_hash)
+        return await db_create_user(self.db_async, user)
+    
+    async def create(self, 
+            prefix: str = "defaultuser", 
+            role: UserRole = UserRole.USER, 
+            suffix: str = ""
+    ) -> User:
+        data = {
+            "username": f"{prefix}{suffix}",
+            "email": f"{prefix}{suffix}@example.com",
+            "password": "SecurePassword1!",
+            "role": role
+        }
+
+        return await self.create_from_data(data)

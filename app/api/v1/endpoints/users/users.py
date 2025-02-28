@@ -23,7 +23,10 @@ from app.core.security.user import (
     delete_user,
     get_list_of_users,
 )
-from app.core.security.decorators import regular, administrator
+from app.core.security.access import (
+    check_user_regular_role, 
+    check_user_admin_role, 
+)
 from app.db.session import get_async_session
 
 from app.exceptions.user import (
@@ -35,14 +38,14 @@ from app.exceptions.user import (
 router = APIRouter()
 
 @router.get("/list-count", response_model=UserListCountResponse)
-@regular
+
 async def get_users_count_on_conditions_(
     id: Optional[int] = Query(default=None),
     role: Optional[UserRole] = Query(default=None),
     username: Optional[str] = Query(default=None),
     email: Optional[str] = Query(default=None),
     external_id: Optional[str] = Query(default=None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session)
 ):
     count = await get_list_of_users(db, id, role, username, email, external_id, only_count=True)
@@ -50,7 +53,6 @@ async def get_users_count_on_conditions_(
 
 
 @router.get("/list", response_model=list[UserReadRegular])
-@regular
 async def get_list_of_users_on_conditions_(
     id: Optional[int] = Query(default=None),
     role: Optional[UserRole] = Query(default=None),
@@ -61,7 +63,7 @@ async def get_list_of_users_on_conditions_(
     sort_order: Optional[str] = Query(default="asc"),
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session)
 ):
     users = await get_list_of_users(db, id, role, username, email, external_id, sort_by, sort_order, limit, offset)
@@ -69,12 +71,11 @@ async def get_list_of_users_on_conditions_(
 
 
 @router.get("/", response_model=UserReadRegular)
-@regular
 async def get_user_by_data_(
     user_id: Optional[int] = Query(default=None),
     username: Optional[str] = Query(default=None),
     email: Optional[str] = Query(default=None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     ensure_user_identifier(user_id, username, email)
@@ -87,13 +88,12 @@ async def get_user_by_data_(
 
 
 @router.put("/", response_model=UserRead)
-@administrator
 async def update_user_information_(
     user_update: UserUpdate,
     user_id: Optional[int] = Query(default=None),
     username: Optional[str] = Query(default=None),
     email: Optional[str] = Query(default=None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_admin_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     ensure_user_identifier(user_id, username, email)
@@ -107,12 +107,11 @@ async def update_user_information_(
 
 
 @router.delete("/", response_model=UserResponce)
-@administrator
 async def delete_user_from_base_(
     user_id: Optional[int] = Query(default=None),
     username: Optional[str] = Query(default=None),
     email: Optional[str] = Query(default=None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_admin_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     ensure_user_identifier(user_id, username, email)
@@ -134,12 +133,11 @@ async def delete_user_from_base_(
 
 
 @router.delete("/tokens", response_model=UserResponce)
-@administrator
 async def clear_user_tokens_(
     user_id: Optional[int] = Query(default=None),
     username: Optional[str] = Query(default=None),
     email: Optional[str] = Query(default=None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_admin_role),
     db: AsyncSession = Depends(get_async_session)
 ):
     ensure_user_identifier(user_id, username, email)

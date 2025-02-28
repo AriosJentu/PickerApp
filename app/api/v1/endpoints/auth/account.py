@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_async_session
 from app.core.security.password import get_password_hash
-from app.core.security.decorators import regular
+from app.core.security.access import check_user_regular_role
 from app.core.security.user import (
     get_current_user, 
     get_user_by_username, 
@@ -26,18 +26,16 @@ from app.exceptions.user import (
 router = APIRouter()
 
 @router.get("/", response_model=UserRead)
-@regular
 async def get_current_user_(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(check_user_regular_role)
 ):
     return current_user
 
 
 @router.put("/", response_model=TokenResponse)
-@regular
 async def update_current_user_(
     user_update: UserUpdateSecure,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session)
 ): 
     if user_update.email: 
@@ -57,7 +55,6 @@ async def update_current_user_(
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
-@regular
 async def delete_current_user_(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
@@ -68,9 +65,8 @@ async def delete_current_user_(
 
 
 @router.get("/check-token", response_model=TokenStatus)
-@regular
 async def check_current_user_token(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(check_user_regular_role)
 ):
     return TokenStatus(
         active=True,

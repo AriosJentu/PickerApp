@@ -24,8 +24,10 @@ from app.core.lobby.team import (
     delete_team,
     get_list_of_teams,
 )
-from app.core.security.decorators import regular, process_has_access_or
-from app.core.security.user import get_current_user
+from app.core.security.access import (
+    process_has_access_or, 
+    check_user_regular_role,
+)
 
 from app.exceptions.lobby import (
     HTTPLobbyNotFound,
@@ -39,10 +41,9 @@ from app.exceptions.lobby import (
 router = APIRouter()
 
 @router.post("/", response_model=TeamReadWithLobby)
-@regular
 async def create_team_(
     team_data: TeamCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     lobby = await get_lobby_by_id(db, team_data.lobby_id)
@@ -60,12 +61,11 @@ async def create_team_(
 
 
 @router.get("/list-count", response_model=TeamListCountResponse)
-@regular
 async def get_count_of_teams_(
     id: Optional[int] = Query(default=None),
     name: Optional[str] = Query(default=None),
     lobby_id: Optional[int] = Query(default=None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     
@@ -81,7 +81,6 @@ async def get_count_of_teams_(
 
 
 @router.get("/list", response_model=list[TeamReadWithLobby])
-@regular
 async def get_list_of_teams_(
     id: Optional[int] = Query(default=None),
     name: Optional[str] = Query(default=None),
@@ -90,7 +89,7 @@ async def get_list_of_teams_(
     sort_order: Optional[str] = Query(default="asc"),
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     
@@ -106,10 +105,9 @@ async def get_list_of_teams_(
 
 
 @router.get("/{team_id}", response_model=TeamReadWithLobby)
-@regular
 async def get_team_info_(
     team_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     team = await get_team_by_id(db, team_id)
@@ -120,11 +118,10 @@ async def get_team_info_(
 
 
 @router.put("/{team_id}", response_model=TeamReadWithLobby)
-@regular
 async def update_team_(
     team_id: int,
     update_data: TeamUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     team = await get_team_by_id(db, team_id)
@@ -140,10 +137,9 @@ async def update_team_(
 
 
 @router.delete("/{team_id}", response_model=LobbyResponse)
-@regular
 async def delete_team_(
     team_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     team = await get_team_by_id(db, team_id)

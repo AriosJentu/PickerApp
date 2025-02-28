@@ -23,8 +23,10 @@ from app.core.lobby.algorithm import (
     delete_algorithm,
     get_list_of_algorithms,
 )
-from app.core.security.decorators import regular, process_has_access_or
-from app.core.security.user import get_current_user
+from app.core.security.access import (
+    process_has_access_or, 
+    check_user_regular_role,
+)
 
 from app.exceptions.lobby import (
     HTTPLobbyInternalError,
@@ -37,10 +39,9 @@ from app.exceptions.lobby import (
 router = APIRouter()
 
 @router.post("/", response_model=AlgorithmRead)
-@regular
 async def create_algorithm_(
     algorithm_data: AlgorithmCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session)
 ):
     algorithm = await create_algorithm(db, algorithm_data)
@@ -51,13 +52,12 @@ async def create_algorithm_(
 
 
 @router.get("/list-count", response_model=AlgorithmsListCountResponse)
-@regular
 async def get_count_of_algorithms_(
     id: Optional[int] = Query(default=None),
     name: Optional[str] = Query(default=None),
     algorithm: Optional[str] = Query(default=None),
     teams_count: Optional[int] = Query(default=None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session)
 ):
     count = await get_list_of_algorithms(db, id, name, algorithm, teams_count, only_count=True)
@@ -65,7 +65,6 @@ async def get_count_of_algorithms_(
 
 
 @router.get("/list", response_model=list[AlgorithmRead])
-@regular
 async def get_algorithms_list_(
     id: Optional[int] = Query(default=None),
     name: Optional[str] = Query(default=None),
@@ -75,7 +74,7 @@ async def get_algorithms_list_(
     sort_order: Optional[str] = Query(default="asc"),
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session)
 ):
     algorithms = await get_list_of_algorithms(db, id, name, algorithm, teams_count, sort_by, sort_order, limit, offset)
@@ -83,10 +82,9 @@ async def get_algorithms_list_(
 
 
 @router.get("/{algorithm_id}", response_model=AlgorithmRead)
-@regular
 async def get_algorithm_(
     algorithm_id: int, 
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session)
 ):
     
@@ -98,11 +96,10 @@ async def get_algorithm_(
 
 
 @router.put("/{algorithm_id}", response_model=AlgorithmRead)
-@regular
 async def update_algorithm_(
     algorithm_id: int,
     update_data: AlgorithmUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     algorithm = await get_algorithm_by_id(db, algorithm_id)
@@ -120,10 +117,9 @@ async def update_algorithm_(
 
 
 @router.delete("/{algorithm_id}", response_model=AlgorithmResponse)
-@regular
 async def delete_algorithm_(
     algorithm_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
     algorithm = await get_algorithm_by_id(db, algorithm_id)

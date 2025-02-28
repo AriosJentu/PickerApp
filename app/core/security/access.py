@@ -1,8 +1,10 @@
 from typing import Optional
 from functools import wraps
+from fastapi import Depends
 
 from app.enums.user import UserRole
 from app.models.auth.user import User
+from app.core.security.user import get_current_user, get_current_user_refresh
 from app.exceptions.user import (
     HTTPUserUnauthorized, 
     HTTPUserExceptionAccessDenied,
@@ -51,29 +53,28 @@ def process_has_access_and(
     process_has_access(user, required_role, additional_condition, "and", exception)
 
 
-def role_required(required_role: UserRole):
-    
-    def decorator(func):
-        
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-        
-            current_user: User = kwargs.get("current_user")
-            process_has_access(current_user, required_role)
-            return await func(*args, **kwargs)
-        
-        return wrapper
-    
-    return decorator
+def check_role(required_role: UserRole):
+    def role_checker(current_user: User = Depends(get_current_user)):
+
+        process_has_access(current_user, required_role)
+        return current_user
+
+    return role_checker
 
 
-def regular(func):
-    return role_required(UserRole.USER)(func)
+def check_role_refresh(required_role: UserRole):
+    def role_checker_refresh(current_user: User = Depends(get_current_user_refresh)):
+
+        process_has_access(current_user, required_role)
+        return current_user
+
+    return role_checker_refresh
 
 
-def moderator(func):
-    return role_required(UserRole.MODERATOR)(func)
+check_user_regular_role = check_role(UserRole.USER)
+check_user_moderator_role = check_role(UserRole.MODERATOR)
+check_user_admin_role = check_role(UserRole.ADMIN)
 
-
-def administrator(func):
-    return role_required(UserRole.ADMIN)(func)
+check_user_regular_role_refresh = check_role_refresh(UserRole.USER)
+check_user_moderator_role_refresh = check_role_refresh(UserRole.MODERATOR)
+check_user_admin_role_refresh = check_role_refresh(UserRole.ADMIN)
