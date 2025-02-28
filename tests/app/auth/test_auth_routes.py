@@ -28,7 +28,7 @@ all_routes = [
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
 @pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
-async def test_account_routes_access(
+async def test_auth_routes_access(
         client_async: AsyncClient,
         user_factory: UserFactory,
         token_factory: TokenFactory,
@@ -42,7 +42,7 @@ async def test_account_routes_access(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
-async def test_account_routes_require_auth(
+async def test_auth_routes_require_auth(
         client_async: AsyncClient, 
         method: str, 
         url: str, 
@@ -164,6 +164,7 @@ async def test_logout_user(
     assert response.status_code == 200, f"Expected 200 for Logout, got {response.status_code}"
     assert "Successfully logout" in response.json().get("detail", "")
 
+
     response: Response = await client_async.post(route, headers=headers)
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
     assert "Authorization token is invalid or expired" in response.json().get("detail", "")
@@ -189,6 +190,7 @@ async def test_successful_refresh(
 
     new_access_token = json_data["access_token"]
     assert new_access_token != access_token, "New access_token should be different"
+
 
     headers = {"Authorization": f"Bearer {new_access_token}"}
     response: Response = await client_async.get(check_route, headers=headers)

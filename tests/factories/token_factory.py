@@ -12,4 +12,3 @@ class TokenFactory:
     async def create(self, user: User) -> tuple[str, str]:
         access_token, refresh_token = await create_user_tokens(self.db_async, user)
         return access_token.token, refresh_token.token
-    

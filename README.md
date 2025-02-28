@@ -5,7 +5,7 @@ Using on Python 3.13 VENV (Anaconda)
 pip install -r requirements.txt
 ```
 
-# Initializa data structures
+# Initialize data structures
 ```zsh
 python -m alembic init alembic
 ```
