@@ -21,10 +21,10 @@ async def db_create_lobby(db: AsyncSession, lobby: Lobby) -> Lobby:
 async def db_get_lobby_by_key_value(db: AsyncSession, key: str, value: str | int) -> Optional[Lobby]:
     result = await db.execute(
         select(Lobby)
-        .options(
-            selectinload(Lobby.host), 
-            selectinload(Lobby.algorithm).selectinload(Algorithm.creator),
-        )
+        # .options(
+        #     selectinload(Lobby.host), 
+        #     selectinload(Lobby.algorithm).selectinload(Algorithm.creator),
+        # )
         .filter(getattr(Lobby, key) == value)
     )
     return result.scalars().first()

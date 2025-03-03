@@ -22,10 +22,10 @@ async def db_create_lobby_participant(db: AsyncSession, participant: LobbyPartic
 async def db_get_lobby_participant_by_key_value(db: AsyncSession, lobby: Lobby, key: str, value: str | int) -> Optional[LobbyParticipant]:
     result = await db.execute(
         select(LobbyParticipant)
-        .options(
-            selectinload(LobbyParticipant.lobby), 
-            selectinload(LobbyParticipant.team),
-        )
+        # .options(
+        #     selectinload(LobbyParticipant.lobby), 
+        #     selectinload(LobbyParticipant.team),
+        # )
         .filter(
             getattr(LobbyParticipant, key) == value,
             LobbyParticipant.lobby_id == lobby.id

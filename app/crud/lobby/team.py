@@ -20,9 +20,9 @@ async def db_create_team(db: AsyncSession, team: Team) -> Team:
 async def db_get_team_by_key_value(db: AsyncSession, key: str, value: str | int) -> Optional[Team]:
     result = await db.execute(
         select(Team)
-        .options(
-            selectinload(Team.lobby), 
-        )
+        # .options(
+        #     selectinload(Team.lobby), 
+        # )
         .filter(getattr(Team, key) == value)
     )
     return result.scalars().first()

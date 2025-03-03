@@ -16,7 +16,7 @@ class Algorithm(Base):
     creator_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
     lobbies = relationship("Lobby", back_populates="algorithm")
-    creator = relationship("User", back_populates="algorithms")
+    creator = relationship("User", back_populates="algorithms", lazy="selectin")
 
 
     @classmethod

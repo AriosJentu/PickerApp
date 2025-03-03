@@ -40,11 +40,11 @@ def validate_teams_count(teams_count: Optional[int]) -> Optional[int]:
     return teams_count
 
 
-def validate_name(name: Optional[str]) -> Optional[str]:
+def validate_name(name: Optional[str], obj_type: str = "Lobby") -> Optional[str]:
     if name is None:
         return None
     
     if not name.strip():
-        raise ValueError("Lobby name cannot be empty")
+        raise ValueError(f"{obj_type} name cannot be empty")
     
     return name

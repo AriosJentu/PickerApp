@@ -13,7 +13,7 @@ class TeamBase(BaseModel):
     
     @field_validator("name")
     def validate_name(cls, name: str):
-        return validate_name(name)
+        return validate_name(name, "Team")
 
 
 class TeamCreate(TeamBase):
@@ -38,5 +38,5 @@ class TeamUpdate(BaseModel):
 
     @field_validator("name", mode="before")
     def validate_name(cls, name: Optional[str]):
-        return validate_name(name)
+        return validate_name(name, "Team")
     
