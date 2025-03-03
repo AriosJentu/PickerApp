@@ -2,6 +2,7 @@ from app.enums.user import UserRole
 
 
 USERS_COUNT = 3
+ALGORITHMS_COUNT = 8
 LOBBIES_COUNT = 5
 TEAMS_COUNT = 5
 

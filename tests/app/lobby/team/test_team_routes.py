@@ -22,15 +22,15 @@ all_routes = [
     ("POST",    "/api/v1/teams/",            Roles.ALL_ROLES),
     ("GET",     "/api/v1/teams/list-count",  Roles.ALL_ROLES),
     ("GET",     "/api/v1/teams/list",        Roles.ALL_ROLES),
-    ("GET",     "/api/v1/teams/1",           None),
-    ("PUT",     "/api/v1/teams/1",           None),
-    ("DELETE",  "/api/v1/teams/1",           None),
+    ("GET",     "/api/v1/teams/1",           Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/teams/1",           Roles.ALL_ROLES),
+    ("DELETE",  "/api/v1/teams/1",           Roles.ALL_ROLES),
 ]
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
 @pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
-async def test_team_routes_access(
+async def test_teams_routes_access(
         client_async: AsyncClient,
         user_factory: UserFactory,
         token_factory: TokenFactory,
@@ -44,7 +44,7 @@ async def test_team_routes_access(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
-async def test_team_routes_require_auth(
+async def test_teams_routes_require_auth(
         client_async: AsyncClient, 
         method: str, 
         url: str, 
@@ -54,7 +54,13 @@ async def test_team_routes_require_auth(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("team_data", [{"name": "New Team"}])
+@pytest.mark.parametrize(
+    "team_data, expected_status, error_substr", 
+    [
+        ({"name": "New Team"},  200,    ""),
+        ({"name": "   "},       422,    "name cannot be empty"),
+    ]
+)
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_create_team(
         client_async: AsyncClient,
@@ -63,6 +69,8 @@ async def test_create_team(
         test_algorithm: Algorithm,
         lobby_factory: LobbyFactory,
         team_data: dict[str, str],
+        expected_status: int,
+        error_substr: str,
         role: UserRole
 ):
     route = "/api/v1/teams/"
@@ -73,10 +81,13 @@ async def test_create_team(
     team_data["lobby_id"] = lobby.id
 
     response: Response = await client_async.post(route, json=team_data, headers=headers)
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+    assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     json_data = response.json()
-    assert json_data["name"] == team_data["name"], "Team name does not match"
+    if expected_status == 200:
+        assert json_data["name"] == team_data["name"], "Team name does not match"
+    else:
+        assert error_substr in json_data["detail"][0]["msg"], f"Message doesn't contains substring: {json_data["detail"][0]["msg"]}"
 
 
 @pytest.mark.asyncio
@@ -86,7 +97,7 @@ async def test_create_team(
     (UserRole.MODERATOR,    200),
     (UserRole.ADMIN,        200),
 ])
-async def test_create_team_no_access(
+async def test_create_team_in_lobby(
         client_async: AsyncClient,
         user_factory: UserFactory,
         token_factory: TokenFactory,
@@ -98,7 +109,7 @@ async def test_create_team_no_access(
 ):
 
     route = "/api/v1/teams/"
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
+    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
     creator, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="creator_user")
     headers = {"Authorization": f"Bearer {access_token}"}
 

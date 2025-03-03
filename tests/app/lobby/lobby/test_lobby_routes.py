@@ -31,7 +31,7 @@ all_routes = [
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
 @pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
-async def test_account_routes_access(
+async def test_lobbies_routes_access(
         client_async: AsyncClient,
         user_factory: UserFactory,
         token_factory: TokenFactory,
@@ -45,7 +45,7 @@ async def test_account_routes_access(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
-async def test_account_routes_require_auth(
+async def test_lobbies_routes_require_auth(
         client_async: AsyncClient,
         method: str, 
         url: str, 
@@ -55,7 +55,13 @@ async def test_account_routes_require_auth(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("lobby_data", [{"name": "New Lobby"}])
+@pytest.mark.parametrize(
+    "lobby_data, expected_status, error_substr", 
+    [
+        ({"name": "New Lobby"}, 200,    ""),
+        ({"name": "   "},       422,    "name cannot be empty"),
+    ]
+)
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_create_lobby(
         client_async: AsyncClient,
@@ -63,6 +69,8 @@ async def test_create_lobby(
         token_factory: TokenFactory,
         test_algorithm_id: int,
         lobby_data: dict[str, str],
+        expected_status: int,
+        error_substr: str,
         role: UserRole
 ):
 
@@ -74,10 +82,13 @@ async def test_create_lobby(
     lobby_data["algorithm_id"] = test_algorithm_id
 
     response: Response = await client_async.post(route, json=lobby_data, headers=headers)
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+    assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     json_data = response.json()
-    assert json_data["name"] == lobby_data["name"], "Lobby name does not match"
+    if expected_status == 200:
+        assert json_data["name"] == lobby_data["name"], "Lobby name does not match"
+    else:
+        assert error_substr in json_data["detail"][0]["msg"], f"Message doesn't contains substring: {json_data["detail"][0]["msg"]}"
 
 
 @pytest.mark.asyncio
