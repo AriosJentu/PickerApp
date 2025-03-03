@@ -70,20 +70,20 @@ async def test_get_current_user_with_role(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("update_data", [{"email": "updated_email@example.com"}])
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_update_current_user(
         client_async: AsyncClient, 
         user_factory: UserFactory,
         token_factory: TokenFactory,
+        update_data: dict[str, str],
         role: UserRole
 ):
     
     route = "/api/v1/account/"
     _, user_access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    
     headers = {"Authorization": f"Bearer {user_access_token}"}
-    update_data = {"email": "updated_email@example.com"}
-
+    
     response: Response = await client_async.put(route, headers=headers, json=update_data)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 

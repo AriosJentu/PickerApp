@@ -1,13 +1,9 @@
 import pytest
-from typing import Callable
 
 from fastapi import Response
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from httpx import AsyncClient
 
-from app.db.base import User
-from app.schemas.auth.user import UserCreate
 from app.enums.user import UserRole
 
 from tests.factories.user_factory import UserFactory

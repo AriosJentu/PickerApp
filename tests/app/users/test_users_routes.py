@@ -112,9 +112,9 @@ async def test_get_users_list_with_filters(
         filter_params: dict[str, str | int],
         expected_count: int
 ):
-    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory)
-
+    
     route = "/api/v1/users/list"
+    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory)
     headers = {"Authorization": f"Bearer {access_token}"}
 
     response: Response = await client_async.get(route, headers=headers, params=filter_params)

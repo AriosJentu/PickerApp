@@ -102,6 +102,51 @@ def token_factory(db_async: AsyncSession) -> TokenFactory:
 
 
 @pytest_asyncio.fixture
+async def test_algorithm(
+        user_factory: UserFactory, 
+        algorithm_factory: AlgorithmFactory, 
+) -> Algorithm:
+    
+    user = await user_factory.create(suffix="algorithm")
+    return await algorithm_factory.create(user)
+
+
+@pytest_asyncio.fixture
+async def test_algorithm_id(
+        test_algorithm: Algorithm, 
+) -> int:
+    return test_algorithm.id
+
+
+@pytest.fixture
+async def test_lobby(
+        user_factory: UserFactory, 
+        algorithm_factory: AlgorithmFactory, 
+        lobby_factory: LobbyFactory
+) -> Lobby:
+    user = await user_factory.create(suffix="lobby")
+    algorithm = await algorithm_factory.create(user)
+    return await lobby_factory.create(user, algorithm)
+
+@pytest_asyncio.fixture
+async def test_lobby_id(test_lobby: Lobby) -> int:
+    return test_lobby.id
+
+
+@pytest.fixture
+async def test_team(
+        team_factory: TeamFactory, 
+        test_lobby: Lobby
+) -> Team:
+    return await team_factory.create(test_lobby)
+
+
+@pytest_asyncio.fixture
+async def test_team_id(test_team: Team) -> int:
+    return test_team.id
+
+
+@pytest_asyncio.fixture
 async def create_test_users(user_factory: UserFactory) -> list[User]:
     return [
         await user_factory.create(prefix="default",     role=UserRole.USER),
@@ -128,55 +173,36 @@ async def create_multiple_test_users_with_tokens(
 @pytest_asyncio.fixture
 async def create_test_lobbies(
         user_factory: UserFactory, 
-        algorithm_factory: AlgorithmFactory, 
-        lobby_factory: LobbyFactory
+        lobby_factory: LobbyFactory,
+        test_algorithm: Algorithm
 ) -> list[Lobby]:
     
     lobbies_count = 5
-    user = await user_factory.create()
-    algorithm = await algorithm_factory.create(user)
+    user = await user_factory.create(suffix="lobbies")
     lobbies = []
 
     for i in range(lobbies_count):
-        lobby = await lobby_factory.create(user, algorithm, i+1)
+        lobby = await lobby_factory.create(user, test_algorithm, i+1)
         lobbies.append(lobby)
 
     return lobbies
 
 
 @pytest_asyncio.fixture
-async def test_algorithm_id(
+async def create_test_teams(
         user_factory: UserFactory, 
-        algorithm_factory: AlgorithmFactory, 
-) -> int:
+        lobby_factory: LobbyFactory,
+        team_factory: TeamFactory,
+        test_algorithm: Algorithm
+) -> list[Team]:
     
-    user = await user_factory.create()
-    algorithm = await algorithm_factory.create(user)
-    return algorithm.id
+    teams_count = 5
+    user = await user_factory.create(suffix="teams")
+    lobby = await lobby_factory.create(user, test_algorithm)
+    teams = []
 
+    for i in range(teams_count):
+        team = await team_factory.create(lobby, i+1)
+        teams.append(team)
 
-@pytest_asyncio.fixture
-async def test_lobby_id(
-        user_factory: UserFactory, 
-        algorithm_factory: AlgorithmFactory, 
-        lobby_factory: LobbyFactory
-) -> int:
-    
-    user = await user_factory.create()
-    algorithm = await algorithm_factory.create(user)
-    lobby = await lobby_factory.create(user, algorithm)
-    return lobby.id
-
-
-@pytest_asyncio.fixture
-async def test_team_id(
-        user_factory: UserFactory, 
-        algorithm_factory: AlgorithmFactory, 
-        lobby_factory: LobbyFactory, 
-        team_factory: TeamFactory
-) -> int:
-    user = await user_factory.create()
-    algorithm = await algorithm_factory.create(user)
-    lobby = await lobby_factory.create(user, algorithm)
-    team = await team_factory.create(lobby)
-    return team.id
+    return teams
