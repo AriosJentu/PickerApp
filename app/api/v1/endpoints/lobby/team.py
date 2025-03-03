@@ -128,6 +128,13 @@ async def update_team_(
     if not team:
         raise HTTPTeamNotFound()
     
+    lobby_id = team.lobby_id
+    if lobby_id:
+        lobby = await get_lobby_by_id(db, lobby_id)
+        process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyTeamAccessDenied)
+    else:
+        process_has_access_or(current_user, UserRole.MODERATOR, True, exception=HTTPLobbyTeamAccessDenied)
+
     updated_team = await update_team(db, team, update_data)
 
     if not updated_team:
@@ -145,6 +152,13 @@ async def delete_team_(
     team = await get_team_by_id(db, team_id)
     if not team:
         raise HTTPTeamNotFound()
+    
+    lobby_id = team.lobby_id
+    if lobby_id:
+        lobby = await get_lobby_by_id(db, lobby_id)
+        process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyTeamAccessDenied)
+    else:
+        process_has_access_or(current_user, UserRole.MODERATOR, True, exception=HTTPLobbyTeamAccessDenied)
     
     result = await delete_team(db, team)
     if not result:
