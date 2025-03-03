@@ -10,7 +10,8 @@ from app.enums.user import UserRole
 from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory
 
-from tests.utils.user_utils import create_user_with_tokens, Roles
+from tests.constants import Roles, USERS_COUNT
+from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
 
@@ -86,8 +87,8 @@ async def test_get_users_list_count(
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
     
     json_data = response.json()
-    error_msg = f"Expected {len(users_list)} users, got {len(json_data)}"
-    assert json_data["total_count"] == len(users_list), error_msg
+    error_msg = f"Expected {USERS_COUNT} users, got {len(json_data)}"
+    assert json_data["total_count"] == USERS_COUNT, error_msg
 
 
 @pytest.mark.asyncio
@@ -96,6 +97,7 @@ async def test_get_users_list_count(
     [
         ({"id":         1},                         1),
         ({"role":       UserRole.USER.value},       2),
+        ({"role":       UserRole.ADMIN.value},      1),
         ({"username":   "default"},                 1),
         ({"email":      "moderator@example.com"},   1),
         ({"sort_by":    "id"},                      4),

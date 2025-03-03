@@ -5,14 +5,6 @@ from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory
 
 
-class Roles:
-    LIST = [UserRole.USER, UserRole.MODERATOR, UserRole.ADMIN]
-    ALL_ROLES = (UserRole.USER, UserRole.MODERATOR, UserRole.ADMIN)
-    MODERATORS = (UserRole.MODERATOR, UserRole.ADMIN)
-    MODERATOR = (UserRole.MODERATOR, )
-    ADMIN = (UserRole.ADMIN, )
-
-
 async def create_user_with_tokens(
         user_factory: UserFactory,
         token_factory: TokenFactory,

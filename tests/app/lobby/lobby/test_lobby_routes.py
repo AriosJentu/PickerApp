@@ -12,7 +12,8 @@ from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory
 from tests.factories.lobby_factory import LobbyFactory
 
-from tests.utils.user_utils import create_user_with_tokens, Roles
+from tests.constants import Roles, LOBBIES_COUNT
+from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
 
@@ -140,7 +141,65 @@ async def test_get_lobbies_list(
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     json_data = response.json()
-    assert len(json_data) == len(create_test_lobbies), f"Expected {len(create_test_lobbies)}, got {len(json_data)}"
+    assert len(json_data) == LOBBIES_COUNT, f"Expected {LOBBIES_COUNT}, got {len(json_data)}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", Roles.LIST)
+async def test_get_lobbies_list_count(
+        client_async: AsyncClient,
+        user_factory: UserFactory,
+        token_factory: TokenFactory,
+        create_test_lobbies: list[Lobby],
+        role: UserRole
+):
+    
+    route = "/api/v1/lobby/list-count"
+    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    response: Response = await client_async.get(route, headers=headers)
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+    
+    json_data = response.json()
+    assert json_data["total_count"] == LOBBIES_COUNT, f"Expected {LOBBIES_COUNT}, got {len(json_data)}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "filter_params, expected_count",
+    [
+        ({"id":             1},             1),
+        ({"name":           "2"},           1),
+        ({"name":           "Test Lobby"},  LOBBIES_COUNT),
+        ({"host_id":        "0"},           LOBBIES_COUNT),
+        ({"host_id":        "1"},           0),
+        ({"algorithm_id":   "1"},           LOBBIES_COUNT),
+        ({"sort_by":        "id"},          LOBBIES_COUNT),
+        ({"sort_order":     "desc"},        LOBBIES_COUNT),
+        ({"limit":          2},             2),
+        ({"offset":         1},             LOBBIES_COUNT-1),
+    ]
+)
+async def test_get_lobbies_list_with_filters(
+        client_async: AsyncClient,
+        user_factory: UserFactory,
+        token_factory: TokenFactory,
+        create_test_lobbies: list[Lobby],
+        filter_params: dict[str, str | int],
+        expected_count: int
+):
+    
+    route = "/api/v1/lobby/list"
+    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory)
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    response: Response = await client_async.get(route, headers=headers, params=filter_params)
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+
+    json_data = response.json()
+    error_msg = f"Expected {expected_count} teams for filter `{filter_params}`, got {len(json_data)}"
+    assert len(json_data) == expected_count, error_msg
 
 
 @pytest.mark.asyncio

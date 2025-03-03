@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from typing import AsyncGenerator, Callable, Awaitable, Optional
+from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio
@@ -14,21 +14,13 @@ from sqlalchemy.orm import sessionmaker
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
-from app.core.security.user import create_user_tokens
-from app.core.security.password import get_password_hash
 from app.core.config import settings
-
-from app.crud.auth.user import db_create_user
-from app.crud.lobby.algorithm import db_create_algorithm
-from app.crud.lobby.lobby import db_create_lobby
-from app.crud.lobby.team import db_create_team
 
 from app.db.session import get_async_session
 from app.db.base import Base, User, Algorithm, Lobby, Team
-from app.schemas.auth.user import UserUpdate
 from app.enums.user import UserRole
-from app.enums.lobby import LobbyParticipantRole
 
+from tests.constants import USERS_COUNT, LOBBIES_COUNT, TEAMS_COUNT
 from tests.factories.user_factory import UserFactory
 from tests.factories.algorithm_factory import AlgorithmFactory
 from tests.factories.lobby_factory import LobbyFactory
@@ -161,9 +153,8 @@ async def create_multiple_test_users_with_tokens(
         token_factory: TokenFactory
 ) -> list[tuple[User, str]]:
     
-    users_count = 3
     users = []
-    for i in range(users_count):
+    for i in range(USERS_COUNT):
         user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, prefix=f"testuser{i+1}")
         users.append((user, access_token))
 
@@ -177,11 +168,10 @@ async def create_test_lobbies(
         test_algorithm: Algorithm
 ) -> list[Lobby]:
     
-    lobbies_count = 5
     user = await user_factory.create(suffix="lobbies")
     lobbies = []
 
-    for i in range(lobbies_count):
+    for i in range(LOBBIES_COUNT):
         lobby = await lobby_factory.create(user, test_algorithm, i+1)
         lobbies.append(lobby)
 
@@ -196,12 +186,11 @@ async def create_test_teams(
         test_algorithm: Algorithm
 ) -> list[Team]:
     
-    teams_count = 5
     user = await user_factory.create(suffix="teams")
     lobby = await lobby_factory.create(user, test_algorithm)
     teams = []
 
-    for i in range(teams_count):
+    for i in range(TEAMS_COUNT):
         team = await team_factory.create(lobby, i+1)
         teams.append(team)
 

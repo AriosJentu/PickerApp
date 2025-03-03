@@ -9,7 +9,8 @@ from app.enums.user import UserRole
 from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory
 
-from tests.utils.user_utils import create_user_with_tokens, Roles
+from tests.constants import Roles
+from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
 
