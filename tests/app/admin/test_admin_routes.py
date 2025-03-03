@@ -55,7 +55,6 @@ async def test_clear_inactive_tokens(
     
     route = "/api/v1/admin/clear-tokens"
     _, user_access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-
     headers = {"Authorization": f"Bearer {user_access_token}"}
 
     response: Response = await client_async.delete(route, headers=headers)

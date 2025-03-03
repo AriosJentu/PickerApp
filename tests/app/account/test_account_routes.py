@@ -58,8 +58,8 @@ async def test_get_current_user_with_role(
     
     route = "/api/v1/account/"
     user, user_access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-
     headers = {"Authorization": f"Bearer {user_access_token}"}
+
     response: Response = await client_async.get(route, headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
@@ -95,10 +95,9 @@ async def test_update_current_user(
     assert json_data["access_token"] != "", "access_token is empty"
     assert json_data["refresh_token"] != "", "refresh_token is empty"
 
-
     user_access_token = json_data["access_token"]
-
     headers = {"Authorization": f"Bearer {user_access_token}"}
+
     user_info: Response = await client_async.get(route, headers=headers)
     assert user_info.status_code == 200, f"Expected 200, got {response.status_code}"
     
@@ -117,11 +116,10 @@ async def test_delete_current_user(
     
     route = "/api/v1/account/"
     _, user_access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-
     headers = {"Authorization": f"Bearer {user_access_token}"}
+
     response: Response = await client_async.delete(route, headers=headers)
     assert response.status_code == 204, f"Expected 204, got {response.status_code}"
-
 
     deleted_info: Response = await client_async.delete(route, headers=headers)
     assert deleted_info.status_code == 401, f"Expected 401 for unexistant user, got {deleted_info.status_code}"
@@ -139,10 +137,9 @@ async def test_check_token(
     
     route = "/api/v1/account/check-token"
     user, user_access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-
     headers = {"Authorization": f"Bearer {user_access_token}"}
-    response: Response = await client_async.get(route, headers=headers)
 
+    response: Response = await client_async.get(route, headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     json_data = response.json()

@@ -4,13 +4,11 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.db.base import Team, Lobby, Algorithm
-
+from app.db.base import Team, Algorithm
 from app.enums.user import UserRole
 
 from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory
-from tests.factories.algorithm_factory import AlgorithmFactory
 from tests.factories.lobby_factory import LobbyFactory
 from tests.factories.team_factory import TeamFactory
 

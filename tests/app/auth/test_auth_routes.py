@@ -153,13 +153,11 @@ async def test_logout_user(
     
     route = "/api/v1/auth/logout"
     _, access_token, _ = await create_user_with_tokens(user_factory, token_factory)
-
     headers = {"Authorization": f"Bearer {access_token}"}
     
     response: Response = await client_async.post(route, headers=headers)
     assert response.status_code == 200, f"Expected 200 for Logout, got {response.status_code}"
     assert "Successfully logout" in response.json().get("detail", "")
-
 
     response: Response = await client_async.post(route, headers=headers)
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
@@ -176,8 +174,8 @@ async def test_successful_refresh(
     route = "/api/v1/auth/refresh"
     check_route = "/api/v1/account/check-token"
     _, access_token, refresh_token = await create_user_with_tokens(user_factory, token_factory)
-
     headers = {"Authorization": f"Bearer {refresh_token}"}
+
     response: Response = await client_async.post(route, headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
@@ -186,9 +184,8 @@ async def test_successful_refresh(
 
     new_access_token = json_data["access_token"]
     assert new_access_token != access_token, "New access_token should be different"
-
-
     headers = {"Authorization": f"Bearer {new_access_token}"}
+
     response: Response = await client_async.get(check_route, headers=headers)
     assert response.status_code == 200, f"Expected 200 for new access token, got {response.status_code}"
 
@@ -202,9 +199,8 @@ async def test_refresh_with_access_token(
     
     route = "/api/v1/auth/refresh"
     _, access_token, _ = await create_user_with_tokens(user_factory, token_factory)
-
     headers = {"Authorization": f"Bearer {access_token}"}
-    response: Response = await client_async.post(route, headers=headers)
 
+    response: Response = await client_async.post(route, headers=headers)
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
     assert "Invalid authorization token type" in response.json().get("detail", "")
