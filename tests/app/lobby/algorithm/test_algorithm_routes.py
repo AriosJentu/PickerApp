@@ -263,7 +263,6 @@ async def test_get_algorithms_list_with_filters(
         client_async, user_factory, token_factory, role, route, 
         expected_count=expected_count,
         is_total_count=False, 
-        is_parametrized=(filter_params is not None),
         filter_params=filter_params,
         obj_type="algorithms"
     )
@@ -287,7 +286,6 @@ async def test_get_algorithms_list_count_with_filters(
         client_async, user_factory, token_factory, role, route, 
         expected_count=expected_count,
         is_total_count=True, 
-        is_parametrized=(filter_params is not None),
         filter_params=filter_params,
         obj_type="algorithms"
     )

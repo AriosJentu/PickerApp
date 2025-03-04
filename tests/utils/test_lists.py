@@ -19,10 +19,10 @@ async def check_list_responces(
         route: str,
         expected_count: int = 0,
         is_total_count: bool = False,
-        is_parametrized: bool = False,
         filter_params: Optional[dict[str, str | int]] = None, 
         obj_type: str = ""
 ):
+    is_parametrized = (filter_params is not None)
     if is_parametrized and is_total_count and any(key in filter_params.keys() for key in ("limit", "offset", "sort_by", "sort_order")):
         return
 

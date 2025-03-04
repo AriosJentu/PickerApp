@@ -4,14 +4,13 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.db.base import Lobby, LobbyParticipant, Algorithm
+from app.db.base import LobbyParticipant, Algorithm
 from app.enums.user import UserRole
 from app.enums.lobby import LobbyParticipantRole
 
 from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory
 from tests.factories.lobby_factory import LobbyFactory
-from tests.factories.team_factory import TeamFactory
 
 from tests.constants import Roles, PARTICIPANTS_COUNT
 from tests.utils.user_utils import create_user_with_tokens
@@ -260,7 +259,6 @@ async def test_get_lobby_participants_with_filters(
         client_async, user_factory, token_factory, role, route, 
         expected_count=expected_count,
         is_total_count=False, 
-        is_parametrized=(filter_params is not None),
         filter_params=filter_params,
         obj_type="participants"
     )
@@ -285,7 +283,6 @@ async def test_get_lobby_participants_count_with_filters(
         client_async, user_factory, token_factory, role, route, 
         expected_count=expected_count,
         is_total_count=True, 
-        is_parametrized=(filter_params is not None),
         filter_params=filter_params,
         obj_type="participants"
     )
