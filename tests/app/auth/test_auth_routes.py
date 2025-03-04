@@ -192,7 +192,7 @@ async def test_successful_refresh(
 
 
 @pytest.mark.asyncio
-async def test_refresh_with_access_token(
+async def test_refresh_with_access_token_incorrect(
         client_async: AsyncClient,
         user_factory: UserFactory,
         token_factory: TokenFactory,

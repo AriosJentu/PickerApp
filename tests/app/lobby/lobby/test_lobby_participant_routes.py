@@ -11,6 +11,7 @@ from app.enums.lobby import LobbyParticipantRole
 from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory
 from tests.factories.lobby_factory import LobbyFactory
+from tests.factories.team_factory import TeamFactory
 
 from tests.constants import Roles, PARTICIPANTS_COUNT
 from tests.utils.user_utils import create_user_with_tokens
@@ -71,8 +72,8 @@ async def test_add_participant(
         user_factory: UserFactory,
         token_factory: TokenFactory,
         lobby_factory: LobbyFactory,
+        team_factory: TeamFactory,
         test_algorithm: Algorithm,
-        test_team_id: int,
         with_team: bool,
         role: UserRole,
         is_lobby_owner: bool,
@@ -91,8 +92,10 @@ async def test_add_participant(
     route = f"/api/v1/lobby/{lobby.id}/participants"
 
     params = {"user_id": user.id}
+    team = None
     if with_team:
-        params["team_id"] = test_team_id
+        team = await team_factory.create(lobby)
+        params["team_id"] = team.id
 
     response: Response = await client_async.post(route, params=params, headers=headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
@@ -104,7 +107,86 @@ async def test_add_participant(
         assert json_data["role"] == LobbyParticipantRole.SPECTATOR, f"Participant has incorrect role"
 
         if with_team:
-            assert json_data["team"]["id"] == test_team_id, f"Team ID is not the same as participant added to"
+            assert json_data["team"]["id"] == team.id, f"Team ID is not the same as participant added to"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("update_data", [
+    {"role":        LobbyParticipantRole.PLAYER}, 
+    {"team_id":     None},
+    {"is_active":   False},
+])
+@pytest.mark.parametrize(
+    "role, is_lobby_owner, expected_status",
+    [
+        (UserRole.ADMIN,        False,  200),
+        (UserRole.MODERATOR,    False,  200),
+        (UserRole.USER,         True,   200),
+        (UserRole.USER,         False,  403),
+    ]
+)
+async def test_edit_participant(
+        client_async: AsyncClient,
+        user_factory: UserFactory,
+        token_factory: TokenFactory,
+        lobby_factory: LobbyFactory,
+        team_factory: TeamFactory,
+        test_algorithm: Algorithm,
+        update_data: dict[str, str | int | bool],
+        role: UserRole,
+        is_lobby_owner: bool,
+        expected_status: int
+):
+
+    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role=role)
+    creator, access_token_creator, _ = await create_user_with_tokens(user_factory, token_factory, prefix="creator_user")
+    user_to_add, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="user_to_add")
+    
+    headers = {"Authorization": f"Bearer {access_token}"}
+    headers_creator = {"Authorization": f"Bearer {access_token_creator}"}
+
+    if is_lobby_owner:
+        lobby = await lobby_factory.create(user, test_algorithm)
+    else:
+        lobby = await lobby_factory.create(creator, test_algorithm)
+    
+    team = await team_factory.create(lobby)
+
+    route_add = f"/api/v1/lobby/{lobby.id}/participants"
+    params = {"user_id": user_to_add.id, "team_id": team.id}
+    
+    response: Response = None
+    if is_lobby_owner:
+        response: Response = await client_async.post(route_add, params=params, headers=headers)
+    else:
+        response: Response = await client_async.post(route_add, params=params, headers=headers_creator)
+
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+
+    json_data = response.json()
+    assert json_data["user"]["id"] == user_to_add.id, f"Expected User ID {user_to_add.id}, got {json_data["user"]["id"]}"
+    participant_id = json_data["id"]
+
+    route = f"/api/v1/lobby/{lobby.id}/participants/{participant_id}"
+    response: Response = await client_async.put(route, json=update_data, headers=headers)
+    assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
+
+    if expected_status == 200:
+        json_data = response.json()
+        assert json_data["lobby"]["id"] == lobby.id, f"Lobby ID is not the same as participant added to"
+        assert json_data["user"]["id"] == user_to_add.id, f"User ID is not the same as participant's"
+
+        if "role" in update_data:
+            assert json_data["role"] == update_data["role"], f"Role was not updated"
+
+        if "team_id" in update_data and update_data["team_id"] is not None:
+            assert json_data["team"]["id"] == update_data["team_id"], f"Team ID was not updated"
+
+        if "team_id" in update_data and update_data["team_id"] is None:
+            assert json_data["team"] == update_data["team_id"], f"Team was not nulled"
+
+        if "is_active" in update_data:
+            assert json_data["is_active"] == update_data["is_active"], f"Active state was not updated"
 
 
 @pytest.mark.asyncio

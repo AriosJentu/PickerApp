@@ -176,12 +176,12 @@ async def test_update_algorithm(
     route = f"/api/v1/algorithm/{algorithm.id}"
 
     response: Response = await client_async.put(route, json=update_data, headers=headers)
-    actual_status = response.status_code
 
-    if expected_status_access == 403 and expected_status == 200:
-        expected_status = expected_status_access
+    if expected_status_access == 403:
+        assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+        return
 
-    assert actual_status == expected_status, f"Expected {expected_status}, got {actual_status}"
+    assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     json_data = response.json()
     if expected_status == 200:

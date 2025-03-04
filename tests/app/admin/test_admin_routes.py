@@ -46,15 +46,21 @@ async def test_admin_routes_require_auth(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("expected_status, response_substr", [(200, "inactive tokens from base")])
-@pytest.mark.parametrize("role", [UserRole.ADMIN])
+@pytest.mark.parametrize(
+    "role, expected_status, response_substr", 
+    [
+        (UserRole.USER,         403,    "Access denied"),
+        (UserRole.MODERATOR,    403,    "Access denied"),
+        (UserRole.ADMIN,        200,    "inactive tokens from base")
+    ]
+)
 async def test_clear_inactive_tokens(
         client_async: AsyncClient, 
         user_factory: UserFactory,
         token_factory: TokenFactory,
-        expected_status: int,
-        response_substr: str,
         role: UserRole,
+        response_substr: str,
+        expected_status: int,
 ):
     
     route = "/api/v1/admin/clear-tokens"

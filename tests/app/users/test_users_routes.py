@@ -11,6 +11,7 @@ from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory
 
 from tests.constants import Roles, USERS_COUNT
+from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
@@ -49,6 +50,234 @@ async def test_users_routes_require_auth(
         allowed_roles: tuple[UserRole, ...]
 ):
     await check_access_for_unauthenticated_users(client_async, method, url)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", Roles.LIST)
+@pytest.mark.parametrize(
+    "query_params, expected_status, should_exist, error_substr",
+    [
+        ({"get_user_id":    1},                         200,    True,   ""),
+        ({"get_username":   "testuser"},                200,    True,   ""),
+        ({"get_email":      "testuser@example.com"},    200,    True,   ""),
+        ({"get_user_id":    999},                       404,    False,  "User not found"),
+        ({"get_username":   "nonexistent"},             404,    False,  "User not found"),
+        ({"get_email":      "noemail@example.com"},     404,    False,  "User not found"),
+    ]
+)
+async def test_get_user_by_data(
+        client_async: AsyncClient,
+        user_factory: UserFactory,
+        token_factory: TokenFactory,
+        query_params: dict[str, str | int],
+        expected_status: int,
+        should_exist: bool,
+        error_substr: str,
+        role: UserRole
+):
+    route = "/api/v1/users/"
+    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    response: Response = await client_async.get(route, headers=headers, params=query_params)
+    assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
+
+    if should_exist:
+        json_data = response.json()
+        assert json_data["id"] == user.id, "Returned user ID does not match"
+    else:
+        assert error_substr in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "update_data, expected_status, error_msg",
+    [
+        ({"email":          "new_email@example.com"},                   200, ""),
+        ({"username":       "somenewname"},                             200, ""),
+        ({"password":       "NewPassword123!"},                         200, ""),
+        ({"username":       ""},                                        422, "Username must be at least 3 characters long."),
+        ({"password":       "InvalidPassword"},                         422, "Password must contain"),
+        ({"email":          "invalid-email"},                           422, "Invalid email format"),
+    ]
+)
+@pytest.mark.parametrize(
+    "role, expected_status_access",
+    [
+        (UserRole.USER,         403),
+        (UserRole.MODERATOR,    403),
+        (UserRole.ADMIN,        200),
+    ]
+)
+@pytest.mark.parametrize(
+    "is_user_exist, expected_status_exists, existance_error_msg, user_params",
+    [
+        (True,  200,    "",                 {}),
+        (False, 404,    "No data provided", {}),
+        (False, 404,    "User not found",   {"get_user_id":     -1}),
+        (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
+        (False, 404,    "User not found",   {"get_email":       "unexistant@mail.com"}),
+    ]
+)
+async def test_update_user(
+        client_async: AsyncClient,
+        user_factory: UserFactory,
+        token_factory: TokenFactory,
+        update_data: dict[str, str | int],
+        expected_status_access: int,
+        expected_status_exists: int,
+        expected_status: int,
+        error_msg: str,
+        is_user_exist: bool,
+        user_params: dict[str, str | int],
+        existance_error_msg: str,
+        role: UserRole
+):
+    route = "/api/v1/users/"
+    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
+    updatable_user, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="updatable_user")
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    if is_user_exist:
+        user_params["get_user_id"] = updatable_user.id
+
+    response: Response = await client_async.put(route, headers=headers, json=update_data, params=user_params)
+    if expected_status_access != 200:
+        assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+        return
+
+    if expected_status != 200:
+        assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
+        assert error_msg in str(response.json()["detail"])
+        return
+
+    assert response.status_code == expected_status_exists, f"Expected {expected_status}, got {response.status_code}"
+
+    json_data = response.json()
+    if is_user_exist:
+        if "email" in update_data:
+            assert json_data["email"] == update_data["email"], "Email was not updated"
+        
+        if "username" in update_data:
+            assert json_data["username"] == update_data["username"], "Email was not updated"
+    else:
+        assert existance_error_msg in json_data["detail"], f"Details not containing info '{existance_error_msg}'"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "role, expected_status_access",
+    [
+        (UserRole.USER,         403),
+        (UserRole.MODERATOR,    403),
+        (UserRole.ADMIN,        200),
+    ]
+)
+@pytest.mark.parametrize(
+    "is_user_exist, expected_status_exists, existance_error_msg, user_params",
+    [
+        (True,  200,    "",                 {}),
+        (False, 404,    "No data provided", {}),
+        (False, 404,    "User not found",   {"get_user_id":     -1}),
+        (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
+        (False, 404,    "User not found",   {"get_email":       "unexistant@mail.com"}),
+    ]
+)
+async def test_delete_user(
+        client_async: AsyncClient,
+        user_factory: UserFactory,
+        token_factory: TokenFactory,
+        role: UserRole,
+        expected_status_access: int,
+        is_user_exist: bool,
+        expected_status_exists: int,
+        existance_error_msg: str,
+        user_params: dict[str, str | int]
+):
+
+    route = "/api/v1/users/"
+    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
+    deletable_user, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="deletable_user")
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    if is_user_exist:
+        user_params["get_user_id"] = deletable_user.id
+
+    response: Response = await client_async.delete(route, headers=headers, params=user_params)
+    if expected_status_access != 200:
+        assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+        return
+
+    if expected_status_exists != 200:
+        assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
+        assert existance_error_msg in str(response.json()["detail"])
+        return
+
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+
+    json_data = response.json()
+    assert json_data["id"] == deletable_user.id, "Deleted user ID does not match"
+    assert json_data["username"] == deletable_user.username, "Deleted user username does not match"
+    assert json_data["email"] == deletable_user.email, "Deleted user email does not match"
+    assert json_data["detail"] == f"User with ID {deletable_user.id} has been deleted", "Unexpected delete confirmation message"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "role, expected_status_access",
+    [
+        (UserRole.USER,         403),
+        (UserRole.MODERATOR,    403),
+        (UserRole.ADMIN,        200),
+    ]
+)
+@pytest.mark.parametrize(
+    "is_user_exist, expected_status_exists, existance_error_msg, user_params",
+    [
+        (True,  200,    "",                 {}),
+        (False, 404,    "No data provided", {}),
+        (False, 404,    "User not found",   {"get_user_id":     -1}),
+        (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
+        (False, 404,    "User not found",   {"get_email":       "unexistant@mail.com"}),
+    ]
+)
+async def test_clear_user_tokens(
+        client_async: AsyncClient,
+        user_factory: UserFactory,
+        token_factory: TokenFactory,
+        role: UserRole,
+        expected_status_access: int,
+        is_user_exist: bool,
+        expected_status_exists: int,
+        existance_error_msg: str,
+        user_params: dict[str, str | int]
+):
+
+    route = "/api/v1/users/tokens"
+    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
+    updatable_user, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="updatable_user")
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    if is_user_exist:
+        user_params["get_user_id"] = updatable_user.id
+
+    response: Response = await client_async.delete(route, headers=headers, params=user_params)
+    if expected_status_access != 200:
+        assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+        return
+
+    if expected_status_exists != 200:
+        assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
+        assert existance_error_msg in str(response.json()["detail"])
+        return
+
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+
+    json_data = response.json()
+    assert json_data["id"] == updatable_user.id, "User ID does not match"
+    assert json_data["username"] == updatable_user.username, "Username does not match"
+    assert json_data["email"] == updatable_user.email, "Email does not match"
+    assert json_data["detail"] == f"Tokens for user with ID {updatable_user.id} has been deactivated", "Unexpected response message"
 
 
 filter_data_multiple = [
