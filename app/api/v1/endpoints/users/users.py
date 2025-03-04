@@ -15,7 +15,6 @@ from app.schemas.auth.user import (
 from app.enums.user import UserRole
 
 from app.core.security.user import (
-    get_current_user, 
     get_user_by_params,
     deactivate_old_tokens_user,
     ensure_user_identifier,
@@ -72,14 +71,14 @@ async def get_list_of_users_on_conditions_(
 
 @router.get("/", response_model=UserReadRegular)
 async def get_user_by_data_(
-    user_id: Optional[int] = Query(default=None),
-    username: Optional[str] = Query(default=None),
-    email: Optional[str] = Query(default=None),
+    get_user_id: Optional[int] = Query(default=None),
+    get_username: Optional[str] = Query(default=None),
+    get_email: Optional[str] = Query(default=None),
     current_user: User = Depends(check_user_regular_role),
     db: AsyncSession = Depends(get_async_session),
 ):
-    ensure_user_identifier(user_id, username, email)
-    user = await get_user_by_params(db, user_id=user_id, username=username, email=email)
+    ensure_user_identifier(get_user_id, get_username, get_email)
+    user = await get_user_by_params(db, get_user_id=get_user_id, get_username=get_username, get_email=get_email)
 
     if not user:
         raise HTTPUserExceptionNotFound()
@@ -90,14 +89,14 @@ async def get_user_by_data_(
 @router.put("/", response_model=UserRead)
 async def update_user_information_(
     user_update: UserUpdate,
-    user_id: Optional[int] = Query(default=None),
-    username: Optional[str] = Query(default=None),
-    email: Optional[str] = Query(default=None),
+    get_user_id: Optional[int] = Query(default=None),
+    get_username: Optional[str] = Query(default=None),
+    get_email: Optional[str] = Query(default=None),
     current_user: User = Depends(check_user_admin_role),
     db: AsyncSession = Depends(get_async_session),
 ):
-    ensure_user_identifier(user_id, username, email)
-    user = await get_user_by_params(db, user_id=user_id, username=username, email=email)
+    ensure_user_identifier(get_user_id, get_username, get_email)
+    user = await get_user_by_params(db, get_user_id=get_user_id, get_username=get_username, get_email=get_email)
 
     if not user:
         raise HTTPUserExceptionNotFound()
@@ -108,14 +107,14 @@ async def update_user_information_(
 
 @router.delete("/", response_model=UserResponce)
 async def delete_user_from_base_(
-    user_id: Optional[int] = Query(default=None),
-    username: Optional[str] = Query(default=None),
-    email: Optional[str] = Query(default=None),
+    get_user_id: Optional[int] = Query(default=None),
+    get_username: Optional[str] = Query(default=None),
+    get_email: Optional[str] = Query(default=None),
     current_user: User = Depends(check_user_admin_role),
     db: AsyncSession = Depends(get_async_session),
 ):
-    ensure_user_identifier(user_id, username, email)
-    user = await get_user_by_params(db, user_id=user_id, username=username, email=email)
+    ensure_user_identifier(get_user_id, get_username, get_email)
+    user = await get_user_by_params(db, get_user_id=get_user_id, get_username=get_username, get_email=get_email)
 
     if not user:
         raise HTTPUserExceptionNotFound()
@@ -134,14 +133,14 @@ async def delete_user_from_base_(
 
 @router.delete("/tokens", response_model=UserResponce)
 async def clear_user_tokens_(
-    user_id: Optional[int] = Query(default=None),
-    username: Optional[str] = Query(default=None),
-    email: Optional[str] = Query(default=None),
+    get_user_id: Optional[int] = Query(default=None),
+    get_username: Optional[str] = Query(default=None),
+    get_email: Optional[str] = Query(default=None),
     current_user: User = Depends(check_user_admin_role),
     db: AsyncSession = Depends(get_async_session)
 ):
-    ensure_user_identifier(user_id, username, email)
-    user = await get_user_by_params(db, user_id=user_id, username=username, email=email)
+    ensure_user_identifier(get_user_id, get_username, get_email)
+    user = await get_user_by_params(db, get_user_id=get_user_id, get_username=get_username, get_email=get_email)
 
     if not user:
         raise HTTPUserExceptionNotFound()

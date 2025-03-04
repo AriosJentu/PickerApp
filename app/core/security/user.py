@@ -39,45 +39,51 @@ type UserTokens = tuple[Token, Token]
 type UserIdentifier = int | str
 
 
-async def get_user_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
-    return await db_get_user_by_key_value(db, "id", user_id)
+async def get_user_by_id(db: AsyncSession, get_user_id: int) -> Optional[User]:
+    return await db_get_user_by_key_value(db, "id", get_user_id)
 
 
-async def get_user_by_username(db: AsyncSession, username: str) -> Optional[User]:
-    return await db_get_user_by_key_value(db, "username", username)
+async def get_user_by_username(db: AsyncSession, get_username: str) -> Optional[User]:
+    return await db_get_user_by_key_value(db, "username", get_username)
 
 
-async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
-    return await db_get_user_by_key_value(db, "email", email)
+async def get_user_by_email(db: AsyncSession, get_email: str) -> Optional[User]:
+    return await db_get_user_by_key_value(db, "email", get_email)
 
 
 async def get_user_by_params(
     db: AsyncSession,
-    user_id: Optional[int] = None,
-    username: Optional[str] = None,
-    email: Optional[str] = None
+    get_user_id: Optional[int] = None,
+    get_username: Optional[str] = None,
+    get_email: Optional[str] = None
 ) -> Optional[User]:
     
-    if user_id is not None:
-        return await get_user_by_id(db, user_id)
+    if get_user_id is not None:
+        user = await get_user_by_id(db, get_user_id)
+        if user is not None:
+            return user
 
-    if username is not None:
-        return await get_user_by_username(db, username)
+    if get_username is not None:
+        user = await get_user_by_username(db, get_username)
+        if user is not None:
+            return user
 
-    if email is not None:
-        return await get_user_by_email(db, email)
+    if get_email is not None:
+        user = await get_user_by_email(db, get_email)
+        if user is not None:
+            return user
 
     return None
 
 
 def ensure_user_identifier(
-    user_id: Optional[int] = None,
-    username: Optional[str] = None,
-    email: Optional[str] = None
+    get_user_id: Optional[int] = None,
+    get_username: Optional[str] = None,
+    get_email: Optional[str] = None
 ):
-    if not (user_id or username or email):
+    if not (get_user_id or get_username or get_email):
         raise HTTPUserExceptionNoDataProvided(
-            detail="No data provided: 'user_id', 'username' or 'email'"
+            detail="No data provided: 'get_user_id', 'get_username' or 'get_email'"
         )
 
 
