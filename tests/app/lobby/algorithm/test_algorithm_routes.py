@@ -14,6 +14,7 @@ from tests.factories.algorithm_factory import AlgorithmFactory
 from tests.constants import Roles, ALGORITHMS_COUNT
 from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
+from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
 
 
@@ -231,79 +232,62 @@ async def test_delete_algorithm(
         assert algorithm.name in json_data["description"], "Algorithm name is not in response description"
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("role", Roles.LIST)
-async def test_get_algorithms_list(
-        client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        create_test_algorithms: list[Algorithm],
-        role: UserRole
-):
-
-    route = "/api/v1/algorithm/list"
-    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    response: Response = await client_async.get(route, headers=headers)
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
- 
-    json_data = response.json()
-    assert len(json_data) == ALGORITHMS_COUNT, f"Expected {ALGORITHMS_COUNT}, got {len(json_data)}"
-
+filter_data = [
+    (None,                                  ALGORITHMS_COUNT),
+    ({"id":             1},                 1),
+    ({"name":           "2"},               1),
+    ({"name":           "Test Algorithm"},  ALGORITHMS_COUNT),
+    ({"teams_count":    2},                 ALGORITHMS_COUNT),
+    ({"teams_count":    3},                 0),
+    ({"sort_by":        "id"},              ALGORITHMS_COUNT),
+    ({"sort_order":     "desc"},            ALGORITHMS_COUNT),
+    ({"limit":          2},                 2),
+    ({"offset":         1},                 ALGORITHMS_COUNT-1),
+]
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-async def test_get_algorithms_list_count(
-        client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        create_test_algorithms: list[Algorithm],
-        role: UserRole
-):
-
-    route = "/api/v1/algorithm/list-count"
-    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    response: Response = await client_async.get(route, headers=headers)
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
- 
-    json_data = response.json()
-    assert json_data["total_count"] == ALGORITHMS_COUNT, f"Expected {ALGORITHMS_COUNT}, got {len(json_data)}"
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "filter_params, expected_count",
-    [
-        ({"id":             1},                 1),
-        ({"name":           "2"},               1),
-        ({"name":           "Test Algorithm"},  ALGORITHMS_COUNT),
-        ({"teams_count":    2},                 ALGORITHMS_COUNT),
-        ({"teams_count":    3},                 0),
-        ({"sort_by":        "id"},              ALGORITHMS_COUNT),
-        ({"sort_order":     "desc"},            ALGORITHMS_COUNT),
-        ({"limit":          2},                 2),
-        ({"offset":         1},                 ALGORITHMS_COUNT-1),
-    ]
-)
+@pytest.mark.parametrize("filter_params, expected_count", filter_data)
 async def test_get_algorithms_list_with_filters(
         client_async: AsyncClient,
         user_factory: UserFactory,
         token_factory: TokenFactory,
         create_test_algorithms: list[Algorithm],
+        role: UserRole,
         filter_params: dict[str, str | int],
         expected_count: int
 ):
     
     route = "/api/v1/algorithm/list"
-    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory)
-    headers = {"Authorization": f"Bearer {access_token}"}
+    await check_list_responces(
+        client_async, user_factory, token_factory, role, route, 
+        expected_count=expected_count,
+        is_total_count=False, 
+        is_parametrized=(filter_params is not None),
+        filter_params=filter_params,
+        obj_type="algorithms"
+    )
 
-    response: Response = await client_async.get(route, headers=headers, params=filter_params)
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
-    json_data = response.json()
-    error_msg = f"Expected {expected_count} teams for filter `{filter_params}`, got {len(json_data)}"
-    assert len(json_data) == expected_count, error_msg
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", Roles.LIST)
+@pytest.mark.parametrize("filter_params, expected_count", filter_data)
+async def test_get_algorithms_list_count_with_filters(
+        client_async: AsyncClient,
+        user_factory: UserFactory,
+        token_factory: TokenFactory,
+        create_test_algorithms: list[Algorithm],
+        role: UserRole,
+        filter_params: dict[str, str | int],
+        expected_count: int
+):
+    
+    route = "/api/v1/algorithm/list-count"
+    await check_list_responces(
+        client_async, user_factory, token_factory, role, route, 
+        expected_count=expected_count,
+        is_total_count=True, 
+        is_parametrized=(filter_params is not None),
+        filter_params=filter_params,
+        obj_type="algorithms"
+    )

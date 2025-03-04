@@ -17,15 +17,22 @@ from app.main import app
 from app.core.config import settings
 
 from app.db.session import get_async_session
-from app.db.base import Base, User, Algorithm, Lobby, Team
+from app.db.base import Base, User, Algorithm, Lobby, Team, LobbyParticipant
 from app.enums.user import UserRole
 
-from tests.constants import USERS_COUNT, ALGORITHMS_COUNT, LOBBIES_COUNT, TEAMS_COUNT
+from tests.constants import (
+    USERS_COUNT, 
+    ALGORITHMS_COUNT, 
+    LOBBIES_COUNT, 
+    TEAMS_COUNT,
+    PARTICIPANTS_COUNT
+)
 from tests.factories.user_factory import UserFactory
 from tests.factories.algorithm_factory import AlgorithmFactory
 from tests.factories.lobby_factory import LobbyFactory
 from tests.factories.team_factory import TeamFactory
 from tests.factories.token_factory import TokenFactory
+from tests.factories.participant_factory import ParticipantFactory
 
 from tests.utils.user_utils import create_user_with_tokens
 
@@ -93,6 +100,11 @@ def token_factory(db_async: AsyncSession) -> TokenFactory:
     return TokenFactory(db_async)
 
 
+@pytest.fixture
+def participant_factory(db_async: AsyncSession, user_factory: UserFactory) -> ParticipantFactory:
+    return ParticipantFactory(db_async, user_factory)
+
+
 @pytest_asyncio.fixture
 async def test_algorithm(
         user_factory: UserFactory, 
@@ -100,7 +112,7 @@ async def test_algorithm(
 ) -> Algorithm:
     
     user = await user_factory.create(suffix="algorithm")
-    return await algorithm_factory.create(user)
+    return await algorithm_factory.create(user, user.id)
 
 
 @pytest_asyncio.fixture
@@ -113,12 +125,11 @@ async def test_algorithm_id(
 @pytest.fixture
 async def test_lobby(
         user_factory: UserFactory, 
-        algorithm_factory: AlgorithmFactory, 
+        test_algorithm: Algorithm, 
         lobby_factory: LobbyFactory
 ) -> Lobby:
     user = await user_factory.create(suffix="lobby")
-    algorithm = await algorithm_factory.create(user)
-    return await lobby_factory.create(user, algorithm)
+    return await lobby_factory.create(user, test_algorithm)
 
 @pytest_asyncio.fixture
 async def test_lobby_id(test_lobby: Lobby) -> int:
@@ -136,6 +147,19 @@ async def test_team(
 @pytest_asyncio.fixture
 async def test_team_id(test_team: Team) -> int:
     return test_team.id
+
+
+@pytest.fixture
+async def test_participant(
+        participant_factory: ParticipantFactory, 
+        test_lobby: Lobby
+) -> LobbyParticipant:
+    return await participant_factory.create(test_lobby)
+
+
+@pytest_asyncio.fixture
+async def test_participant_id(test_participant: LobbyParticipant) -> int:
+    return test_participant.id
 
 
 @pytest_asyncio.fixture
@@ -211,3 +235,17 @@ async def create_test_teams(
         teams.append(team)
 
     return teams
+
+
+@pytest_asyncio.fixture
+async def create_test_participants(
+        participant_factory: ParticipantFactory,
+        test_lobby: Lobby
+) -> list[LobbyParticipant]:
+    
+    participants = []
+    for i in range(PARTICIPANTS_COUNT):
+        participant = await participant_factory.create(test_lobby, i+1)
+        participants.append(participant)
+
+    return participants

@@ -46,11 +46,14 @@ async def test_admin_routes_require_auth(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("expected_status, response_substr", [(200, "inactive tokens from base")])
 @pytest.mark.parametrize("role", [UserRole.ADMIN])
 async def test_clear_inactive_tokens(
         client_async: AsyncClient, 
         user_factory: UserFactory,
         token_factory: TokenFactory,
+        expected_status: int,
+        response_substr: str,
         role: UserRole,
 ):
     
@@ -59,7 +62,7 @@ async def test_clear_inactive_tokens(
     headers = {"Authorization": f"Bearer {user_access_token}"}
 
     response: Response = await client_async.delete(route, headers=headers)
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+    assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     json_data = response.json()
-    assert "inactive tokens from base" in str(json_data), f"Unexpected response data: {json_data}"
+    assert response_substr in str(json_data["detail"]), f"Unexpected response data: {json_data}"
