@@ -26,6 +26,20 @@ all_routes = [
     ("DELETE",  "/api/v1/users/tokens",     Roles.ADMIN),
 ]
 
+default_search_user_data = [
+    (True,  200,    "",                 {}),
+    (False, 404,    "No data provided", {}),
+    (False, 404,    "User not found",   {"get_user_id":     -1}),
+    (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
+    (False, 404,    "User not found",   {"get_email":       "unexistant@mail.com"}),
+]
+
+default_roles_access = [
+    (UserRole.USER,         403),
+    (UserRole.MODERATOR,    403),
+    (UserRole.ADMIN,        200),
+]
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
 @pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
@@ -101,24 +115,8 @@ async def test_get_user_by_data(
         ({"email":          "invalid-email"},                           422, "Invalid email format"),
     ]
 )
-@pytest.mark.parametrize(
-    "role, expected_status_access",
-    [
-        (UserRole.USER,         403),
-        (UserRole.MODERATOR,    403),
-        (UserRole.ADMIN,        200),
-    ]
-)
-@pytest.mark.parametrize(
-    "is_user_exist, expected_status_exists, existance_error_msg, user_params",
-    [
-        (True,  200,    "",                 {}),
-        (False, 404,    "No data provided", {}),
-        (False, 404,    "User not found",   {"get_user_id":     -1}),
-        (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
-        (False, 404,    "User not found",   {"get_email":       "unexistant@mail.com"}),
-    ]
-)
+@pytest.mark.parametrize("role, expected_status_access", default_roles_access)
+@pytest.mark.parametrize("is_user_exist, expected_status_exists, existance_error_msg, user_params", default_search_user_data)
 async def test_update_user(
         client_async: AsyncClient,
         user_factory: UserFactory,
@@ -165,24 +163,8 @@ async def test_update_user(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "role, expected_status_access",
-    [
-        (UserRole.USER,         403),
-        (UserRole.MODERATOR,    403),
-        (UserRole.ADMIN,        200),
-    ]
-)
-@pytest.mark.parametrize(
-    "is_user_exist, expected_status_exists, existance_error_msg, user_params",
-    [
-        (True,  200,    "",                 {}),
-        (False, 404,    "No data provided", {}),
-        (False, 404,    "User not found",   {"get_user_id":     -1}),
-        (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
-        (False, 404,    "User not found",   {"get_email":       "unexistant@mail.com"}),
-    ]
-)
+@pytest.mark.parametrize("role, expected_status_access", default_roles_access)
+@pytest.mark.parametrize("is_user_exist, expected_status_exists, existance_error_msg, user_params", default_search_user_data)
 async def test_delete_user(
         client_async: AsyncClient,
         user_factory: UserFactory,
@@ -223,24 +205,8 @@ async def test_delete_user(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "role, expected_status_access",
-    [
-        (UserRole.USER,         403),
-        (UserRole.MODERATOR,    403),
-        (UserRole.ADMIN,        200),
-    ]
-)
-@pytest.mark.parametrize(
-    "is_user_exist, expected_status_exists, existance_error_msg, user_params",
-    [
-        (True,  200,    "",                 {}),
-        (False, 404,    "No data provided", {}),
-        (False, 404,    "User not found",   {"get_user_id":     -1}),
-        (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
-        (False, 404,    "User not found",   {"get_email":       "unexistant@mail.com"}),
-    ]
-)
+@pytest.mark.parametrize("role, expected_status_access", default_roles_access)
+@pytest.mark.parametrize("is_user_exist, expected_status_exists, existance_error_msg, user_params", default_search_user_data)
 async def test_clear_user_tokens(
         client_async: AsyncClient,
         user_factory: UserFactory,
