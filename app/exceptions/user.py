@@ -11,7 +11,7 @@ class HTTPUserExceptionUsernameAlreadyExists(HTTPUserException):
     def __init__(self):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists"
+            detail="User with this username already exists"
         )
 
 
@@ -19,7 +19,7 @@ class HTTPUserExceptionEmailAlreadyExists(HTTPUserException):
     def __init__(self):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already exists"
+            detail="User with this email already exists"
         )
 
 
