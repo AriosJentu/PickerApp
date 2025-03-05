@@ -4,6 +4,7 @@ from pydantic import ValidationError
 
 from app.schemas.lobby.lobby import LobbyCreate, LobbyUpdate
 from app.enums.lobby import LobbyStatus
+from tests.types import InputData
 
 
 @pytest.mark.parametrize(
@@ -17,7 +18,7 @@ from app.enums.lobby import LobbyStatus
     ],
 )
 def test_lobby_create_schema_valid(
-        lobby_data: dict[str, str | int], 
+        lobby_data: InputData, 
         is_valid: bool, 
         error_info: str
 ):
@@ -46,7 +47,7 @@ def test_lobby_create_schema_valid(
     ],
 )
 def test_lobby_update_schema_valid(
-        update_data: dict[str, str | int], 
+        update_data: InputData, 
         is_valid: bool, 
         error_info: str
 ):

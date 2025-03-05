@@ -4,19 +4,27 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.db.base import Team, Algorithm
+from app.db.base import Team
 from app.enums.user import UserRole
 
-from tests.factories.user_factory import UserFactory
-from tests.factories.token_factory import TokenFactory
-from tests.factories.lobby_factory import LobbyFactory
-from tests.factories.team_factory import TeamFactory
-
+from tests.types import (
+    BaseObjectFixtureCallable,
+    BaseUserFixtureCallable, 
+    BaseCreatorUsersFixtureCallable, 
+    InputData, 
+    RouteBaseFixture
+)
 from tests.constants import Roles, TEAMS_COUNT
-from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
+from tests.utils.common_fixtures import (
+    test_base_user_from_role,
+    test_base_creator_users_from_role,
+    test_create_lobby_from_data,
+    test_create_team_from_data,
+    protected_route
+)
 
 
 all_routes = [
@@ -29,29 +37,24 @@ all_routes = [
 ]
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
 async def test_teams_routes_access(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        role: UserRole,
-        method: str,
-        url: str,
-        allowed_roles: tuple[UserRole, ...]
+        protected_route: RouteBaseFixture,
+        test_base_user_from_role: BaseUserFixtureCallable,
+        role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, user_factory, token_factory, role, method, url, allowed_roles)
+    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 async def test_teams_routes_require_auth(
-        client_async: AsyncClient, 
-        method: str, 
-        url: str, 
-        allowed_roles: tuple[UserRole, ...]
+        client_async: AsyncClient,
+        protected_route: RouteBaseFixture,
 ):
-    await check_access_for_unauthenticated_users(client_async, method, url)
+    await check_access_for_unauthenticated_users(client_async, protected_route)
 
 
 @pytest.mark.asyncio
@@ -81,11 +84,9 @@ async def test_teams_routes_require_auth(
 )
 async def test_create_team(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        test_algorithm: Algorithm,
-        lobby_factory: LobbyFactory,
-        team_data: dict[str, str],
+        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        test_create_lobby_from_data: BaseObjectFixtureCallable,
+        team_data: InputData,
         expected_status_team: int,
         error_substr_team: str,
         role: UserRole,
@@ -99,19 +100,9 @@ async def test_create_team(
 
     route = "/api/v1/teams/"
     
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    creator, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="creator_user")
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    if not lobby_exists:
-        team_data["lobby_id"] = -1 
-    else:
-        if is_lobby_owner:
-            lobby = await lobby_factory.create(user, test_algorithm)
-        else:
-            lobby = await lobby_factory.create(creator, test_algorithm)
-
-        team_data["lobby_id"] = lobby.id
+    user, headers, creator, _ = await test_base_creator_users_from_role(role)
+    lobby_id, _ = await test_create_lobby_from_data(user if is_lobby_owner else creator, lobby_exists)
+    team_data["lobby_id"] = lobby_id
 
     response: Response = await client_async.post(route, json=team_data, headers=headers)
     json_data = response.json()
@@ -146,25 +137,18 @@ async def test_create_team(
 )
 async def test_get_team_info(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        lobby_factory: LobbyFactory,
-        team_factory: TeamFactory,
-        test_algorithm: Algorithm,
+        test_base_user_from_role: BaseUserFixtureCallable,
+        test_create_lobby_from_data: BaseObjectFixtureCallable,
+        test_create_team_from_data: BaseObjectFixtureCallable,
         role: UserRole,
         team_exists: bool,
         expected_status: int,
         error_msg: str
 ):
     
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    team_id = -1
-    if team_exists:
-        lobby = await lobby_factory.create(user, test_algorithm)
-        team = await team_factory.create(lobby)
-        team_id = team.id
+    user, headers = await test_base_user_from_role(role)
+    _, lobby = await test_create_lobby_from_data(user)
+    team_id, team = await test_create_team_from_data(lobby, team_exists)
 
     route = f"/api/v1/teams/{team_id}"
     response: Response = await client_async.get(route, headers=headers)
@@ -207,12 +191,10 @@ async def test_get_team_info(
 )
 async def test_update_team(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        lobby_factory: LobbyFactory,
-        team_factory: TeamFactory,
-        test_algorithm: Algorithm,
-        update_data: dict[str, str],
+        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        test_create_lobby_from_data: BaseObjectFixtureCallable,
+        test_create_team_from_data: BaseObjectFixtureCallable,
+        update_data: InputData,
         role: UserRole,
         is_lobby_owner: bool,
         team_exists: bool,
@@ -223,19 +205,10 @@ async def test_update_team(
         error_msg_exists: str,
 ):
 
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    creator, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="creator_user")
-    headers = {"Authorization": f"Bearer {access_token}"}
 
-    if is_lobby_owner:
-        lobby = await lobby_factory.create(user, test_algorithm)
-    else:
-        lobby = await lobby_factory.create(creator, test_algorithm)
-
-    team_id = -1
-    if team_exists:
-        team = await team_factory.create(lobby)
-        team_id = team.id
+    user, headers, creator, _ = await test_base_creator_users_from_role(role)
+    _, lobby = await test_create_lobby_from_data(user if is_lobby_owner else creator)
+    team_id, _ = await test_create_team_from_data(lobby, team_exists)
 
     route = f"/api/v1/teams/{team_id}"
     response: Response = await client_async.put(route, json=update_data, headers=headers)
@@ -278,11 +251,9 @@ async def test_update_team(
 )
 async def test_delete_team(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        lobby_factory: LobbyFactory,
-        team_factory: TeamFactory,
-        test_algorithm: Algorithm,
+        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        test_create_lobby_from_data: BaseObjectFixtureCallable,
+        test_create_team_from_data: BaseObjectFixtureCallable,
         role: UserRole,
         is_lobby_owner: bool,
         team_exists: bool,
@@ -291,23 +262,13 @@ async def test_delete_team(
         error_msg_exists: str,
 ):
 
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    creator, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="creator_user")
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    if is_lobby_owner:
-        lobby = await lobby_factory.create(user, test_algorithm)
-    else:
-        lobby = await lobby_factory.create(creator, test_algorithm)
-
-    team_id = -1
-    if team_exists:
-        team = await team_factory.create(lobby)
-        team_id = team.id
+    user, headers, creator, _ = await test_base_creator_users_from_role(role)
+    _, lobby = await test_create_lobby_from_data(user if is_lobby_owner else creator)
+    team_id, team = await test_create_team_from_data(lobby, team_exists)
 
     route = f"/api/v1/teams/{team_id}"
-
     response: Response = await client_async.delete(route, headers=headers)
+
     if expected_status_exists != 200:
         assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
         assert error_msg_exists in response.json()["detail"], f"Expected error message '{error_msg_exists}', got: {response.json()['detail']}"
@@ -340,17 +301,16 @@ filter_data = [
 @pytest.mark.parametrize("filter_params, expected_count", filter_data)
 async def test_get_teams_list_with_filters(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         create_test_teams: list[Team],
         role: UserRole,
-        filter_params: dict[str, str | int],
+        filter_params: InputData,
         expected_count: int
 ):
     
     route = "/api/v1/teams/list"
     await check_list_responces(
-        client_async, user_factory, token_factory, role, route, 
+        client_async, test_base_user_from_role, role, route, 
         expected_count=expected_count,
         is_total_count=False, 
         filter_params=filter_params,
@@ -363,17 +323,16 @@ async def test_get_teams_list_with_filters(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data)
 async def test_get_teams_list_count_with_filters(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         create_test_teams: list[Team],
         role: UserRole,
-        filter_params: dict[str, str | int],
+        filter_params: InputData,
         expected_count: int
 ):
     
     route = "/api/v1/teams/list-count"
     await check_list_responces(
-        client_async, user_factory, token_factory, role, route, 
+        client_async, test_base_user_from_role, role, route, 
         expected_count=expected_count,
         is_total_count=True, 
         filter_params=filter_params,

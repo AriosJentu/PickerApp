@@ -3,6 +3,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas.lobby.team import TeamCreate, TeamUpdate
+from tests.types import InputData
 
 
 @pytest.mark.parametrize(
@@ -14,7 +15,7 @@ from app.schemas.lobby.team import TeamCreate, TeamUpdate
     ],
 )
 def test_team_create_schema(
-    team_data: dict[str, str | int], 
+    team_data: InputData, 
     is_valid: bool, 
     error_info: str
 ):
@@ -39,7 +40,7 @@ def test_team_create_schema(
     ],
 )
 def test_team_update_schema(
-    update_data: dict[str, str], 
+    update_data: InputData, 
     is_valid: bool, 
     error_info: str
 ):

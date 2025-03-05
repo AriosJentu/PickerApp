@@ -4,19 +4,27 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.db.base import Lobby, Algorithm 
+from app.db.base import Lobby 
 from app.enums.user import UserRole
 from app.enums.lobby import LobbyStatus
 
-from tests.factories.user_factory import UserFactory
-from tests.factories.token_factory import TokenFactory
-from tests.factories.lobby_factory import LobbyFactory
-
+from tests.types import (
+    BaseObjectFixtureCallable,
+    BaseUserFixtureCallable, 
+    BaseCreatorUsersFixtureCallable, 
+    InputData, 
+    RouteBaseFixture
+)
 from tests.constants import Roles, LOBBIES_COUNT
-from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
+from tests.utils.common_fixtures import (
+    test_base_user_from_role,
+    test_base_creator_users_from_role,
+    test_create_lobby_from_data,
+    protected_route
+)
 
 
 all_routes = [
@@ -30,29 +38,24 @@ all_routes = [
 ]
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
 async def test_lobbies_routes_access(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        role: UserRole,
-        method: str,
-        url: str,
-        allowed_roles: tuple[UserRole, ...]
+        protected_route: RouteBaseFixture,
+        test_base_user_from_role: BaseUserFixtureCallable,
+        role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, user_factory, token_factory, role, method, url, allowed_roles)
+    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 async def test_lobbies_routes_require_auth(
         client_async: AsyncClient,
-        method: str, 
-        url: str, 
-        allowed_roles: tuple[UserRole, ...]
+        protected_route: RouteBaseFixture,
 ):
-    await check_access_for_unauthenticated_users(client_async, method, url)
+    await check_access_for_unauthenticated_users(client_async, protected_route)
 
 
 @pytest.mark.asyncio
@@ -66,19 +69,16 @@ async def test_lobbies_routes_require_auth(
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_create_lobby(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         test_algorithm_id: int,
-        lobby_data: dict[str, str],
+        lobby_data: InputData,
         expected_status: int,
         error_substr: str,
         role: UserRole
 ):
 
     route = "/api/v1/lobby/"
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    headers = {"Authorization": f"Bearer {access_token}"}
-    
+    user, headers = await test_base_user_from_role(role)
     lobby_data["host_id"] = user.id
     lobby_data["algorithm_id"] = test_algorithm_id
 
@@ -105,27 +105,18 @@ async def test_create_lobby(
 )
 async def test_update_lobby(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        lobby_factory: LobbyFactory,
-        test_algorithm: Algorithm,
+        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        test_create_lobby_from_data: BaseObjectFixtureCallable,
         role: UserRole,
         is_lobby_owner: bool,
         expected_status: int,
-        update_data: dict[str, str]
+        update_data: InputData
 ):
 
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role=role)
-    creator, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="creator_user")
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    if is_lobby_owner:
-        lobby = await lobby_factory.create(user, test_algorithm)
-    else:
-        lobby = await lobby_factory.create(creator, test_algorithm)
+    user, headers, creator, _ = await test_base_creator_users_from_role(role)
+    lobby_id, _ = await test_create_lobby_from_data(user if is_lobby_owner else creator)
     
-    route = f"/api/v1/lobby/{lobby.id}"
-
+    route = f"/api/v1/lobby/{lobby_id}"
     response: Response = await client_async.put(route, json=update_data, headers=headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
@@ -147,26 +138,17 @@ async def test_update_lobby(
 )
 async def test_close_lobby(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        lobby_factory: LobbyFactory,
-        test_algorithm: Algorithm,
+        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        test_create_lobby_from_data: BaseObjectFixtureCallable,
         role: UserRole,
         is_lobby_owner: bool,
         expected_status: int,
 ):
 
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role=role)
-    creator, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="creator_user")
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    if is_lobby_owner:
-        lobby = await lobby_factory.create(user, test_algorithm)
-    else:
-        lobby = await lobby_factory.create(creator, test_algorithm)
+    user, headers, creator, _ = await test_base_creator_users_from_role(role)
+    lobby_id, _ = await test_create_lobby_from_data(user if is_lobby_owner else creator)
     
-    route = f"/api/v1/lobby/{lobby.id}/close"
-
+    route = f"/api/v1/lobby/{lobby_id}/close"
     response: Response = await client_async.put(route, headers=headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
@@ -187,32 +169,23 @@ async def test_close_lobby(
 )
 async def test_delete_lobby(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        lobby_factory: LobbyFactory,
-        test_algorithm: Algorithm,
+        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        test_create_lobby_from_data: BaseObjectFixtureCallable,
         role: UserRole,
         is_lobby_owner: bool,
         expected_status: int,
 ):
 
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role=role)
-    creator, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="creator_user")
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    if is_lobby_owner:
-        lobby = await lobby_factory.create(user, test_algorithm)
-    else:
-        lobby = await lobby_factory.create(creator, test_algorithm)
-    
-    route = f"/api/v1/lobby/{lobby.id}"
+    user, headers, creator, _ = await test_base_creator_users_from_role(role)
+    lobby_id, lobby = await test_create_lobby_from_data(user if is_lobby_owner else creator)
+    route = f"/api/v1/lobby/{lobby_id}"
 
     response: Response = await client_async.delete(route, headers=headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     if expected_status == 200:
         json_data = response.json()
-        assert json_data["id"] == lobby.id, f"Expected {lobby.id}, got {json_data["id"]}"
+        assert json_data["id"] == lobby_id, f"Expected {lobby_id}, got {json_data["id"]}"
         assert lobby.name in json_data["description"], f"Deleted lobby with incorrect name"
 
 
@@ -235,17 +208,16 @@ filter_data = [
 @pytest.mark.parametrize("filter_params, expected_count", filter_data)
 async def test_get_lobbies_list_with_filters(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         create_test_lobbies: list[Lobby],
         role: UserRole,
-        filter_params: dict[str, str | int],
+        filter_params: InputData,
         expected_count: int
 ):
     
     route = "/api/v1/lobby/list"
     await check_list_responces(
-        client_async, user_factory, token_factory, role, route, 
+        client_async, test_base_user_from_role, role, route, 
         expected_count=expected_count,
         is_total_count=False, 
         filter_params=filter_params,
@@ -258,17 +230,16 @@ async def test_get_lobbies_list_with_filters(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data)
 async def test_get_lobbies_list_count_with_filters(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         create_test_lobbies: list[Lobby],
         role: UserRole,
-        filter_params: dict[str, str | int],
+        filter_params: InputData,
         expected_count: int
 ):
     
     route = "/api/v1/lobby/list-count"
     await check_list_responces(
-        client_async, user_factory, token_factory, role, route, 
+        client_async, test_base_user_from_role, role, route, 
         expected_count=expected_count,
         is_total_count=True, 
         filter_params=filter_params,

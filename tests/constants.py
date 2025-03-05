@@ -9,6 +9,7 @@ LOBBIES_COUNT:      Final[int] = 5
 TEAMS_COUNT:        Final[int] = 5
 PARTICIPANTS_COUNT: Final[int] = 8
 
+
 class Roles:
     LIST:       Final[list[UserRole]]       = [UserRole.USER, UserRole.MODERATOR, UserRole.ADMIN]
     ALL_ROLES:  Final[tuple[UserRole, ...]] = (UserRole.USER, UserRole.MODERATOR, UserRole.ADMIN)

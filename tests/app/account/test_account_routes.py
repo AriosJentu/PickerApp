@@ -6,13 +6,11 @@ from httpx import AsyncClient
 
 from app.enums.user import UserRole
 
-from tests.factories.user_factory import UserFactory
-from tests.factories.token_factory import TokenFactory
-
+from tests.types import BaseUserFixtureCallable, InputData, RouteBaseFixture
 from tests.constants import Roles
-from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
+from tests.utils.common_fixtures import test_base_user_from_role, protected_route
 
 
 all_routes = [
@@ -23,43 +21,36 @@ all_routes = [
 ]
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
 async def test_account_routes_access(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        role: UserRole,
-        method: str,
-        url: str,
-        allowed_roles: tuple[UserRole, ...]
+        protected_route: RouteBaseFixture,
+        test_base_user_from_role: BaseUserFixtureCallable,
+        role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, user_factory, token_factory, role, method, url, allowed_roles)
+    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 async def test_account_routes_require_auth(
-        client_async: AsyncClient, 
-        method: str, 
-        url: str, 
-        allowed_roles: tuple[UserRole, ...]
+        client_async: AsyncClient,
+        protected_route: RouteBaseFixture,
 ):
-    await check_access_for_unauthenticated_users(client_async, method, url)
+    await check_access_for_unauthenticated_users(client_async, protected_route)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_get_current_user_with_role(
         client_async: AsyncClient, 
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
     
     route = "/api/v1/account/"
-    user, user_access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    headers = {"Authorization": f"Bearer {user_access_token}"}
+    user, headers = await test_base_user_from_role(role)
 
     response: Response = await client_async.get(route, headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
@@ -67,23 +58,21 @@ async def test_get_current_user_with_role(
     user_data = response.json()
     assert user_data["username"] == user.username, f"Expected username: {user.username}, got {user_data["username"]}"
     assert user_data["email"] == user.email, f"Expected email: {user.email}, got {user_data["email"]}"
-    assert user_data["role"] == str(role), f"Expected role: {str(role)}, got {user_data["role"]}"
+    assert user_data["role"] == str(user.role), f"Expected role: {str(user.role)}, got {user_data["role"]}"
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("update_data", [{"email": "updated_email@example.com"}])
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_update_current_user(
-        client_async: AsyncClient, 
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        update_data: dict[str, str],
+        client_async: AsyncClient,
+        test_base_user_from_role: BaseUserFixtureCallable,
+        update_data: InputData,
         role: UserRole
 ):
     
     route = "/api/v1/account/"
-    _, user_access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    headers = {"Authorization": f"Bearer {user_access_token}"}
+    _, headers = await test_base_user_from_role(role)
     
     response: Response = await client_async.put(route, headers=headers, json=update_data)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
@@ -110,14 +99,12 @@ async def test_update_current_user(
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_delete_current_user(
         client_async: AsyncClient, 
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
     
     route = "/api/v1/account/"
-    _, user_access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    headers = {"Authorization": f"Bearer {user_access_token}"}
+    _, headers = await test_base_user_from_role(role)
 
     response: Response = await client_async.delete(route, headers=headers)
     assert response.status_code == 204, f"Expected 204, got {response.status_code}"
@@ -131,14 +118,12 @@ async def test_delete_current_user(
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_check_token(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
     
     route = "/api/v1/account/check-token"
-    user, user_access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    headers = {"Authorization": f"Bearer {user_access_token}"}
+    user, headers = await test_base_user_from_role(role)
 
     response: Response = await client_async.get(route, headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
@@ -147,4 +132,5 @@ async def test_check_token(
     assert json_data["active"] is True, "Expected token state `Active`"
     assert json_data["username"] == user.username, f"Expected username: {user.username}, got {json_data['username']}"
     assert json_data["email"] == user.email, f"Expected email: {user.email}, got {json_data['email']}"
+    assert json_data["role"] == user.role, f"Expected role: {user.role}, got {json_data['role']}"
     assert json_data["detail"] == "Token is valid", "Expected detail `Token is valid`"

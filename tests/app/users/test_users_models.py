@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import User
 from app.enums.user import UserRole
 from app.schemas.auth.user import UserCreate, UserRead 
+from tests.types import InputData
 
 
 @pytest.mark.parametrize(
@@ -28,7 +29,7 @@ from app.schemas.auth.user import UserCreate, UserRead
     ]
 )
 def test_user_create_schema_valid(
-        user_data: dict[str, str], 
+        user_data: InputData, 
         is_valid: bool, 
         where: str
 ):
@@ -61,7 +62,7 @@ def test_user_create_schema_valid(
     ]
 )
 def test_user_out_schema(
-        user_data: dict[str, str | int | UserRole], 
+        user_data: InputData, 
         is_valid: bool, 
         where: str
 ):
@@ -91,7 +92,7 @@ def test_user_out_schema(
 @pytest.mark.asyncio
 async def test_user_creation(
         db_async: AsyncSession, 
-        user_data: dict[str, str], 
+        user_data: InputData, 
         expected_error: Optional[str]
 ):
 
@@ -141,8 +142,8 @@ async def test_user_creation(
 @pytest.mark.asyncio
 async def test_user_unique_constraints(
         db_async: AsyncSession, 
-        user_data_original: dict[str, str], 
-        user_data_duplicate: dict[str, str], 
+        user_data_original: InputData, 
+        user_data_duplicate: InputData, 
         where: str
 ):
 
@@ -178,7 +179,7 @@ async def test_user_unique_constraints(
 @pytest.mark.asyncio
 async def test_user_deletion(
         db_async: AsyncSession, 
-        user_data: dict[str, str], 
+        user_data: InputData, 
         delete_username: str, 
         expected_deleted: bool
 ):
@@ -232,8 +233,8 @@ async def test_user_deletion(
 @pytest.mark.asyncio
 async def test_user_update(
         db_async: AsyncSession, 
-        initial_data: dict[str, str], 
-        update_data: dict[str, str], 
+        initial_data: InputData, 
+        update_data: InputData, 
         expected_username: str, 
         expected_email: str
 ):
@@ -290,7 +291,7 @@ async def test_user_update(
 @pytest.mark.asyncio
 async def test_user_role_assignment(
         db_async: AsyncSession, 
-        input_data: dict[str, str], 
+        input_data: InputData, 
         expected_role: UserRole
 ):
     

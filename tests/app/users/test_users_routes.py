@@ -7,14 +7,21 @@ from httpx import AsyncClient
 from app.db.base import User
 from app.enums.user import UserRole
 
-from tests.factories.user_factory import UserFactory
-from tests.factories.token_factory import TokenFactory
-
+from tests.types import (
+    BaseUserFixtureCallable, 
+    BaseCreatorUsersFixtureCallable, 
+    InputData, 
+    RouteBaseFixture
+)
 from tests.constants import Roles, USERS_COUNT
-from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
+from tests.utils.common_fixtures import (
+    test_base_user_from_role,
+    test_base_creator_users_from_role,
+    protected_route
+)
 
 
 all_routes = [
@@ -41,29 +48,24 @@ default_roles_access = [
 ]
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
 async def test_users_routes_access(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        role: UserRole,
-        method: str,
-        url: str,
-        allowed_roles: tuple[UserRole, ...]
+        protected_route: RouteBaseFixture,
+        test_base_user_from_role: BaseUserFixtureCallable,
+        role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, user_factory, token_factory, role, method, url, allowed_roles)
+    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 async def test_users_routes_require_auth(
-        client_async: AsyncClient, 
-        method: str, 
-        url: str, 
-        allowed_roles: tuple[UserRole, ...]
+        client_async: AsyncClient,
+        protected_route: RouteBaseFixture,
 ):
-    await check_access_for_unauthenticated_users(client_async, method, url)
+    await check_access_for_unauthenticated_users(client_async, protected_route)
 
 
 @pytest.mark.asyncio
@@ -81,17 +83,15 @@ async def test_users_routes_require_auth(
 )
 async def test_get_user_by_data(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        query_params: dict[str, str | int],
+        test_base_user_from_role: BaseUserFixtureCallable,
+        query_params: InputData,
         expected_status: int,
         should_exist: bool,
         error_substr: str,
         role: UserRole
 ):
     route = "/api/v1/users/"
-    user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    headers = {"Authorization": f"Bearer {access_token}"}
+    user, headers = await test_base_user_from_role(role)
 
     response: Response = await client_async.get(route, headers=headers, params=query_params)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
@@ -119,23 +119,20 @@ async def test_get_user_by_data(
 @pytest.mark.parametrize("is_user_exist, expected_status_exists, existance_error_msg, user_params", default_search_user_data)
 async def test_update_user(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        update_data: dict[str, str | int],
+        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        update_data: InputData,
+        user_params: InputData,
+        expected_status: int,
         expected_status_access: int,
         expected_status_exists: int,
-        expected_status: int,
-        error_msg: str,
         is_user_exist: bool,
-        user_params: dict[str, str | int],
+        error_msg: str,
         existance_error_msg: str,
         role: UserRole
 ):
     route = "/api/v1/users/"
-    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    updatable_user, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="updatable_user")
-    headers = {"Authorization": f"Bearer {access_token}"}
-
+    
+    _, headers, updatable_user, _ = await test_base_creator_users_from_role(role)
     if is_user_exist:
         user_params["get_user_id"] = updatable_user.id
 
@@ -167,21 +164,17 @@ async def test_update_user(
 @pytest.mark.parametrize("is_user_exist, expected_status_exists, existance_error_msg, user_params", default_search_user_data)
 async def test_delete_user(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        role: UserRole,
+        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        user_params: InputData,
         expected_status_access: int,
-        is_user_exist: bool,
         expected_status_exists: int,
         existance_error_msg: str,
-        user_params: dict[str, str | int]
+        is_user_exist: bool,
+        role: UserRole,
 ):
 
     route = "/api/v1/users/"
-    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    deletable_user, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="deletable_user")
-    headers = {"Authorization": f"Bearer {access_token}"}
-
+    _, headers, deletable_user, _ = await test_base_creator_users_from_role(role)
     if is_user_exist:
         user_params["get_user_id"] = deletable_user.id
 
@@ -209,21 +202,18 @@ async def test_delete_user(
 @pytest.mark.parametrize("is_user_exist, expected_status_exists, existance_error_msg, user_params", default_search_user_data)
 async def test_clear_user_tokens(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
         role: UserRole,
         expected_status_access: int,
         is_user_exist: bool,
         expected_status_exists: int,
         existance_error_msg: str,
-        user_params: dict[str, str | int]
+        user_params: InputData
 ):
 
     route = "/api/v1/users/tokens"
-    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory, role)
-    updatable_user, _, _ = await create_user_with_tokens(user_factory, token_factory, prefix="updatable_user")
-    headers = {"Authorization": f"Bearer {access_token}"}
 
+    _, headers, updatable_user, _ = await test_base_creator_users_from_role(role)
     if is_user_exist:
         user_params["get_user_id"] = updatable_user.id
 
@@ -274,17 +264,16 @@ filter_data_default = [
 @pytest.mark.parametrize("filter_params, expected_count", filter_data_multiple)
 async def test_get_users_list_with_filters_multiple(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         create_multiple_test_users_with_tokens: list[tuple[User, str]],
         role: UserRole,
-        filter_params: dict[str, str | int],
+        filter_params: InputData,
         expected_count: int
 ):
     
     route = "/api/v1/users/list"
     await check_list_responces(
-        client_async, user_factory, token_factory, role, route, 
+        client_async, test_base_user_from_role, role, route, 
         expected_count=expected_count,
         is_total_count=False, 
         filter_params=filter_params,
@@ -296,16 +285,15 @@ async def test_get_users_list_with_filters_multiple(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data_default)
 async def test_get_users_list_with_filters_default(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         create_test_users: list[User],
-        filter_params: dict[str, str | int],
+        filter_params: InputData,
         expected_count: int
 ):
     
     route = "/api/v1/users/list"
     await check_list_responces(
-        client_async, user_factory, token_factory, UserRole.USER, route, 
+        client_async, test_base_user_from_role, UserRole.USER, route, 
         expected_count=expected_count,
         is_total_count=False, 
         filter_params=filter_params,
@@ -318,17 +306,16 @@ async def test_get_users_list_with_filters_default(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data_multiple)
 async def test_get_users_list_count_with_filters_multiple(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         create_multiple_test_users_with_tokens: list[tuple[User, str]],
         role: UserRole,
-        filter_params: dict[str, str | int],
+        filter_params: InputData,
         expected_count: int
 ):
     
     route = "/api/v1/users/list-count"
     await check_list_responces(
-        client_async, user_factory, token_factory, role, route, 
+        client_async, test_base_user_from_role, role, route, 
         expected_count=expected_count,
         is_total_count=True, 
         filter_params=filter_params,
@@ -340,16 +327,15 @@ async def test_get_users_list_count_with_filters_multiple(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data_default)
 async def test_get_users_list_count_with_filters_default(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
         create_test_users: list[User],
-        filter_params: dict[str, str | int],
+        filter_params: InputData,
         expected_count: int
 ):
     
     route = "/api/v1/users/list-count"
     await check_list_responces(
-        client_async, user_factory, token_factory, UserRole.USER, route, 
+        client_async, test_base_user_from_role, UserRole.USER, route, 
         expected_count=expected_count,
         is_total_count=True, 
         filter_params=filter_params,

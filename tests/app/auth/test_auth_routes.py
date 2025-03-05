@@ -7,12 +7,12 @@ from httpx import AsyncClient
 from app.enums.user import UserRole
 
 from tests.factories.user_factory import UserFactory
-from tests.factories.token_factory import TokenFactory
 
+from tests.types import BaseUserFixtureCallable, InputData, OutputData, RouteBaseFixture
 from tests.constants import Roles
-from tests.utils.user_utils import create_user_with_tokens
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
+from tests.utils.common_fixtures import test_base_user_from_role, protected_route
 
 
 all_routes = [
@@ -23,29 +23,24 @@ all_routes = [
 ]
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
 async def test_auth_routes_access(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
-        role: UserRole,
-        method: str,
-        url: str,
-        allowed_roles: tuple[UserRole, ...]
+        protected_route: RouteBaseFixture,
+        test_base_user_from_role: BaseUserFixtureCallable,
+        role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, user_factory, token_factory, role, method, url, allowed_roles)
+    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("method, url, allowed_roles", get_protected_routes(all_routes))
+@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
 async def test_auth_routes_require_auth(
-        client_async: AsyncClient, 
-        method: str, 
-        url: str, 
-        allowed_roles: tuple[UserRole, ...]
+        client_async: AsyncClient,
+        protected_route: RouteBaseFixture,
 ):
-    await check_access_for_unauthenticated_users(client_async, method, url)
+    await check_access_for_unauthenticated_users(client_async, protected_route)
 
 
 @pytest.mark.parametrize(
@@ -74,11 +69,11 @@ async def test_auth_routes_require_auth(
     ],
 )
 @pytest.mark.asyncio
-async def test_create_user(
+async def test_register_user(
         client_async: AsyncClient, 
-        data: dict[str, str], 
+        data: InputData, 
         expected_status: int, 
-        expected_response: dict[str, str]
+        expected_response: OutputData
 ):
 
     route = "/api/v1/auth/register"
@@ -122,10 +117,10 @@ async def test_create_user(
 async def test_login_user(
         client_async: AsyncClient,
         user_factory: UserFactory,
-        creation_data: dict[str, str],
-        data: dict[str, str],
+        creation_data: InputData,
+        data: InputData,
         expected_status: int,
-        expected_response: dict[str, str],
+        expected_response: OutputData,
 ):
 
     route = "/api/v1/auth/login"
@@ -148,13 +143,11 @@ async def test_login_user(
 @pytest.mark.asyncio
 async def test_logout_user(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
 ):
     
     route = "/api/v1/auth/logout"
-    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory)
-    headers = {"Authorization": f"Bearer {access_token}"}
+    _, headers = await test_base_user_from_role()
     
     response: Response = await client_async.post(route, headers=headers)
     assert response.status_code == 200, f"Expected 200 for Logout, got {response.status_code}"
@@ -168,14 +161,12 @@ async def test_logout_user(
 @pytest.mark.asyncio
 async def test_successful_refresh(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
 ):
     
     route = "/api/v1/auth/refresh"
     check_route = "/api/v1/account/check-token"
-    _, access_token, refresh_token = await create_user_with_tokens(user_factory, token_factory)
-    headers = {"Authorization": f"Bearer {refresh_token}"}
+    _, access_token, _, headers = await test_base_user_from_role(UserRole.USER, True, True)
 
     response: Response = await client_async.post(route, headers=headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
@@ -194,13 +185,11 @@ async def test_successful_refresh(
 @pytest.mark.asyncio
 async def test_refresh_with_access_token_incorrect(
         client_async: AsyncClient,
-        user_factory: UserFactory,
-        token_factory: TokenFactory,
+        test_base_user_from_role: BaseUserFixtureCallable,
 ):
     
     route = "/api/v1/auth/refresh"
-    _, access_token, _ = await create_user_with_tokens(user_factory, token_factory)
-    headers = {"Authorization": f"Bearer {access_token}"}
+    _, headers = await test_base_user_from_role()
 
     response: Response = await client_async.post(route, headers=headers)
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"

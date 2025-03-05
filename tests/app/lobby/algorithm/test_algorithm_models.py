@@ -3,6 +3,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas.lobby.algorithm import AlgorithmCreate, AlgorithmUpdate
+from tests.types import InputData
 
 
 @pytest.mark.parametrize(
@@ -22,7 +23,7 @@ from app.schemas.lobby.algorithm import AlgorithmCreate, AlgorithmUpdate
     ]
 )
 def test_algorithm_create_schema(
-        algorithm_data: dict[str, str | int], 
+        algorithm_data: InputData, 
         is_valid: bool, 
         error_info: str
 ):
@@ -52,7 +53,7 @@ def test_algorithm_create_schema(
     ]
 )
 def test_algorithm_update_schema(
-        update_data: dict[str, str | int], 
+        update_data: InputData, 
         is_valid: bool, 
         error_info: str
 ):
