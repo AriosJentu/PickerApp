@@ -72,5 +72,6 @@ async def check_current_user_token(
         active=True,
         username=current_user.username,
         email=current_user.email,
+        role=current_user.role,
         detail="Token is valid"
     )
