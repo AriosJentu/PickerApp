@@ -38,7 +38,7 @@ default_search_user_data = [
     (False, 404,    "No data provided", {}),
     (False, 404,    "User not found",   {"get_user_id":     -1}),
     (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
-    (False, 404,    "User not found",   {"get_email":       "unexistant@mail.com"}),
+    (False, 404,    "User not found",   {"get_email":       "unexistant@example.com"}),
 ]
 
 default_roles_access = [

@@ -10,8 +10,10 @@ from tests.factories.team_factory import TeamFactory
 from tests.factories.algorithm_factory import AlgorithmFactory
 
 from tests.types import (
+    InputData,
     RouteBaseFixture,
     BaseObjectFixtureCallable,
+    BaseAdditionalUserFixtureCallable,
     BaseUserFixture,
     BaseUserFixtureTokens,
     BaseUserFixtureCallable,
@@ -30,13 +32,13 @@ def protected_route(request) -> RouteBaseFixture:
 
 @pytest.fixture
 def test_base_user_from_role(
-        user_factory: UserFactory, 
+        user_factory: UserFactory,
         token_factory: TokenFactory
 ) -> BaseUserFixtureCallable:
     
     async def test_base_user(
-            role: UserRole = UserRole.USER, 
-            with_tokens: bool = False, 
+            role: UserRole = UserRole.USER,
+            with_tokens: bool = False,
             is_refresh_token: bool = False
     ) -> BaseUserFixture | BaseUserFixtureTokens:
         user, access_token, refresh_token = await create_user_with_tokens(user_factory, token_factory, role)
@@ -52,7 +54,7 @@ def test_base_user_from_role(
 
 @pytest.fixture
 def test_base_creator_users_from_role(
-        user_factory: UserFactory, 
+        user_factory: UserFactory,
         token_factory: TokenFactory
 ) -> BaseCreatorUsersFixtureCallable:
     
@@ -69,7 +71,7 @@ def test_base_creator_users_from_role(
 
 @pytest.fixture
 def test_base_creator_additional_users_from_role(
-        user_factory: UserFactory, 
+        user_factory: UserFactory,
         token_factory: TokenFactory
 ) -> BaseCreatorAdditionalUsersFixtureCallable:
     
@@ -88,6 +90,39 @@ def test_base_creator_additional_users_from_role(
 
 
 @pytest.fixture
+def test_add_extra_users_with_email_password(
+        user_factory: UserFactory
+) -> BaseAdditionalUserFixtureCallable:
+    
+    async def test_add_extra_users(
+            update_data: InputData,
+            is_duplicate_email: bool = False,
+            is_duplicate_username: bool = False,
+            is_failed: bool = False
+    ) -> User | None:
+        
+        if is_failed:
+            return
+        
+        default_data = {
+            "username": "someusername_extra",
+            "email":    "somemail_extra@example.com",
+            "password": "SecurePassword1!",
+            "role":     UserRole.USER
+        }
+
+        if is_duplicate_email:
+            default_data["email"] = update_data["email"]
+
+        if is_duplicate_username:
+            default_data["username"] = update_data["username"]
+
+        return await user_factory.create_from_data(default_data)
+    
+    return test_add_extra_users
+
+
+@pytest.fixture
 def test_create_algorithm_from_data(algorithm_factory: AlgorithmFactory) -> BaseObjectFixtureCallable:
 
     async def create_algorithm(user: User, is_algorithm_exists: bool = True) -> tuple[int, Algorithm]:
@@ -102,7 +137,7 @@ def test_create_algorithm_from_data(algorithm_factory: AlgorithmFactory) -> Base
 
 @pytest.fixture
 def test_create_lobby_from_data(
-        lobby_factory: LobbyFactory, 
+        lobby_factory: LobbyFactory,
         test_algorithm: Algorithm
 ) -> BaseObjectFixtureCallable:
 
