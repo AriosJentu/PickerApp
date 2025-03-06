@@ -167,7 +167,7 @@ async def test_get_algorithm_info(
     assert json_data["teams_count"] == algorithm.teams_count, "Algorithm teams count does not match"
 
 
-
+# TODO: Update, because now I have `404` when data is empty
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "update_data, expected_status, error_substr",

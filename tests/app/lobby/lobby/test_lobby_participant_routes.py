@@ -106,6 +106,7 @@ async def test_add_participant(
             assert json_data["team"]["id"] == team_id, f"Team ID is not the same as participant added to"
 
 
+# TODO: Update, because now I have `404` when data is empty
 @pytest.mark.asyncio
 @pytest.mark.parametrize("update_data", [
     {"role":        LobbyParticipantRole.PLAYER}, 

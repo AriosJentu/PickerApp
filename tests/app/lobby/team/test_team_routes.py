@@ -164,6 +164,7 @@ async def test_get_team_info(
     assert json_data["lobby"]["id"] == lobby.id, "Lobby ID associated with team is incorrect"
 
 
+# TODO: Update, because now I have `404` when data is empty
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "update_data, expected_status, error_msg",
