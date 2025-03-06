@@ -129,7 +129,7 @@ async def test_create_team(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
 @pytest.mark.parametrize(
-    "team_exists, expected_status, error_msg",
+    "team_exists, expected_status, error_substr",
     [
         (True,  200,    ""),
         (False, 404,    "Team not found"),
@@ -143,7 +143,7 @@ async def test_get_team_info(
         role: UserRole,
         team_exists: bool,
         expected_status: int,
-        error_msg: str
+        error_substr: str
 ):
     
     user, headers = await test_base_user_from_role(role)
@@ -154,11 +154,11 @@ async def test_get_team_info(
     response: Response = await client_async.get(route, headers=headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
+    json_data = response.json()
     if not team_exists:
-        assert error_msg in response.json()["detail"], f"Expected error message '{error_msg}', got: {response.json()['detail']}"
+        assert error_substr in json_data["detail"], f"Expected error message '{error_substr}', got: {json_data['detail']}"
         return
 
-    json_data = response.json()
     assert json_data["id"] == team.id, "Team ID does not match"
     assert json_data["name"] == team.name, "Team name does not match"
     assert json_data["lobby"]["id"] == lobby.id, "Lobby ID associated with team is incorrect"
@@ -167,7 +167,7 @@ async def test_get_team_info(
 # TODO: Update, because now I have `404` when data is empty
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "update_data, expected_status, error_msg",
+    "update_data, expected_status, error_substr",
     [
         ({"name":   "Updated Team Name"},   200,    ""),
         ({"name":   "  "},                  422,    "Team name cannot be empty"),
@@ -175,16 +175,16 @@ async def test_get_team_info(
     ]
 )
 @pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status_access",
+    "role, is_lobby_owner, expected_status_access, error_substr_access",
     [
-        (UserRole.ADMIN,        False,  200),
-        (UserRole.MODERATOR,    False,  200),
-        (UserRole.USER,         True,   200),
-        (UserRole.USER,         False,  403),
+        (UserRole.ADMIN,        False,  200,    ""),
+        (UserRole.MODERATOR,    False,  200,    ""),
+        (UserRole.USER,         True,   200,    ""),
+        (UserRole.USER,         False,  403,    "No access to control team"),
     ]
 )
 @pytest.mark.parametrize(
-    "team_exists, expected_status_exists, error_msg_exists",
+    "team_exists, expected_status_exists, error_substr_exists",
     [
         (True,  200,    ""),
         (False, 404,    "Team not found"),
@@ -202,8 +202,9 @@ async def test_update_team(
         expected_status: int,
         expected_status_access: int,
         expected_status_exists: int,
-        error_msg: str,
-        error_msg_exists: str,
+        error_substr: str,
+        error_substr_access: str,
+        error_substr_exists: str,
 ):
 
 
@@ -214,37 +215,37 @@ async def test_update_team(
     route = f"/api/v1/teams/{team_id}"
     response: Response = await client_async.put(route, json=update_data, headers=headers)
     
+    json_data = response.json()
     if expected_status != 200:
         assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
-        message = response.json()["detail"][0]["msg"]
-        assert error_msg in message, f"Expected validation error message '{error_msg}', got: {message}"
+        assert error_substr in str(json_data["detail"]), f"Expected validation error message '{error_substr}', got: {json_data['detail']}"
         return
 
     if not team_exists:
         assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
-        assert error_msg_exists in response.json()["detail"], f"Expected error message '{error_msg_exists}', got: {response.json()['detail']}"
+        assert error_substr_exists in json_data["detail"], f"Expected error message '{error_substr_exists}', got: {json_data['detail']}"
         return
 
     assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
     if expected_status_access != 200:
+        assert error_substr_access in str(json_data["detail"]), f"Expected error '{error_substr_access}', got: {json_data['detail']}"
         return
 
-    json_data = response.json()
     assert json_data["name"] == update_data["name"], "Team name was not updated"
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status_access",
+    "role, is_lobby_owner, expected_status_access, error_substr_access",
     [
-        (UserRole.ADMIN,        False,  200),
-        (UserRole.MODERATOR,    False,  200),
-        (UserRole.USER,         True,   200),
-        (UserRole.USER,         False,  403),
+        (UserRole.ADMIN,        False,  200,    ""),
+        (UserRole.MODERATOR,    False,  200,    ""),
+        (UserRole.USER,         True,   200,    ""),
+        (UserRole.USER,         False,  403,    "No access to control team"),
     ]
 )
 @pytest.mark.parametrize(
-    "team_exists, expected_status_exists, error_msg_exists",
+    "team_exists, expected_status_exists, error_substr_exists",
     [
         (True,  200,    ""),
         (False, 404,    "Team not found"),
@@ -260,7 +261,8 @@ async def test_delete_team(
         team_exists: bool,
         expected_status_access: int,
         expected_status_exists: int,
-        error_msg_exists: str,
+        error_substr_access: str,
+        error_substr_exists: str,
 ):
 
     user, headers, creator, _ = await test_base_creator_users_from_role(role)
@@ -270,18 +272,18 @@ async def test_delete_team(
     route = f"/api/v1/teams/{team_id}"
     response: Response = await client_async.delete(route, headers=headers)
 
+    json_data = response.json()
     if expected_status_exists != 200:
         assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
-        assert error_msg_exists in response.json()["detail"], f"Expected error message '{error_msg_exists}', got: {response.json()['detail']}"
+        assert error_substr_exists in json_data["detail"], f"Expected error message '{error_substr_exists}', got: {json_data['detail']}"
         return
 
+    assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
     if expected_status_access != 200:
-        assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+        assert error_substr_access in json_data["detail"], f"Expected error message '{error_substr_access}', got: {json_data['detail']}"
         return
 
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-    
-    json_data = response.json()
+    # assert response.status_code == 200, f"Expected 200, got {response.status_code}"
     assert json_data["description"] == f"Team '{team.name}' deleted successfully"
 
 

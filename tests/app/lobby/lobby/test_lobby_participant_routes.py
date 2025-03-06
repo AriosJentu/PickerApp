@@ -64,12 +64,12 @@ async def test_lobby_participants_routes_require_auth(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("with_team", [True, False])
 @pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status",
+    "role, is_lobby_owner, expected_status, error_substr",
     [
-        (UserRole.ADMIN,        False,  200),
-        (UserRole.MODERATOR,    False,  200),
-        (UserRole.USER,         True,   200),
-        (UserRole.USER,         False,  403),
+        (UserRole.ADMIN,        False,  200,    ""),
+        (UserRole.MODERATOR,    False,  200,    ""),
+        (UserRole.USER,         True,   200,    ""),
+        (UserRole.USER,         False,  403,    "No access to control lobby"),
     ]
 )
 async def test_add_participant(
@@ -81,6 +81,7 @@ async def test_add_participant(
         role: UserRole,
         is_lobby_owner: bool,
         expected_status: int,
+        error_substr: str,
 ):
 
     user, headers, creator, _ = await test_base_creator_users_from_role(role)
@@ -96,14 +97,17 @@ async def test_add_participant(
     response: Response = await client_async.post(route, params=params, headers=headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
-    if expected_status == 200:
-        json_data = response.json()
-        assert json_data["lobby"]["id"] == lobby_id, f"Lobby ID is not the same as participant added to"
-        assert json_data["user"]["id"] == user.id, f"User ID is not the same as participant's"
-        assert json_data["role"] == LobbyParticipantRole.SPECTATOR, f"Participant has incorrect role"
+    json_data = response.json()
+    if expected_status != 200:
+        assert error_substr in str(json_data["detail"]), f"Expected error '{error_substr}', got: {json_data['detail']}"
+        return
 
-        if with_team:
-            assert json_data["team"]["id"] == team_id, f"Team ID is not the same as participant added to"
+    assert json_data["lobby"]["id"] == lobby_id, f"Lobby ID is not the same as participant added to"
+    assert json_data["user"]["id"] == user.id, f"User ID is not the same as participant's"
+    assert json_data["role"] == LobbyParticipantRole.SPECTATOR, f"Participant has incorrect role"
+
+    if with_team:
+        assert json_data["team"]["id"] == team_id, f"Team ID is not the same as participant added to"
 
 
 # TODO: Update, because now I have `404` when data is empty
@@ -114,12 +118,12 @@ async def test_add_participant(
     {"is_active":   False},
 ])
 @pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status",
+    "role, is_lobby_owner, expected_status, error_substr",
     [
-        (UserRole.ADMIN,        False,  200),
-        (UserRole.MODERATOR,    False,  200),
-        (UserRole.USER,         True,   200),
-        (UserRole.USER,         False,  403),
+        (UserRole.ADMIN,        False,  200,    ""),
+        (UserRole.MODERATOR,    False,  200,    ""),
+        (UserRole.USER,         True,   200,    ""),
+        (UserRole.USER,         False,  403,    "No access to control lobby"),
     ]
 )
 async def test_edit_participant(
@@ -130,7 +134,8 @@ async def test_edit_participant(
         update_data: InputData,
         role: UserRole,
         is_lobby_owner: bool,
-        expected_status: int
+        expected_status: int,
+        error_substr: str
 ):
 
     user, headers, creator, headers_creator, user_to_add, _ = await test_base_creator_additional_users_from_role(role)
@@ -151,22 +156,25 @@ async def test_edit_participant(
     response: Response = await client_async.put(route, json=update_data, headers=headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
-    if expected_status == 200:
-        json_data = response.json()
-        assert json_data["lobby"]["id"] == lobby_id, f"Lobby ID is not the same as participant added to"
-        assert json_data["user"]["id"] == user_to_add.id, f"User ID is not the same as participant's"
+    json_data = response.json()
+    if expected_status != 200:
+        assert error_substr in str(json_data["detail"]), f"Expected error '{error_substr}', got: {json_data['detail']}"
+        return
 
-        if "role" in update_data:
-            assert json_data["role"] == update_data["role"], f"Role was not updated"
+    assert json_data["lobby"]["id"] == lobby_id, f"Lobby ID is not the same as participant added to"
+    assert json_data["user"]["id"] == user_to_add.id, f"User ID is not the same as participant's"
 
-        if "team_id" in update_data and update_data["team_id"] is not None:
-            assert json_data["team"]["id"] == update_data["team_id"], f"Team ID was not updated"
+    if "role" in update_data:
+        assert json_data["role"] == update_data["role"], f"Role was not updated"
 
-        if "team_id" in update_data and update_data["team_id"] is None:
-            assert json_data["team"] == update_data["team_id"], f"Team was not nulled"
+    if "team_id" in update_data and update_data["team_id"] is not None:
+        assert json_data["team"]["id"] == update_data["team_id"], f"Team ID was not updated"
 
-        if "is_active" in update_data:
-            assert json_data["is_active"] == update_data["is_active"], f"Active state was not updated"
+    if "team_id" in update_data and update_data["team_id"] is None:
+        assert json_data["team"] == update_data["team_id"], f"Team was not nulled"
+
+    if "is_active" in update_data:
+        assert json_data["is_active"] == update_data["is_active"], f"Active state was not updated"
 
 
 @pytest.mark.asyncio
@@ -228,12 +236,12 @@ async def test_leave_lobby(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status",
+    "role, is_lobby_owner, expected_status, error_substr",
     [
-        (UserRole.ADMIN,        False,  200),
-        (UserRole.MODERATOR,    False,  200),
-        (UserRole.USER,         True,   200),
-        (UserRole.USER,         False,  403),
+        (UserRole.ADMIN,        False,  200,    ""),
+        (UserRole.MODERATOR,    False,  200,    ""),
+        (UserRole.USER,         True,   200,    ""),
+        (UserRole.USER,         False,  403,    "No access to control lobby"),
     ]
 )
 async def test_kick_from_lobby(
@@ -242,7 +250,8 @@ async def test_kick_from_lobby(
         test_create_lobby_from_data: BaseObjectFixtureCallable,
         role: UserRole,
         is_lobby_owner: bool,
-        expected_status: int
+        expected_status: int,
+        error_substr: str
 ):
 
     user, headers, creator, headers_creator, user_to_add, _ = await test_base_creator_additional_users_from_role(role)
@@ -262,12 +271,15 @@ async def test_kick_from_lobby(
     response: Response = await client_async.delete(route, headers=headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
-    if expected_status == 200:
-        response: Response = await client_async.delete(route, headers=headers)
-        assert response.status_code == 404, f"Expected 404, got {response.status_code}"
+    if expected_status != 200:
+        assert error_substr in str(response.json()["detail"]), f"Expected error '{error_substr}', got: {response.json()['detail']}"
+        return 
 
-        json_data = response.json()
-        assert json_data["detail"] == "Participant not found", f"Expected that participant already not in lobby"
+    response: Response = await client_async.delete(route, headers=headers)
+    assert response.status_code == 404, f"Expected 404, got {response.status_code}"
+
+    json_data = response.json()
+    assert json_data["detail"] == "Participant not found", f"Expected that participant already not in lobby"
 
 
 filter_data = [

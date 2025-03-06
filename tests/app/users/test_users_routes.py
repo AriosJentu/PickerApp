@@ -105,7 +105,7 @@ async def test_get_user_by_data(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "update_data, expected_status, error_msg",
+    "update_data, expected_status, error_substr",
     [
         ({"email":          "new_email@example.com"},                   200, ""),
         ({"username":       "somenewname"},                             200, ""),
@@ -116,7 +116,7 @@ async def test_get_user_by_data(
     ]
 )
 @pytest.mark.parametrize("role, expected_status_access", default_roles_access)
-@pytest.mark.parametrize("is_user_exist, expected_status_exists, existance_error_msg, user_params", default_search_user_data)
+@pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", default_search_user_data)
 async def test_update_user(
         client_async: AsyncClient,
         test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
@@ -126,8 +126,8 @@ async def test_update_user(
         expected_status_access: int,
         expected_status_exists: int,
         is_user_exist: bool,
-        error_msg: str,
-        existance_error_msg: str,
+        error_substr: str,
+        error_substr_exists: str,
         role: UserRole
 ):
     route = "/api/v1/users/"
@@ -137,18 +137,19 @@ async def test_update_user(
         user_params["get_user_id"] = updatable_user.id
 
     response: Response = await client_async.put(route, headers=headers, json=update_data, params=user_params)
+    json_data = response.json()
+
     if expected_status_access != 200:
         assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
         return
 
     if expected_status != 200:
         assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
-        assert error_msg in str(response.json()["detail"])
+        assert error_substr in str(json_data["detail"]), f"Details not containing info '{error_substr}'"
         return
 
     assert response.status_code == expected_status_exists, f"Expected {expected_status}, got {response.status_code}"
 
-    json_data = response.json()
     if is_user_exist:
         if "email" in update_data:
             assert json_data["email"] == update_data["email"], "Email was not updated"
@@ -156,19 +157,19 @@ async def test_update_user(
         if "username" in update_data:
             assert json_data["username"] == update_data["username"], "Email was not updated"
     else:
-        assert existance_error_msg in json_data["detail"], f"Details not containing info '{existance_error_msg}'"
+        assert error_substr_exists in json_data["detail"], f"Details not containing info '{error_substr_exists}'"
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role, expected_status_access", default_roles_access)
-@pytest.mark.parametrize("is_user_exist, expected_status_exists, existance_error_msg, user_params", default_search_user_data)
+@pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", default_search_user_data)
 async def test_delete_user(
         client_async: AsyncClient,
         test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
         user_params: InputData,
         expected_status_access: int,
         expected_status_exists: int,
-        existance_error_msg: str,
+        error_substr_exists: str,
         is_user_exist: bool,
         role: UserRole,
 ):
@@ -179,18 +180,18 @@ async def test_delete_user(
         user_params["get_user_id"] = deletable_user.id
 
     response: Response = await client_async.delete(route, headers=headers, params=user_params)
+    json_data = response.json()
+
     if expected_status_access != 200:
         assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
         return
 
+    assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
     if expected_status_exists != 200:
-        assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
-        assert existance_error_msg in str(response.json()["detail"])
+        assert error_substr_exists in str(json_data["detail"]), f"Details not containing info '{error_substr_exists}'"
         return
 
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-
-    json_data = response.json()
+    # assert response.status_code == 200, f"Expected 200, got {response.status_code}"
     assert json_data["id"] == deletable_user.id, "Deleted user ID does not match"
     assert json_data["username"] == deletable_user.username, "Deleted user username does not match"
     assert json_data["email"] == deletable_user.email, "Deleted user email does not match"
@@ -199,7 +200,7 @@ async def test_delete_user(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role, expected_status_access", default_roles_access)
-@pytest.mark.parametrize("is_user_exist, expected_status_exists, existance_error_msg, user_params", default_search_user_data)
+@pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", default_search_user_data)
 async def test_clear_user_tokens(
         client_async: AsyncClient,
         test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
@@ -207,7 +208,7 @@ async def test_clear_user_tokens(
         expected_status_access: int,
         is_user_exist: bool,
         expected_status_exists: int,
-        existance_error_msg: str,
+        error_substr_exists: str,
         user_params: InputData
 ):
 
@@ -218,18 +219,19 @@ async def test_clear_user_tokens(
         user_params["get_user_id"] = updatable_user.id
 
     response: Response = await client_async.delete(route, headers=headers, params=user_params)
+    json_data = response.json()
+    
     if expected_status_access != 200:
         assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
         return
 
     if expected_status_exists != 200:
         assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
-        assert existance_error_msg in str(response.json()["detail"])
+        assert error_substr_exists in str(json_data["detail"]), f"Details not containing info '{error_substr_exists}'"
         return
 
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
-    json_data = response.json()
     assert json_data["id"] == updatable_user.id, "User ID does not match"
     assert json_data["username"] == updatable_user.username, "Username does not match"
     assert json_data["email"] == updatable_user.email, "Email does not match"

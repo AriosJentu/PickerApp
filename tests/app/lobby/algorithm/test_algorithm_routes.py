@@ -117,13 +117,13 @@ async def test_create_algorithm(
 
     algorithm_data["creator_id"] = user.id
     response: Response = await client_async.post(route, json=algorithm_data, headers=headers)
-
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
+    
+    json_data = response.json()
     if expected_status != 200:
-        assert error_substr in response.json()["detail"][0]["msg"], f"Incorrect validation response: {response.json()['detail'][0]['msg']}"
+        assert error_substr in str(json_data["detail"]), f"Incorrect validation response: {json_data["detail"]}"
         return
 
-    json_data = response.json()
     assert json_data["name"] == algorithm_data["name"], "Algorithm name does not match"
     assert json_data["algorithm"] == algorithm_data["algorithm"], "Algorithm script does not match"
     assert json_data["teams_count"] == algorithm_data["teams_count"], "Teams count does not match"
@@ -133,7 +133,7 @@ async def test_create_algorithm(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
 @pytest.mark.parametrize(
-    "algorithm_exists, expected_status, error_msg",
+    "algorithm_exists, expected_status, error_substr",
     [
         (True,  200,    ""),
         (False, 404,    "Algorithm not found"),
@@ -146,7 +146,7 @@ async def test_get_algorithm_info(
         role: UserRole,
         algorithm_exists: bool,
         expected_status: int,
-        error_msg: str
+        error_substr: str
 ):
     
     user, headers = await test_base_user_from_role(role)
@@ -156,11 +156,11 @@ async def test_get_algorithm_info(
     response: Response = await client_async.get(route, headers=headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
+    json_data = response.json()
     if not algorithm_exists:
-        assert error_msg in response.json()["detail"], f"Expected error message '{error_msg}', got: {response.json()['detail']}"
+        assert error_substr in json_data["detail"], f"Expected error message '{error_substr}', got: {json_data['detail']}"
         return
 
-    json_data = response.json()
     assert json_data["id"] == algorithm_id, "Algorithm ID does not match"
     assert json_data["name"] == algorithm.name, "Algorithm name does not match"
     assert json_data["algorithm"] == algorithm.algorithm, "Algorithm script does not match"
@@ -215,16 +215,16 @@ async def test_get_algorithm_info(
     ]
 )
 @pytest.mark.parametrize(
-    "role, is_creator, expected_status_access",
+    "role, is_creator, expected_status_access, error_substr_access",
     [
-        (UserRole.ADMIN,        False,  200),
-        (UserRole.MODERATOR,    False,  200),
-        (UserRole.USER,         True,   200),
-        (UserRole.USER,         False,  403),
+        (UserRole.ADMIN,        False,  200,    ""),
+        (UserRole.MODERATOR,    False,  200,    ""),
+        (UserRole.USER,         True,   200,    ""),
+        (UserRole.USER,         False,  403,    "No access to control algorithm"),
     ]
 )
 @pytest.mark.parametrize(
-    "algorithm_exists, expected_status_exists, error_msg_exists",
+    "algorithm_exists, expected_status_exists, error_substr_exists",
     [
         (True,  200,    ""),
         (False, 404,    "Algorithm not found"),
@@ -242,7 +242,8 @@ async def test_update_algorithm(
         update_data: InputData,
         expected_status: int,
         error_substr: str,
-        error_msg_exists: str
+        error_substr_access: str,
+        error_substr_exists: str,
 ):
     user, headers, creator, _ = await test_base_creator_users_from_role(role)
     algorithm_id, _ = await test_create_algorithm_from_data(user if is_creator else creator, algorithm_exists)
@@ -250,22 +251,22 @@ async def test_update_algorithm(
     route = f"/api/v1/algorithm/{algorithm_id}"
     response: Response = await client_async.put(route, json=update_data, headers=headers)
 
+    json_data = response.json()
     if expected_status != 200:
         assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
-        message = response.json()["detail"][0]["msg"]
-        assert error_substr in message, f"Expected validation error '{error_substr}', got: {message}"
+        assert error_substr in str(json_data["detail"]), f"Expected validation error '{error_substr}', got: {json_data["detail"]}"
         return
     
     if not algorithm_exists:
         assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
-        assert error_msg_exists in response.json()["detail"], f"Expected error message '{error_msg_exists}', got: {response.json()["detail"]}"
+        assert error_substr_exists in json_data["detail"], f"Expected error message '{error_substr_exists}', got: {json_data["detail"]}"
         return
 
     assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
     if expected_status_access != 200:
+        assert error_substr_access in json_data["detail"], f"Expected error message '{error_substr_access}', got: {json_data["detail"]}"
         return
     
-    json_data = response.json()
     assert json_data["name"] == update_data["name"], "Algorithm name was not updated"
     assert json_data["algorithm"] == update_data["algorithm"], "Algorithm script was not updated"
     assert json_data["teams_count"] == update_data["teams_count"], "Teams count was not updated"    
@@ -273,16 +274,16 @@ async def test_update_algorithm(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "role, is_creator, expected_status_access",
+    "role, is_creator, expected_status_access, error_substr_access",
     [
-        (UserRole.ADMIN,        False,  200),
-        (UserRole.MODERATOR,    False,  200),
-        (UserRole.USER,         True,   200),
-        (UserRole.USER,         False,  403),
+        (UserRole.ADMIN,        False,  200,    ""),
+        (UserRole.MODERATOR,    False,  200,    ""),
+        (UserRole.USER,         True,   200,    ""),
+        (UserRole.USER,         False,  403,    "No access to control algorithm"),
     ]
 )
 @pytest.mark.parametrize(
-    "algorithm_exists, expected_status_exists, error_msg_exists",
+    "algorithm_exists, expected_status_exists, error_substr_exists",
     [
         (True,  200,    ""),
         (False, 404,    "Algorithm not found"),
@@ -297,7 +298,8 @@ async def test_delete_algorithm(
         algorithm_exists: bool,
         expected_status_access: int,
         expected_status_exists: int,
-        error_msg_exists: str,
+        error_substr_access: str,
+        error_substr_exists: str,
 ):
 
     user, headers, creator, _ = await test_base_creator_users_from_role(role)
@@ -306,16 +308,17 @@ async def test_delete_algorithm(
     route = f"/api/v1/algorithm/{algorithm_id}"
     response: Response = await client_async.delete(route, headers=headers)
 
+    json_data = response.json()
     if not algorithm_exists:
         assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
-        assert error_msg_exists in response.json().get("detail", ""), f"Expected error message '{error_msg_exists}', got: {response.json().get('detail', '')}"
+        assert error_substr_exists in str(json_data["detail"]), f"Expected error message '{error_substr_exists}', got: {json_data["detail"]}"
         return
 
     assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
     if expected_status_access != 200:
+        assert error_substr_access in str(json_data["detail"]), f"Expected error message '{error_substr_access}', got: {json_data["detail"]}"
         return
 
-    json_data = response.json()
     assert json_data["id"] == algorithm_id, "Algorithm ID is not correct"
     assert algorithm.name in json_data["description"], "Algorithm name is not in response description"
 
