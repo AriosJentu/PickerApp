@@ -24,7 +24,7 @@ async def create_lobby(db: AsyncSession, lobby: LobbyCreate) -> Lobby:
     return await db_create_lobby(db, new_lobby)
 
 
-async def update_lobby(db: AsyncSession, lobby: Lobby, update_data: LobbyUpdate) -> Lobby:
+async def update_lobby(db: AsyncSession, lobby: Lobby, update_data: LobbyUpdate) -> Optional[Lobby]:
     return await db_update_lobby(db, lobby, update_data)
 
 

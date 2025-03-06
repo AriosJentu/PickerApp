@@ -13,11 +13,27 @@ class HTTPLobbyAlgorithmNotFound(HTTPLobbyException):
         )
 
 
+class HTTPLobbyAlgorithmUpdateDataNotProvided(HTTPLobbyException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Algorithm update data not provided",
+        )
+
+
 class HTTPLobbyNotFound(HTTPLobbyException):
     def __init__(self):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Lobby not found",
+        )
+
+
+class HTTPLobbyUpdateDataNotProvided(HTTPLobbyException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Lobby update data not provided",
         )
 
 
@@ -61,6 +77,14 @@ class HTTPTeamNotFound(HTTPLobbyException):
         )
 
 
+class HTTPTeamUpdateDataNotProvided(HTTPLobbyException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Team update data not provided",
+        )
+
+
 class HTTPLobbyInternalError(HTTPLobbyException):
     def __init__(self, description: str):
         super().__init__(
@@ -90,4 +114,12 @@ class HTTPLobbyParticipantNotFound(HTTPLobbyException):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Participant not found"
+        )
+
+
+class HTTPLobbyParticipantUpdateDataNotProvided(HTTPLobbyException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Participant update data not provided",
         )

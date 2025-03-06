@@ -35,6 +35,7 @@ from app.exceptions.lobby import (
     HTTPLobbyInternalError,
     HTTPTeamCreatingFailed,
     HTTPTeamNotFound,
+    HTTPTeamUpdateDataNotProvided,
 )
 
 
@@ -138,7 +139,7 @@ async def update_team_(
     updated_team = await update_team(db, team, update_data)
 
     if not updated_team:
-        raise HTTPTeamNotFound()
+        raise HTTPTeamUpdateDataNotProvided()
     
     return updated_team
 

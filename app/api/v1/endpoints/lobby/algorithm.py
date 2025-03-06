@@ -33,6 +33,7 @@ from app.exceptions.lobby import (
     HTTPLobbyAlgorithmNotFound,
     HTTPLobbyAlgorithmAccessDenied,
     HTTPAlgorithmCreatingFailed,
+    HTTPLobbyAlgorithmUpdateDataNotProvided,
 )
 
 
@@ -111,7 +112,7 @@ async def update_algorithm_(
     updated_algorithm = await update_algorithm(db, algorithm, update_data)
 
     if not updated_algorithm:
-        raise HTTPLobbyAlgorithmNotFound()
+        raise HTTPLobbyAlgorithmUpdateDataNotProvided()
     
     return updated_algorithm
 

@@ -57,6 +57,8 @@ from app.exceptions.lobby import (
     HTTPLobbyInternalError,
     HTTPLobbyUserAlreadyIn,
     HTTPLobbyParticipantNotFound,
+    HTTPLobbyUpdateDataNotProvided,
+    HTTPLobbyParticipantUpdateDataNotProvided,
     HTTPTeamNotFound,
 )
 
@@ -137,7 +139,12 @@ async def update_lobby_(
         raise HTTPLobbyNotFound()
     
     process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
-    return await update_lobby(db, lobby, lobby_data)
+    
+    lobby = await update_lobby(db, lobby, lobby_data)
+    if not lobby:
+        raise HTTPLobbyUpdateDataNotProvided()
+
+    return lobby
 
 
 @router.put("/{lobby_id}/close", response_model=LobbyRead)
@@ -151,7 +158,11 @@ async def close_lobby_(
         raise HTTPLobbyNotFound()
     
     process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
-    return await close_lobby(db, lobby)
+    lobby = await close_lobby(db, lobby)
+    if not lobby:
+        raise HTTPLobbyUpdateDataNotProvided()
+
+    return lobby
 
 
 @router.delete("/{lobby_id}", response_model=LobbyResponse)
@@ -270,7 +281,11 @@ async def edit_participant_(
     if not participant:
         raise HTTPLobbyParticipantNotFound()
     
-    return await update_lobby_participant(db, participant, update_data)
+    participant = await update_lobby_participant(db, participant, update_data)
+    if not participant:
+        raise HTTPLobbyParticipantUpdateDataNotProvided()
+    
+    return participant
 
 
 @router.post("/{lobby_id}/connect", response_model=LobbyParticipantWithLobbyRead)
