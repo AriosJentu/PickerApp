@@ -8,11 +8,12 @@ from app.enums.user import UserRole
 
 from tests.factories.user_factory import UserFactory
 
-from tests.types import BaseUserFixtureCallable, InputData, OutputData, RouteBaseFixture
+from tests.types import InputData, OutputData, RouteBaseFixture
 from tests.constants import Roles
+from tests.factories.general_factory import GeneralFactory
+
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
-from tests.utils.common_fixtures import test_base_user_from_role, protected_route
 
 
 all_routes = [
@@ -27,11 +28,11 @@ all_routes = [
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_auth_routes_access(
         client_async: AsyncClient,
+        general_factory: GeneralFactory,
         protected_route: RouteBaseFixture,
-        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
+    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
 
 
 @pytest.mark.asyncio
@@ -143,17 +144,17 @@ async def test_login_user(
 @pytest.mark.asyncio
 async def test_logout_user(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
 ):
     
     route = "/api/v1/auth/logout"
-    _, headers = await test_base_user_from_role()
+    base_user_data = await general_factory.create_base_user()
     
-    response: Response = await client_async.post(route, headers=headers)
+    response: Response = await client_async.post(route, headers=base_user_data.headers)
     assert response.status_code == 200, f"Expected 200 for Logout, got {response.status_code}"
     assert "Successfully logout" in response.json().get("detail", "")
 
-    response: Response = await client_async.post(route, headers=headers)
+    response: Response = await client_async.post(route, headers=base_user_data.headers)
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
     assert "Authorization token is invalid or expired" in response.json().get("detail", "")
 
@@ -161,21 +162,21 @@ async def test_logout_user(
 @pytest.mark.asyncio
 async def test_successful_refresh(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
 ):
     
     route = "/api/v1/auth/refresh"
     check_route = "/api/v1/account/check-token"
-    _, access_token, _, headers = await test_base_user_from_role(UserRole.USER, True, True)
+    base_user_data = await general_factory.create_base_user(is_refresh_token=True)
 
-    response: Response = await client_async.post(route, headers=headers)
+    response: Response = await client_async.post(route, headers=base_user_data.headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     json_data = response.json()
     assert "access_token" in json_data and "refresh_token" in json_data, f"Missing tokens: {json_data}"
 
     new_access_token = json_data["access_token"]
-    assert new_access_token != access_token, "New access_token should be different"
+    assert new_access_token != base_user_data.access_token, "New access_token should be different"
     headers = {"Authorization": f"Bearer {new_access_token}"}
 
     response: Response = await client_async.get(check_route, headers=headers)
@@ -185,12 +186,12 @@ async def test_successful_refresh(
 @pytest.mark.asyncio
 async def test_refresh_with_access_token_incorrect(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
 ):
     
     route = "/api/v1/auth/refresh"
-    _, headers = await test_base_user_from_role()
+    base_user_data = await general_factory.create_base_user()
 
-    response: Response = await client_async.post(route, headers=headers)
+    response: Response = await client_async.post(route, headers=base_user_data.headers)
     assert response.status_code == 401, f"Expected 401, got {response.status_code}"
     assert "Invalid authorization token type" in response.json().get("detail", "")

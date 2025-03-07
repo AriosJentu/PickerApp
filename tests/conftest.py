@@ -20,6 +20,7 @@ from app.db.session import get_async_session
 from app.db.base import Base, User, Algorithm, Lobby, Team, LobbyParticipant
 from app.enums.user import UserRole
 
+from tests.types import RouteBaseFixture
 from tests.constants import (
     USERS_COUNT, 
     ALGORITHMS_COUNT, 
@@ -33,6 +34,7 @@ from tests.factories.lobby_factory import LobbyFactory
 from tests.factories.team_factory import TeamFactory
 from tests.factories.token_factory import TokenFactory
 from tests.factories.participant_factory import ParticipantFactory
+from tests.factories.general_factory import GeneralFactory
 
 from tests.utils.user_utils import create_user_with_tokens
 
@@ -73,6 +75,11 @@ async def client_async(db_async: AsyncSession) -> AsyncGenerator[AsyncClient, No
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
+
+
+@pytest.fixture
+def protected_route(request) -> RouteBaseFixture:
+    return request.param
 
 
 @pytest.fixture
@@ -249,3 +256,15 @@ async def create_test_participants(
         participants.append(participant)
 
     return participants
+
+
+@pytest.fixture
+def general_factory(
+        db_async: AsyncSession,
+        user_factory: UserFactory, 
+        token_factory: TokenFactory,
+        algorithm_factory: AlgorithmFactory, 
+        lobby_factory: LobbyFactory,
+        team_factory: TeamFactory,
+):
+    return GeneralFactory(db_async, user_factory, token_factory, algorithm_factory, lobby_factory, team_factory)

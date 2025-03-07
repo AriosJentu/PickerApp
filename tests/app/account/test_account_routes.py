@@ -6,20 +6,12 @@ from httpx import AsyncClient
 
 from app.enums.user import UserRole
 
-from tests.types import (
-    BaseUserFixtureCallable,
-    BaseAdditionalUserFixtureCallable, 
-    InputData, 
-    RouteBaseFixture
-)
+from tests.types import InputData, RouteBaseFixture
 from tests.constants import Roles
+from tests.factories.general_factory import GeneralFactory
+
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
-from tests.utils.common_fixtures import (
-    test_base_user_from_role, 
-    test_add_extra_users_with_email_password,
-    protected_route
-)
 
 
 all_routes = [
@@ -34,11 +26,11 @@ all_routes = [
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_account_routes_access(
         client_async: AsyncClient,
+        general_factory: GeneralFactory,
         protected_route: RouteBaseFixture,
-        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
+    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
 
 
 @pytest.mark.asyncio
@@ -54,20 +46,20 @@ async def test_account_routes_require_auth(
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_get_current_user(
         client_async: AsyncClient, 
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         role: UserRole
 ):
     
     route = "/api/v1/account/"
-    user, headers = await test_base_user_from_role(role)
+    base_user_data = await general_factory.create_base_user(role)
 
-    response: Response = await client_async.get(route, headers=headers)
+    response: Response = await client_async.get(route, headers=base_user_data.headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     user_data = response.json()
-    assert user_data["username"] == user.username, f"Expected username: {user.username}, got {user_data["username"]}"
-    assert user_data["email"] == user.email, f"Expected email: {user.email}, got {user_data["email"]}"
-    assert user_data["role"] == str(user.role), f"Expected role: {str(user.role)}, got {user_data["role"]}"
+    assert user_data["username"] == base_user_data.user.username, f"Expected username: {base_user_data.user.username}, got {user_data["username"]}"
+    assert user_data["email"] == base_user_data.user.email, f"Expected email: {base_user_data.user.email}, got {user_data["email"]}"
+    assert user_data["role"] == str(base_user_data.user.role), f"Expected role: {str(base_user_data.user.role)}, got {user_data["role"]}"
 
 
 @pytest.mark.asyncio
@@ -101,8 +93,7 @@ async def test_get_current_user(
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_update_current_user(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
-        test_add_extra_users_with_email_password: BaseAdditionalUserFixtureCallable,
+        general_factory: GeneralFactory,
         update_data: InputData,
         role: UserRole,
         duplicate_email: bool,
@@ -115,13 +106,13 @@ async def test_update_current_user(
         error_username_substr: str
 ):
     route = "/api/v1/account/"
-    _, headers = await test_base_user_from_role(role)
+    base_user_data = await general_factory.create_base_user(role)
 
     duplicate_email = duplicate_email and "email" in update_data
     duplicate_username = duplicate_username and "username" in update_data
-    await test_add_extra_users_with_email_password(update_data, duplicate_email, duplicate_username, expected_status == 422)
+    await general_factory.create_extra_user(update_data, duplicate_email, duplicate_username, expected_status == 422)
 
-    response: Response = await client_async.put(route, headers=headers, json=update_data)
+    response: Response = await client_async.put(route, headers=base_user_data.headers, json=update_data)
     json_data = response.json()
 
     if expected_status != 200:
@@ -161,17 +152,17 @@ async def test_update_current_user(
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_delete_current_user(
         client_async: AsyncClient, 
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         role: UserRole
 ):
     
     route = "/api/v1/account/"
-    _, headers = await test_base_user_from_role(role)
+    base_user_data = await general_factory.create_base_user(role)
 
-    response: Response = await client_async.delete(route, headers=headers)
+    response: Response = await client_async.delete(route, headers=base_user_data.headers)
     assert response.status_code == 204, f"Expected 204, got {response.status_code}"
 
-    deleted_info: Response = await client_async.delete(route, headers=headers)
+    deleted_info: Response = await client_async.delete(route, headers=base_user_data.headers)
     assert deleted_info.status_code == 401, f"Expected 401 for deleted user, got {deleted_info.status_code}"
     assert "Authorization token is invalid or expired" in str(deleted_info.json())
 
@@ -180,19 +171,19 @@ async def test_delete_current_user(
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_check_token(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         role: UserRole
 ):
     
     route = "/api/v1/account/check-token"
-    user, headers = await test_base_user_from_role(role)
+    base_user_data = await general_factory.create_base_user(role)
 
-    response: Response = await client_async.get(route, headers=headers)
+    response: Response = await client_async.get(route, headers=base_user_data.headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     json_data = response.json()
     assert json_data["active"] is True, "Expected token state `Active`"
-    assert json_data["username"] == user.username, f"Expected username: {user.username}, got {json_data['username']}"
-    assert json_data["email"] == user.email, f"Expected email: {user.email}, got {json_data['email']}"
-    assert json_data["role"] == user.role, f"Expected role: {user.role}, got {json_data['role']}"
+    assert json_data["username"] == base_user_data.user.username, f"Expected username: {base_user_data.user.username}, got {json_data['username']}"
+    assert json_data["email"] == base_user_data.user.email, f"Expected email: {base_user_data.user.email}, got {json_data['email']}"
+    assert json_data["role"] == base_user_data.user.role, f"Expected role: {base_user_data.user.role}, got {json_data['role']}"
     assert json_data["detail"] == "Token is valid", "Expected detail `Token is valid`"

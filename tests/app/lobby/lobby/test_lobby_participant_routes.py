@@ -8,26 +8,13 @@ from app.db.base import LobbyParticipant
 from app.enums.user import UserRole
 from app.enums.lobby import LobbyParticipantRole
 
-from tests.types import (
-    BaseObjectFixtureCallable,
-    BaseUserFixtureCallable,
-    BaseCreatorUsersFixtureCallable,
-    BaseCreatorAdditionalUsersFixtureCallable,
-    InputData,
-    RouteBaseFixture
-)
+from tests.types import InputData, RouteBaseFixture
 from tests.constants import Roles, PARTICIPANTS_COUNT
+from tests.factories.general_factory import GeneralFactory
+
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
-from tests.utils.common_fixtures import (
-    test_base_user_from_role,
-    test_base_creator_users_from_role,
-    test_base_creator_additional_users_from_role,
-    test_create_lobby_from_data,
-    test_create_team_from_data,
-    protected_route
-)
 
 
 all_routes = [
@@ -45,11 +32,11 @@ all_routes = [
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_lobby_participants_routes_access(
         client_async: AsyncClient,
+        general_factory: GeneralFactory,
         protected_route: RouteBaseFixture,
-        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
+    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
 
 
 @pytest.mark.asyncio
@@ -74,9 +61,7 @@ async def test_lobby_participants_routes_require_auth(
 )
 async def test_add_participant(
         client_async: AsyncClient,
-        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
-        test_create_lobby_from_data: BaseObjectFixtureCallable,
-        test_create_team_from_data: BaseObjectFixtureCallable,
+        general_factory: GeneralFactory,
         with_team: bool,
         role: UserRole,
         is_lobby_owner: bool,
@@ -84,17 +69,17 @@ async def test_add_participant(
         error_substr: str,
 ):
 
-    user, headers, creator, _ = await test_base_creator_users_from_role(role)
-    lobby_id, lobby = await test_create_lobby_from_data(user if is_lobby_owner else creator)
-    team_id, _ = await test_create_team_from_data(lobby)
+    base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
+    creator = base_user_data.user if is_lobby_owner else base_creator_data.user
+    lobby_data = await general_factory.create_conditional_lobby(creator)
+    team_data = await general_factory.create_conditional_team(lobby_data.data)
 
-    route = f"/api/v1/lobby/{lobby_id}/participants"
-
-    params = {"user_id": user.id}
+    route = f"/api/v1/lobby/{lobby_data.id}/participants"
+    params = {"user_id": base_user_data.user.id}
     if with_team:
-        params["team_id"] = team_id
+        params["team_id"] = team_data.id
 
-    response: Response = await client_async.post(route, params=params, headers=headers)
+    response: Response = await client_async.post(route, params=params, headers=base_user_data.headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     json_data = response.json()
@@ -102,12 +87,12 @@ async def test_add_participant(
         assert error_substr in str(json_data["detail"]), f"Expected error '{error_substr}', got: {json_data['detail']}"
         return
 
-    assert json_data["lobby"]["id"] == lobby_id, f"Lobby ID is not the same as participant added to"
-    assert json_data["user"]["id"] == user.id, f"User ID is not the same as participant's"
+    assert json_data["lobby"]["id"] == lobby_data.id, f"Lobby ID is not the same as participant added to"
+    assert json_data["user"]["id"] == base_user_data.user.id, f"User ID is not the same as participant's"
     assert json_data["role"] == LobbyParticipantRole.SPECTATOR, f"Participant has incorrect role"
 
     if with_team:
-        assert json_data["team"]["id"] == team_id, f"Team ID is not the same as participant added to"
+        assert json_data["team"]["id"] == team_data.id, f"Team ID is not the same as participant added to"
 
 
 # TODO: Update, because now I have `404` when data is empty
@@ -128,9 +113,7 @@ async def test_add_participant(
 )
 async def test_edit_participant(
         client_async: AsyncClient,
-        test_base_creator_additional_users_from_role: BaseCreatorAdditionalUsersFixtureCallable,
-        test_create_lobby_from_data: BaseObjectFixtureCallable,
-        test_create_team_from_data: BaseObjectFixtureCallable,
+        general_factory: GeneralFactory,
         update_data: InputData,
         role: UserRole,
         is_lobby_owner: bool,
@@ -138,22 +121,24 @@ async def test_edit_participant(
         error_substr: str
 ):
 
-    user, headers, creator, headers_creator, user_to_add, _ = await test_base_creator_additional_users_from_role(role)
-    lobby_id, lobby = await test_create_lobby_from_data(user if is_lobby_owner else creator)
-    team_id, _ = await test_create_team_from_data(lobby)
+    base_user_data, base_creator_data, base_additional_data = await general_factory.create_base_users_creator_aditional(role)
+    creator = base_user_data.user if is_lobby_owner else base_creator_data.user
+    lobby_data = await general_factory.create_conditional_lobby(creator)
+    team_data = await general_factory.create_conditional_team(lobby_data.data)
 
-    route_add = f"/api/v1/lobby/{lobby_id}/participants"
-    params = {"user_id": user_to_add.id, "team_id": team_id}
+    route_add = f"/api/v1/lobby/{lobby_data.id}/participants"
+    params = {"user_id": base_additional_data.user.id, "team_id": team_data.id}
     
-    response: Response = await client_async.post(route_add, params=params, headers=(headers if is_lobby_owner else headers_creator))
+    initial_headers = base_user_data.headers if is_lobby_owner else base_creator_data.headers
+    response: Response = await client_async.post(route_add, params=params, headers=initial_headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     json_data = response.json()
-    assert json_data["user"]["id"] == user_to_add.id, f"Expected User ID {user_to_add.id}, got {json_data["user"]["id"]}"
+    assert json_data["user"]["id"] == base_additional_data.user.id, f"Expected User ID {base_additional_data.user.id}, got {json_data["user"]["id"]}"
     participant_id = json_data["id"]
 
-    route = f"/api/v1/lobby/{lobby_id}/participants/{participant_id}"
-    response: Response = await client_async.put(route, json=update_data, headers=headers)
+    route = f"/api/v1/lobby/{lobby_data.id}/participants/{participant_id}"
+    response: Response = await client_async.put(route, json=update_data, headers=base_user_data.headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     json_data = response.json()
@@ -161,8 +146,8 @@ async def test_edit_participant(
         assert error_substr in str(json_data["detail"]), f"Expected error '{error_substr}', got: {json_data['detail']}"
         return
 
-    assert json_data["lobby"]["id"] == lobby_id, f"Lobby ID is not the same as participant added to"
-    assert json_data["user"]["id"] == user_to_add.id, f"User ID is not the same as participant's"
+    assert json_data["lobby"]["id"] == lobby_data.id, f"Lobby ID is not the same as participant added to"
+    assert json_data["user"]["id"] == base_additional_data.user.id, f"User ID is not the same as participant's"
 
     if "role" in update_data:
         assert json_data["role"] == update_data["role"], f"Role was not updated"
@@ -181,23 +166,23 @@ async def test_edit_participant(
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_connect_to_lobby(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         test_lobby_id: int,
         role: UserRole
 ):
 
     route = f"/api/v1/lobby/{test_lobby_id}/connect"
-    user, headers = await test_base_user_from_role(role)
+    base_user_data = await general_factory.create_base_user(role)
 
-    response: Response = await client_async.post(route, headers=headers)
+    response: Response = await client_async.post(route, headers=base_user_data.headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     json_data = response.json()
     assert json_data["lobby"]["id"] == test_lobby_id, f"Expected Lobby ID {test_lobby_id}, got {json_data["lobby"]["id"]}"
-    assert json_data["user"]["id"] == user.id, f"Expected User ID {user.id}, got {json_data["user"]["id"]}"
+    assert json_data["user"]["id"] == base_user_data.user.id, f"Expected User ID {base_user_data.user.id}, got {json_data["user"]["id"]}"
 
     
-    response: Response = await client_async.post(route, headers=headers)
+    response: Response = await client_async.post(route, headers=base_user_data.headers)
     assert response.status_code == 409, f"Expected 409, got {response.status_code}"
     
     json_data = response.json()
@@ -208,26 +193,26 @@ async def test_connect_to_lobby(
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_leave_lobby(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         test_lobby_id: int,
         role: UserRole
 ):
 
     route = f"/api/v1/lobby/{test_lobby_id}/leave"
     route_connect = f"/api/v1/lobby/{test_lobby_id}/connect"
-    user, headers = await test_base_user_from_role(role)
+    base_user_data = await general_factory.create_base_user(role)
 
-    await client_async.post(route_connect, headers=headers)
+    await client_async.post(route_connect, headers=base_user_data.headers)
     
-    response: Response = await client_async.delete(route, headers=headers)
+    response: Response = await client_async.delete(route, headers=base_user_data.headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     json_data = response.json()
     assert json_data["lobby"]["id"] == test_lobby_id, f"Expected Lobby ID {test_lobby_id}, got {json_data["lobby"]["id"]}"
-    assert json_data["user"]["id"] == user.id, f"Expected User ID {user.id}, got {json_data["user"]["id"]}"
+    assert json_data["user"]["id"] == base_user_data.user.id, f"Expected User ID {base_user_data.user.id}, got {json_data["user"]["id"]}"
 
 
-    response: Response = await client_async.delete(route, headers=headers)
+    response: Response = await client_async.delete(route, headers=base_user_data.headers)
     assert response.status_code == 404, f"Expected 404, got {response.status_code}"
 
     json_data = response.json()
@@ -246,36 +231,37 @@ async def test_leave_lobby(
 )
 async def test_kick_from_lobby(
         client_async: AsyncClient,
-        test_base_creator_additional_users_from_role: BaseCreatorAdditionalUsersFixtureCallable,
-        test_create_lobby_from_data: BaseObjectFixtureCallable,
+        general_factory: GeneralFactory,
         role: UserRole,
         is_lobby_owner: bool,
         expected_status: int,
         error_substr: str
 ):
 
-    user, headers, creator, headers_creator, user_to_add, _ = await test_base_creator_additional_users_from_role(role)
-    lobby_id, _ = await test_create_lobby_from_data(user if is_lobby_owner else creator)
+    base_user_data, base_creator_data, base_additional_data = await general_factory.create_base_users_creator_aditional(role)
+    creator = base_user_data.user if is_lobby_owner else base_creator_data.user
+    lobby_data = await general_factory.create_conditional_lobby(creator)
 
-    route_add = f"/api/v1/lobby/{lobby_id}/participants"
-    params = {"user_id": user_to_add.id}
+    route_add = f"/api/v1/lobby/{lobby_data.id}/participants"
+    params = {"user_id": base_additional_data.user.id}
     
-    response: Response = await client_async.post(route_add, params=params, headers=(headers if is_lobby_owner else headers_creator))
+    initial_headers = base_user_data.headers if is_lobby_owner else base_creator_data.headers
+    response: Response = await client_async.post(route_add, params=params, headers=initial_headers)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     json_data = response.json()
-    assert json_data["user"]["id"] == user_to_add.id, f"Expected User ID {user_to_add.id}, got {json_data["user"]["id"]}"
+    assert json_data["user"]["id"] == base_additional_data.user.id, f"Expected User ID {base_additional_data.user.id}, got {json_data["user"]["id"]}"
     participant_id = json_data["id"]
 
-    route = f"/api/v1/lobby/{lobby_id}/participants/{participant_id}"
-    response: Response = await client_async.delete(route, headers=headers)
+    route = f"/api/v1/lobby/{lobby_data.id}/participants/{participant_id}"
+    response: Response = await client_async.delete(route, headers=base_user_data.headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     if expected_status != 200:
         assert error_substr in str(response.json()["detail"]), f"Expected error '{error_substr}', got: {response.json()['detail']}"
         return 
 
-    response: Response = await client_async.delete(route, headers=headers)
+    response: Response = await client_async.delete(route, headers=base_user_data.headers)
     assert response.status_code == 404, f"Expected 404, got {response.status_code}"
 
     json_data = response.json()
@@ -299,7 +285,7 @@ filter_data = [
 @pytest.mark.parametrize("filter_params, expected_count", filter_data)
 async def test_get_lobby_participants_with_filters(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         test_lobby_id: int,
         create_test_participants: list[LobbyParticipant],
         role: UserRole,
@@ -309,7 +295,7 @@ async def test_get_lobby_participants_with_filters(
     
     route = f"/api/v1/lobby/{test_lobby_id}/participants"
     await check_list_responces(
-        client_async, test_base_user_from_role, role, route, 
+        client_async, general_factory, role, route, 
         expected_count=expected_count,
         is_total_count=False, 
         filter_params=filter_params,
@@ -322,7 +308,7 @@ async def test_get_lobby_participants_with_filters(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data)
 async def test_get_lobby_participants_count_with_filters(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         test_lobby_id: int,
         create_test_participants: list[LobbyParticipant],
         role: UserRole,
@@ -332,7 +318,7 @@ async def test_get_lobby_participants_count_with_filters(
     
     route = f"/api/v1/lobby/{test_lobby_id}/participants-count"
     await check_list_responces(
-        client_async, test_base_user_from_role, role, route, 
+        client_async, general_factory, role, route, 
         expected_count=expected_count,
         is_total_count=True, 
         filter_params=filter_params,

@@ -6,12 +6,12 @@ from httpx import AsyncClient
 
 from app.enums.user import UserRole
 
-from tests.types import BaseUserFixtureCallable, RouteBaseFixture
+from tests.types import RouteBaseFixture
 from tests.constants import Roles
+from tests.factories.general_factory import GeneralFactory
+
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
-
-from tests.utils.common_fixtures import test_base_user_from_role, protected_route
 
 
 all_routes = [
@@ -23,11 +23,11 @@ all_routes = [
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_admin_routes_access(
         client_async: AsyncClient,
+        general_factory: GeneralFactory,
         protected_route: RouteBaseFixture,
-        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
+    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
 
 
 @pytest.mark.asyncio
@@ -50,16 +50,16 @@ async def test_admin_routes_require_auth(
 )
 async def test_clear_inactive_tokens(
         client_async: AsyncClient, 
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         role: UserRole,
         response_substr: str,
         expected_status: int,
 ):
     
     route = "/api/v1/admin/clear-tokens"
-    _, headers = await test_base_user_from_role(role)
+    base_user_data = await general_factory.create_base_user(role)
 
-    response: Response = await client_async.delete(route, headers=headers)
+    response: Response = await client_async.delete(route, headers=base_user_data.headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     json_data = response.json()

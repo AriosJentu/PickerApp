@@ -4,20 +4,21 @@ from httpx import AsyncClient
 
 from app.enums.user import UserRole
 
-from tests.types import RouteBaseFixture, BaseUserFixtureCallable
+from tests.types import RouteBaseFixture
+from tests.factories.general_factory import GeneralFactory
 
 
 async def check_access_for_authenticated_users(
         client_async: AsyncClient,
+        general_factory: GeneralFactory,
         protected_route: RouteBaseFixture,
-        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
     method, url, allowed_roles = protected_route
-    user, headers = await test_base_user_from_role(role)
-    response: Response = await client_async.request(method, url, headers=headers)
+    base_user_data = await general_factory.create_base_user(role)
+    response: Response = await client_async.request(method, url, headers=base_user_data.headers)
 
-    if user.role in allowed_roles:
+    if base_user_data.user.role in allowed_roles:
         assert response.status_code != 403, f"Expected not 403, got {response.status_code}"
     else:
         assert response.status_code == 403, f"Expected 403, got {response.status_code}"

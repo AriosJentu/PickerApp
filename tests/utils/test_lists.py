@@ -5,13 +5,13 @@ from httpx import AsyncClient
 
 from app.enums.user import UserRole
 
-from tests.types import BaseUserFixtureCallable, InputData
-from tests.utils.user_utils import create_user_with_tokens
+from tests.types import InputData
+from tests.factories.general_factory import GeneralFactory
 
 
 async def check_list_responces(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         role: UserRole,
         route: str,
         expected_count: int = 0,
@@ -20,11 +20,14 @@ async def check_list_responces(
         obj_type: str = ""
 ):
     is_parametrized = (filter_params is not None)
-    if is_parametrized and is_total_count and any(key in filter_params.keys() for key in ("limit", "offset", "sort_by", "sort_order")):
+    if is_parametrized and is_total_count and any(
+            key in filter_params.keys() 
+            for key in ("limit", "offset", "sort_by", "sort_order")
+    ):
         return
 
-    _, headers = await test_base_user_from_role(role)
-    response: Response = await client_async.get(route, headers=headers, params=filter_params)
+    base_user_data = await general_factory.create_base_user(role)
+    response: Response = await client_async.get(route, headers=base_user_data.headers, params=filter_params)
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
     
     json_data = response.json()

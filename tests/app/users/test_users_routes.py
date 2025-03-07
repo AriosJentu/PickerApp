@@ -7,21 +7,13 @@ from httpx import AsyncClient
 from app.db.base import User
 from app.enums.user import UserRole
 
-from tests.types import (
-    BaseUserFixtureCallable, 
-    BaseCreatorUsersFixtureCallable, 
-    InputData, 
-    RouteBaseFixture
-)
+from tests.types import InputData, RouteBaseFixture
 from tests.constants import Roles, USERS_COUNT
+from tests.factories.general_factory import GeneralFactory
+
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
-from tests.utils.common_fixtures import (
-    test_base_user_from_role,
-    test_base_creator_users_from_role,
-    protected_route
-)
 
 
 all_routes = [
@@ -52,11 +44,11 @@ default_roles_access = [
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_users_routes_access(
         client_async: AsyncClient,
+        general_factory: GeneralFactory,
         protected_route: RouteBaseFixture,
-        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
+    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
 
 
 @pytest.mark.asyncio
@@ -83,7 +75,7 @@ async def test_users_routes_require_auth(
 )
 async def test_get_user_by_data(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         query_params: InputData,
         expected_status: int,
         should_exist: bool,
@@ -91,14 +83,14 @@ async def test_get_user_by_data(
         role: UserRole
 ):
     route = "/api/v1/users/"
-    user, headers = await test_base_user_from_role(role)
+    base_user_data = await general_factory.create_base_user(role)
 
-    response: Response = await client_async.get(route, headers=headers, params=query_params)
+    response: Response = await client_async.get(route, headers=base_user_data.headers, params=query_params)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     if should_exist:
         json_data = response.json()
-        assert json_data["id"] == user.id, "Returned user ID does not match"
+        assert json_data["id"] == base_user_data.user.id, "Returned user ID does not match"
     else:
         assert error_substr in response.json()["detail"]
 
@@ -119,7 +111,7 @@ async def test_get_user_by_data(
 @pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", default_search_user_data)
 async def test_update_user(
         client_async: AsyncClient,
-        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        general_factory: GeneralFactory,
         update_data: InputData,
         user_params: InputData,
         expected_status: int,
@@ -132,11 +124,11 @@ async def test_update_user(
 ):
     route = "/api/v1/users/"
     
-    _, headers, updatable_user, _ = await test_base_creator_users_from_role(role)
+    base_user_data, base_updatable_data = await general_factory.create_base_users_creator(role)
     if is_user_exist:
-        user_params["get_user_id"] = updatable_user.id
+        user_params["get_user_id"] = base_updatable_data.user.id
 
-    response: Response = await client_async.put(route, headers=headers, json=update_data, params=user_params)
+    response: Response = await client_async.put(route, headers=base_user_data.headers, json=update_data, params=user_params)
     json_data = response.json()
 
     if expected_status_access != 200:
@@ -165,7 +157,7 @@ async def test_update_user(
 @pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", default_search_user_data)
 async def test_delete_user(
         client_async: AsyncClient,
-        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
+        general_factory: GeneralFactory,
         user_params: InputData,
         expected_status_access: int,
         expected_status_exists: int,
@@ -175,11 +167,11 @@ async def test_delete_user(
 ):
 
     route = "/api/v1/users/"
-    _, headers, deletable_user, _ = await test_base_creator_users_from_role(role)
+    base_user_data, base_deletable_data = await general_factory.create_base_users_creator(role)
     if is_user_exist:
-        user_params["get_user_id"] = deletable_user.id
+        user_params["get_user_id"] = base_deletable_data.user.id
 
-    response: Response = await client_async.delete(route, headers=headers, params=user_params)
+    response: Response = await client_async.delete(route, headers=base_user_data.headers, params=user_params)
     json_data = response.json()
 
     if expected_status_access != 200:
@@ -191,11 +183,10 @@ async def test_delete_user(
         assert error_substr_exists in str(json_data["detail"]), f"Details not containing info '{error_substr_exists}'"
         return
 
-    # assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-    assert json_data["id"] == deletable_user.id, "Deleted user ID does not match"
-    assert json_data["username"] == deletable_user.username, "Deleted user username does not match"
-    assert json_data["email"] == deletable_user.email, "Deleted user email does not match"
-    assert json_data["detail"] == f"User with ID {deletable_user.id} has been deleted", "Unexpected delete confirmation message"
+    assert json_data["id"] == base_deletable_data.user.id, "Deleted user ID does not match"
+    assert json_data["username"] == base_deletable_data.user.username, "Deleted user username does not match"
+    assert json_data["email"] == base_deletable_data.user.email, "Deleted user email does not match"
+    assert json_data["detail"] == f"User with ID {base_deletable_data.user.id} has been deleted", "Unexpected delete confirmation message"
 
 
 @pytest.mark.asyncio
@@ -203,22 +194,22 @@ async def test_delete_user(
 @pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", default_search_user_data)
 async def test_clear_user_tokens(
         client_async: AsyncClient,
-        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
-        role: UserRole,
+        general_factory: GeneralFactory,
+        user_params: InputData,
         expected_status_access: int,
-        is_user_exist: bool,
         expected_status_exists: int,
         error_substr_exists: str,
-        user_params: InputData
+        is_user_exist: bool,
+        role: UserRole,
 ):
 
     route = "/api/v1/users/tokens"
 
-    _, headers, updatable_user, _ = await test_base_creator_users_from_role(role)
+    base_user_data, base_updatable_data = await general_factory.create_base_users_creator(role)
     if is_user_exist:
-        user_params["get_user_id"] = updatable_user.id
+        user_params["get_user_id"] = base_updatable_data.user.id
 
-    response: Response = await client_async.delete(route, headers=headers, params=user_params)
+    response: Response = await client_async.delete(route, headers=base_user_data.headers, params=user_params)
     json_data = response.json()
     
     if expected_status_access != 200:
@@ -232,10 +223,10 @@ async def test_clear_user_tokens(
 
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
-    assert json_data["id"] == updatable_user.id, "User ID does not match"
-    assert json_data["username"] == updatable_user.username, "Username does not match"
-    assert json_data["email"] == updatable_user.email, "Email does not match"
-    assert json_data["detail"] == f"Tokens for user with ID {updatable_user.id} has been deactivated", "Unexpected response message"
+    assert json_data["id"] == base_updatable_data.user.id, "User ID does not match"
+    assert json_data["username"] == base_updatable_data.user.username, "Username does not match"
+    assert json_data["email"] == base_updatable_data.user.email, "Email does not match"
+    assert json_data["detail"] == f"Tokens for user with ID {base_updatable_data.user.id} has been deactivated", "Unexpected response message"
 
 
 filter_data_multiple = [
@@ -266,7 +257,7 @@ filter_data_default = [
 @pytest.mark.parametrize("filter_params, expected_count", filter_data_multiple)
 async def test_get_users_list_with_filters_multiple(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         create_multiple_test_users_with_tokens: list[tuple[User, str]],
         role: UserRole,
         filter_params: InputData,
@@ -275,7 +266,7 @@ async def test_get_users_list_with_filters_multiple(
     
     route = "/api/v1/users/list"
     await check_list_responces(
-        client_async, test_base_user_from_role, role, route, 
+        client_async, general_factory, role, route, 
         expected_count=expected_count,
         is_total_count=False, 
         filter_params=filter_params,
@@ -287,7 +278,7 @@ async def test_get_users_list_with_filters_multiple(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data_default)
 async def test_get_users_list_with_filters_default(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         create_test_users: list[User],
         filter_params: InputData,
         expected_count: int
@@ -295,7 +286,7 @@ async def test_get_users_list_with_filters_default(
     
     route = "/api/v1/users/list"
     await check_list_responces(
-        client_async, test_base_user_from_role, UserRole.USER, route, 
+        client_async, general_factory, UserRole.USER, route, 
         expected_count=expected_count,
         is_total_count=False, 
         filter_params=filter_params,
@@ -308,7 +299,7 @@ async def test_get_users_list_with_filters_default(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data_multiple)
 async def test_get_users_list_count_with_filters_multiple(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         create_multiple_test_users_with_tokens: list[tuple[User, str]],
         role: UserRole,
         filter_params: InputData,
@@ -317,7 +308,7 @@ async def test_get_users_list_count_with_filters_multiple(
     
     route = "/api/v1/users/list-count"
     await check_list_responces(
-        client_async, test_base_user_from_role, role, route, 
+        client_async, general_factory, role, route, 
         expected_count=expected_count,
         is_total_count=True, 
         filter_params=filter_params,
@@ -329,7 +320,7 @@ async def test_get_users_list_count_with_filters_multiple(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data_default)
 async def test_get_users_list_count_with_filters_default(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         create_test_users: list[User],
         filter_params: InputData,
         expected_count: int
@@ -337,7 +328,7 @@ async def test_get_users_list_count_with_filters_default(
     
     route = "/api/v1/users/list-count"
     await check_list_responces(
-        client_async, test_base_user_from_role, UserRole.USER, route, 
+        client_async, general_factory, UserRole.USER, route, 
         expected_count=expected_count,
         is_total_count=True, 
         filter_params=filter_params,

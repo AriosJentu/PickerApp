@@ -7,23 +7,13 @@ from httpx import AsyncClient
 from app.db.base import Algorithm
 from app.enums.user import UserRole
 
-from tests.types import (
-    BaseObjectFixtureCallable,
-    BaseUserFixtureCallable, 
-    BaseCreatorUsersFixtureCallable, 
-    InputData, 
-    RouteBaseFixture
-)
+from tests.types import InputData, RouteBaseFixture
 from tests.constants import Roles, ALGORITHMS_COUNT
+from tests.factories.general_factory import GeneralFactory
+
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
-from tests.utils.common_fixtures import (
-    test_base_user_from_role, 
-    test_base_creator_users_from_role, 
-    test_create_algorithm_from_data,
-    protected_route
-)
 
 
 all_routes = [
@@ -40,11 +30,11 @@ all_routes = [
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_algorithm_routes_access(
         client_async: AsyncClient,
+        general_factory: GeneralFactory,
         protected_route: RouteBaseFixture,
-        test_base_user_from_role: BaseUserFixtureCallable,
         role: UserRole
 ):
-    await check_access_for_authenticated_users(client_async, protected_route, test_base_user_from_role, role)
+    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
 
 
 @pytest.mark.asyncio
@@ -105,7 +95,7 @@ async def test_algorithm_routes_require_auth(
 )
 async def test_create_algorithm(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         algorithm_data: InputData,
         expected_status: int,
         error_substr: str,
@@ -113,10 +103,10 @@ async def test_create_algorithm(
 ):
 
     route = "/api/v1/algorithm/"
-    user, headers = await test_base_user_from_role(role)
+    base_user_data = await general_factory.create_base_user(role)
 
-    algorithm_data["creator_id"] = user.id
-    response: Response = await client_async.post(route, json=algorithm_data, headers=headers)
+    algorithm_data["creator_id"] = base_user_data.user.id
+    response: Response = await client_async.post(route, json=algorithm_data, headers=base_user_data.headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
     
     json_data = response.json()
@@ -127,7 +117,7 @@ async def test_create_algorithm(
     assert json_data["name"] == algorithm_data["name"], "Algorithm name does not match"
     assert json_data["algorithm"] == algorithm_data["algorithm"], "Algorithm script does not match"
     assert json_data["teams_count"] == algorithm_data["teams_count"], "Teams count does not match"
-    assert json_data["creator"]["id"] == user.id, "Algorithm creator does not match"
+    assert json_data["creator"]["id"] == base_user_data.user.id, "Algorithm creator does not match"
 
 
 @pytest.mark.asyncio
@@ -141,19 +131,18 @@ async def test_create_algorithm(
 )
 async def test_get_algorithm_info(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
-        test_create_algorithm_from_data: BaseObjectFixtureCallable,
+        general_factory: GeneralFactory,
         role: UserRole,
         algorithm_exists: bool,
         expected_status: int,
         error_substr: str
 ):
     
-    user, headers = await test_base_user_from_role(role)
-    algorithm_id, algorithm = await test_create_algorithm_from_data(user, algorithm_exists)
+    base_user_data = await general_factory.create_base_user(role)
+    algorithm_data = await general_factory.create_conditional_algorithm(base_user_data.user, algorithm_exists)
 
-    route = f"/api/v1/algorithm/{algorithm_id}"
-    response: Response = await client_async.get(route, headers=headers)
+    route = f"/api/v1/algorithm/{algorithm_data.id}"
+    response: Response = await client_async.get(route, headers=base_user_data.headers)
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     json_data = response.json()
@@ -161,10 +150,10 @@ async def test_get_algorithm_info(
         assert error_substr in json_data["detail"], f"Expected error message '{error_substr}', got: {json_data['detail']}"
         return
 
-    assert json_data["id"] == algorithm_id, "Algorithm ID does not match"
-    assert json_data["name"] == algorithm.name, "Algorithm name does not match"
-    assert json_data["algorithm"] == algorithm.algorithm, "Algorithm script does not match"
-    assert json_data["teams_count"] == algorithm.teams_count, "Algorithm teams count does not match"
+    assert json_data["id"] == algorithm_data.id, "Algorithm ID does not match"
+    assert json_data["name"] == algorithm_data.data.name, "Algorithm name does not match"
+    assert json_data["algorithm"] == algorithm_data.data.algorithm, "Algorithm script does not match"
+    assert json_data["teams_count"] == algorithm_data.data.teams_count, "Algorithm teams count does not match"
 
 
 # TODO: Update, because now I have `404` when data is empty
@@ -232,8 +221,7 @@ async def test_get_algorithm_info(
 )
 async def test_update_algorithm(
         client_async: AsyncClient,
-        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
-        test_create_algorithm_from_data: BaseObjectFixtureCallable,
+        general_factory: GeneralFactory,
         role: UserRole,
         is_creator: bool,
         algorithm_exists: bool,
@@ -245,11 +233,13 @@ async def test_update_algorithm(
         error_substr_access: str,
         error_substr_exists: str,
 ):
-    user, headers, creator, _ = await test_base_creator_users_from_role(role)
-    algorithm_id, _ = await test_create_algorithm_from_data(user if is_creator else creator, algorithm_exists)
-
-    route = f"/api/v1/algorithm/{algorithm_id}"
-    response: Response = await client_async.put(route, json=update_data, headers=headers)
+    
+    base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
+    creator = base_user_data.user if is_creator else base_creator_data.user
+    algorithm_data = await general_factory.create_conditional_algorithm(creator, algorithm_exists)
+    
+    route = f"/api/v1/algorithm/{algorithm_data.id}"
+    response: Response = await client_async.put(route, json=update_data, headers=base_user_data.headers)
 
     json_data = response.json()
     if expected_status != 200:
@@ -291,8 +281,7 @@ async def test_update_algorithm(
 )
 async def test_delete_algorithm(
         client_async: AsyncClient,
-        test_base_creator_users_from_role: BaseCreatorUsersFixtureCallable,
-        test_create_algorithm_from_data: BaseObjectFixtureCallable,
+        general_factory: GeneralFactory,
         role: UserRole,
         is_creator: bool,
         algorithm_exists: bool,
@@ -302,11 +291,12 @@ async def test_delete_algorithm(
         error_substr_exists: str,
 ):
 
-    user, headers, creator, _ = await test_base_creator_users_from_role(role)
-    algorithm_id, algorithm = await test_create_algorithm_from_data(user if is_creator else creator, algorithm_exists)
+    base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
+    creator = base_user_data.user if is_creator else base_creator_data.user
+    algorithm_data = await general_factory.create_conditional_algorithm(creator, algorithm_exists)
     
-    route = f"/api/v1/algorithm/{algorithm_id}"
-    response: Response = await client_async.delete(route, headers=headers)
+    route = f"/api/v1/algorithm/{algorithm_data.id}"
+    response: Response = await client_async.delete(route, headers=base_user_data.headers)
 
     json_data = response.json()
     if not algorithm_exists:
@@ -319,8 +309,8 @@ async def test_delete_algorithm(
         assert error_substr_access in str(json_data["detail"]), f"Expected error message '{error_substr_access}', got: {json_data["detail"]}"
         return
 
-    assert json_data["id"] == algorithm_id, "Algorithm ID is not correct"
-    assert algorithm.name in json_data["description"], "Algorithm name is not in response description"
+    assert json_data["id"] == algorithm_data.id, "Algorithm ID is not correct"
+    assert algorithm_data.data.name in json_data["description"], "Algorithm name is not in response description"
 
 
 filter_data = [
@@ -341,7 +331,7 @@ filter_data = [
 @pytest.mark.parametrize("filter_params, expected_count", filter_data)
 async def test_get_algorithms_list_with_filters(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         create_test_algorithms: list[Algorithm],
         role: UserRole,
         filter_params: InputData,
@@ -350,7 +340,7 @@ async def test_get_algorithms_list_with_filters(
     
     route = "/api/v1/algorithm/list"
     await check_list_responces(
-        client_async, test_base_user_from_role, role, route, 
+        client_async, general_factory, role, route, 
         expected_count=expected_count,
         is_total_count=False, 
         filter_params=filter_params,
@@ -363,7 +353,7 @@ async def test_get_algorithms_list_with_filters(
 @pytest.mark.parametrize("filter_params, expected_count", filter_data)
 async def test_get_algorithms_list_count_with_filters(
         client_async: AsyncClient,
-        test_base_user_from_role: BaseUserFixtureCallable,
+        general_factory: GeneralFactory,
         create_test_algorithms: list[Algorithm],
         role: UserRole,
         filter_params: InputData,
@@ -372,7 +362,7 @@ async def test_get_algorithms_list_count_with_filters(
     
     route = "/api/v1/algorithm/list-count"
     await check_list_responces(
-        client_async, test_base_user_from_role, role, route, 
+        client_async, general_factory, role, route, 
         expected_count=expected_count,
         is_total_count=True, 
         filter_params=filter_params,
