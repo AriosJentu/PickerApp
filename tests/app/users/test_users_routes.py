@@ -80,7 +80,7 @@ async def test_get_user_by_data(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("update_data, expected_status, error_substr", params.USERS_UPDATE_DATA_STATUS_ERROR)
+@pytest.mark.parametrize("update_data, expected_status_update, error_substr_update", params.USERS_UPDATE_DATA_STATUS_ERROR)
 @pytest.mark.parametrize("role, expected_status_access, error_substr_access", get_role_status_response_for_admin_params())
 @pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", params.USERS_EXIST_STATUS_ERROR)
 async def test_update_user(
@@ -88,11 +88,11 @@ async def test_update_user(
         general_factory: GeneralFactory,
         update_data: InputData,
         user_params: InputData,
-        expected_status: int,
+        is_user_exist: bool,
+        expected_status_update: int,
         expected_status_access: int,
         expected_status_exists: int,
-        is_user_exist: bool,
-        error_substr: str,
+        error_substr_update: str,
         error_substr_access: str,
         error_substr_exists: str,
         role: UserRole
@@ -111,12 +111,12 @@ async def test_update_user(
         assert error_substr_access in str(json_data["detail"]), f"Details not containing info '{error_substr_access}'"
         return
 
-    if expected_status != 200:
-        assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
-        assert error_substr in str(json_data["detail"]), f"Details not containing info '{error_substr}'"
+    if expected_status_update != 200:
+        assert response.status_code == expected_status_update, f"Expected {expected_status_update}, got {response.status_code}"
+        assert error_substr_update in str(json_data["detail"]), f"Details not containing info '{error_substr_update}'"
         return
 
-    assert response.status_code == expected_status_exists, f"Expected {expected_status}, got {response.status_code}"
+    assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
 
     if is_user_exist:
         if "email" in update_data:
@@ -216,9 +216,9 @@ async def test_get_users_list_with_filters_multiple(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         create_multiple_test_users_with_tokens: list[tuple[User, str]],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = "/api/v1/users/list"
@@ -258,9 +258,9 @@ async def test_get_users_list_count_with_filters_multiple(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         create_multiple_test_users_with_tokens: list[tuple[User, str]],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = "/api/v1/users/list-count"

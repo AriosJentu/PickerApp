@@ -12,7 +12,7 @@ from tests.types import InputData, RouteBaseFixture
 from tests.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 
-import tests.params.routes.lobby_participants as params
+import tests.params.routes.lobby_participant as params
 from tests.params.routes.common import get_user_creator_access_error_params
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
@@ -57,10 +57,10 @@ async def test_add_participant(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         with_team: bool,
-        role: UserRole,
         is_lobby_owner: bool,
         expected_status: int,
         error_substr: str,
+        role: UserRole,
 ):
 
     base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
@@ -97,10 +97,10 @@ async def test_edit_participant(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         update_data: InputData,
-        role: UserRole,
         is_lobby_owner: bool,
         expected_status: int,
-        error_substr: str
+        error_substr: str,
+        role: UserRole,
 ):
 
     base_user_data, base_creator_data, base_additional_data = await general_factory.create_base_users_creator_aditional(role)
@@ -206,10 +206,10 @@ async def test_leave_lobby(
 async def test_kick_from_lobby(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
-        role: UserRole,
         is_lobby_owner: bool,
         expected_status: int,
-        error_substr: str
+        error_substr: str,
+        role: UserRole,
 ):
 
     base_user_data, base_creator_data, base_additional_data = await general_factory.create_base_users_creator_aditional(role)
@@ -250,9 +250,9 @@ async def test_get_lobby_participants_with_filters(
         general_factory: GeneralFactory,
         test_lobby_id: int,
         create_test_participants: list[LobbyParticipant],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = f"/api/v1/lobby/{test_lobby_id}/participants"
@@ -273,9 +273,9 @@ async def test_get_lobby_participants_count_with_filters(
         general_factory: GeneralFactory,
         test_lobby_id: int,
         create_test_participants: list[LobbyParticipant],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = f"/api/v1/lobby/{test_lobby_id}/participants-count"

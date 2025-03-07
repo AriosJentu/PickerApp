@@ -134,7 +134,6 @@ async def test_update_team(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         update_data: InputData,
-        role: UserRole,
         is_lobby_owner: bool,
         team_exists: bool,
         expected_status_update: int,
@@ -143,6 +142,7 @@ async def test_update_team(
         error_substr_update: str,
         error_substr_access: str,
         error_substr_exists: str,
+        role: UserRole,
 ):
 
     base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
@@ -183,13 +183,13 @@ async def test_update_team(
 async def test_delete_team(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
-        role: UserRole,
         is_lobby_owner: bool,
         team_exists: bool,
         expected_status_access: int,
         expected_status_exists: int,
         error_substr_access: str,
         error_substr_exists: str,
+        role: UserRole,
 ):
 
     base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
@@ -221,9 +221,9 @@ async def test_get_teams_list_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         create_test_teams: list[Team],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = "/api/v1/teams/list"
@@ -243,9 +243,9 @@ async def test_get_teams_list_count_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         create_test_teams: list[Team],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = "/api/v1/teams/list-count"
