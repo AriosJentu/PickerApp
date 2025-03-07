@@ -8,9 +8,11 @@ from app.db.base import Team
 from app.enums.user import UserRole
 
 from tests.types import InputData, RouteBaseFixture
-from tests.constants import Roles, TEAMS_COUNT
+from tests.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 
+import tests.params.routes.team as params
+from tests.params.routes.common import get_exists_status_error_params, get_user_creator_access_error_params
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
@@ -47,30 +49,9 @@ async def test_teams_routes_require_auth(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "team_data, expected_status_team, error_substr_team",
-    [
-        ({"name":   "New Team"},    200,    ""),
-        ({"name":   "   "},         422,    "name cannot be empty"),
-        ({},                        422,    "Field required"),
-    ]
-)
-@pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status_access, error_substr_access",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control team"),
-    ]
-)
-@pytest.mark.parametrize(
-    "lobby_exists, expected_status_lobby, error_substr_lobby",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Lobby not found"),
-    ]
-)
+@pytest.mark.parametrize("team_data, expected_status_team, error_substr_team", params.TEAM_DATA_STATUS_ERROR)
+@pytest.mark.parametrize("role, is_lobby_owner, expected_status_access, error_substr_access", get_user_creator_access_error_params("team"))
+@pytest.mark.parametrize("lobby_exists, expected_status_lobby, error_substr_lobby", get_exists_status_error_params("Lobby"))
 async def test_create_team(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -117,13 +98,7 @@ async def test_create_team(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize(
-    "team_exists, expected_status, error_substr",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Team not found"),
-    ]
-)
+@pytest.mark.parametrize("team_exists, expected_status, error_substr", get_exists_status_error_params("Team"))
 async def test_get_team_info(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -151,32 +126,10 @@ async def test_get_team_info(
     assert json_data["lobby"]["id"] == lobby_data.id, "Lobby ID associated with team is incorrect"
 
 
-# TODO: Update, because now I have `404` when data is empty
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "update_data, expected_status, error_substr",
-    [
-        ({"name":   "Updated Team Name"},   200,    ""),
-        ({"name":   "  "},                  422,    "Team name cannot be empty"),
-        # ({},                                422,    "Field required"),
-    ]
-)
-@pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status_access, error_substr_access",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control team"),
-    ]
-)
-@pytest.mark.parametrize(
-    "team_exists, expected_status_exists, error_substr_exists",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Team not found"),
-    ]
-)
+@pytest.mark.parametrize("update_data, expected_status_update, error_substr_update", params.TEAM_UPDATE_DATA_STATUS_ERROR)
+@pytest.mark.parametrize("role, is_lobby_owner, expected_status_access, error_substr_access", get_user_creator_access_error_params("team"))
+@pytest.mark.parametrize("team_exists, expected_status_exists, error_substr_exists", get_exists_status_error_params("Team"))
 async def test_update_team(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -184,10 +137,10 @@ async def test_update_team(
         role: UserRole,
         is_lobby_owner: bool,
         team_exists: bool,
-        expected_status: int,
+        expected_status_update: int,
         expected_status_access: int,
         expected_status_exists: int,
-        error_substr: str,
+        error_substr_update: str,
         error_substr_access: str,
         error_substr_exists: str,
 ):
@@ -201,9 +154,9 @@ async def test_update_team(
     response: Response = await client_async.put(route, json=update_data, headers=base_user_data.headers)
     
     json_data = response.json()
-    if expected_status != 200:
-        assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
-        assert error_substr in str(json_data["detail"]), f"Expected validation error message '{error_substr}', got: {json_data['detail']}"
+    if expected_status_update == 422:
+        assert response.status_code == expected_status_update, f"Expected {expected_status_update}, got {response.status_code}"
+        assert error_substr_update in str(json_data["detail"]), f"Expected validation error '{error_substr_update}', got: {json_data['detail']}"
         return
 
     if not team_exists:
@@ -211,31 +164,22 @@ async def test_update_team(
         assert error_substr_exists in json_data["detail"], f"Expected error message '{error_substr_exists}', got: {json_data['detail']}"
         return
 
-    assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
     if expected_status_access != 200:
+        assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
         assert error_substr_access in str(json_data["detail"]), f"Expected error '{error_substr_access}', got: {json_data['detail']}"
+        return
+
+    assert response.status_code == expected_status_update, f"Expected {expected_status_update}, got {response.status_code}"
+    if expected_status_update == 400:
+        assert error_substr_update in str(json_data["detail"]), f"Expected error '{error_substr_update}', got: {json_data['detail']}"
         return
 
     assert json_data["name"] == update_data["name"], "Team name was not updated"
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status_access, error_substr_access",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control team"),
-    ]
-)
-@pytest.mark.parametrize(
-    "team_exists, expected_status_exists, error_substr_exists",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Team not found"),
-    ]
-)
+@pytest.mark.parametrize("role, is_lobby_owner, expected_status_access, error_substr_access", get_user_creator_access_error_params("team"))
+@pytest.mark.parametrize("team_exists, expected_status_exists, error_substr_exists", get_exists_status_error_params("Team"))
 async def test_delete_team(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -270,21 +214,9 @@ async def test_delete_team(
     assert json_data["description"] == f"Team '{team_data.data.name}' deleted successfully"
 
 
-filter_data = [
-    (None,                          TEAMS_COUNT),
-    ({"id":         1},             1),
-    ({"name":       "2"},           1),
-    ({"name":       "Test Team"},   TEAMS_COUNT),
-    ({"lobby_id":   1},             TEAMS_COUNT),
-    ({"sort_by":    "id"},          TEAMS_COUNT),
-    ({"sort_order": "desc"},        TEAMS_COUNT),
-    ({"limit":      2},             2),
-    ({"offset":     1},             TEAMS_COUNT-1),
-]
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data)
+@pytest.mark.parametrize("filter_params, expected_count", params.TEAM_FILTER_DATA)
 async def test_get_teams_list_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -306,7 +238,7 @@ async def test_get_teams_list_with_filters(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data)
+@pytest.mark.parametrize("filter_params, expected_count", params.TEAM_FILTER_DATA)
 async def test_get_teams_list_count_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,

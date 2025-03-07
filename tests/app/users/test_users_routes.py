@@ -8,9 +8,11 @@ from app.db.base import User
 from app.enums.user import UserRole
 
 from tests.types import InputData, RouteBaseFixture
-from tests.constants import Roles, USERS_COUNT
+from tests.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 
+import tests.params.routes.users as params
+from tests.params.routes.common import get_role_status_response_for_admin_params
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
@@ -23,14 +25,6 @@ all_routes = [
     ("PUT",     "/api/v1/users/",           Roles.ADMIN),
     ("DELETE",  "/api/v1/users/",           Roles.ADMIN),
     ("DELETE",  "/api/v1/users/tokens",     Roles.ADMIN),
-]
-
-default_search_user_data = [
-    (True,  200,    "",                 {}),
-    (False, 404,    "No data provided", {}),
-    (False, 404,    "User not found",   {"get_user_id":     -1}),
-    (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
-    (False, 404,    "User not found",   {"get_email":       "unexistant@example.com"}),
 ]
 
 default_roles_access = [
@@ -62,17 +56,7 @@ async def test_users_routes_require_auth(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize(
-    "query_params, expected_status, should_exist, error_substr",
-    [
-        ({"get_user_id":    1},                         200,    True,   ""),
-        ({"get_username":   "testuser"},                200,    True,   ""),
-        ({"get_email":      "testuser@example.com"},    200,    True,   ""),
-        ({"get_user_id":    999},                       404,    False,  "User not found"),
-        ({"get_username":   "nonexistent"},             404,    False,  "User not found"),
-        ({"get_email":      "noemail@example.com"},     404,    False,  "User not found"),
-    ]
-)
+@pytest.mark.parametrize("query_params, expected_status, should_exist, error_substr", params.USERS_PARAMS_STATUS_EXISTS_ERROR)
 async def test_get_user_by_data(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -96,19 +80,9 @@ async def test_get_user_by_data(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "update_data, expected_status, error_substr",
-    [
-        ({"email":          "new_email@example.com"},                   200, ""),
-        ({"username":       "somenewname"},                             200, ""),
-        ({"password":       "NewPassword123!"},                         200, ""),
-        ({"username":       ""},                                        422, "Username must be at least 3 characters long."),
-        ({"password":       "InvalidPassword"},                         422, "Password must contain"),
-        ({"email":          "invalid-email"},                           422, "Invalid email format"),
-    ]
-)
-@pytest.mark.parametrize("role, expected_status_access", default_roles_access)
-@pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", default_search_user_data)
+@pytest.mark.parametrize("update_data, expected_status, error_substr", params.USERS_UPDATE_DATA_STATUS_ERROR)
+@pytest.mark.parametrize("role, expected_status_access, error_substr_access", get_role_status_response_for_admin_params())
+@pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", params.USERS_EXIST_STATUS_ERROR)
 async def test_update_user(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -119,6 +93,7 @@ async def test_update_user(
         expected_status_exists: int,
         is_user_exist: bool,
         error_substr: str,
+        error_substr_access: str,
         error_substr_exists: str,
         role: UserRole
 ):
@@ -133,6 +108,7 @@ async def test_update_user(
 
     if expected_status_access != 200:
         assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+        assert error_substr_access in str(json_data["detail"]), f"Details not containing info '{error_substr_access}'"
         return
 
     if expected_status != 200:
@@ -153,16 +129,17 @@ async def test_update_user(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("role, expected_status_access", default_roles_access)
-@pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", default_search_user_data)
+@pytest.mark.parametrize("role, expected_status_access, error_substr_access", get_role_status_response_for_admin_params())
+@pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", params.USERS_EXIST_STATUS_ERROR)
 async def test_delete_user(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         user_params: InputData,
+        is_user_exist: bool,
         expected_status_access: int,
         expected_status_exists: int,
+        error_substr_access: str,
         error_substr_exists: str,
-        is_user_exist: bool,
         role: UserRole,
 ):
 
@@ -176,6 +153,7 @@ async def test_delete_user(
 
     if expected_status_access != 200:
         assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+        assert error_substr_access in str(json_data["detail"]), f"Details not containing info '{error_substr_access}'"
         return
 
     assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
@@ -190,16 +168,17 @@ async def test_delete_user(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("role, expected_status_access", default_roles_access)
-@pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", default_search_user_data)
+@pytest.mark.parametrize("role, expected_status_access, error_substr_access", get_role_status_response_for_admin_params())
+@pytest.mark.parametrize("is_user_exist, expected_status_exists, error_substr_exists, user_params", params.USERS_EXIST_STATUS_ERROR)
 async def test_clear_user_tokens(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         user_params: InputData,
+        is_user_exist: bool,
         expected_status_access: int,
         expected_status_exists: int,
+        error_substr_access: str,
         error_substr_exists: str,
-        is_user_exist: bool,
         role: UserRole,
 ):
 
@@ -214,6 +193,7 @@ async def test_clear_user_tokens(
     
     if expected_status_access != 200:
         assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+        assert error_substr_access in str(json_data["detail"]), f"Details not containing info '{error_substr_access}'"
         return
 
     if expected_status_exists != 200:
@@ -229,32 +209,9 @@ async def test_clear_user_tokens(
     assert json_data["detail"] == f"Tokens for user with ID {base_updatable_data.user.id} has been deactivated", "Unexpected response message"
 
 
-filter_data_multiple = [
-    (None,                                      USERS_COUNT+1),
-    ({"id":         1},                         1),
-    ({"username":   "testuser"},                USERS_COUNT+1),
-    ({"sort_by":    "id"},                      USERS_COUNT+1),
-    ({"sort_order": "desc"},                    USERS_COUNT+1),
-    ({"limit":      2},                         2),
-    ({"offset":     1},                         USERS_COUNT),
-]
-
-filter_data_default = [
-    (None,                                      4),
-    ({"id":         1},                         1),
-    ({"role":       UserRole.USER.value},       2),
-    ({"role":       UserRole.ADMIN.value},      1),
-    ({"username":   "default"},                 1),
-    ({"email":      "moderator@example.com"},   1),
-    ({"sort_by":    "id"},                      4),
-    ({"sort_order": "desc"},                    4),
-    ({"limit":      2},                         2),
-    ({"offset":     1},                         3),
-]
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data_multiple)
+@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA_MULTIPLE)
 async def test_get_users_list_with_filters_multiple(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -275,7 +232,7 @@ async def test_get_users_list_with_filters_multiple(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("filter_params, expected_count", filter_data_default)
+@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA)
 async def test_get_users_list_with_filters_default(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -296,7 +253,7 @@ async def test_get_users_list_with_filters_default(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data_multiple)
+@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA_MULTIPLE)
 async def test_get_users_list_count_with_filters_multiple(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -317,7 +274,7 @@ async def test_get_users_list_count_with_filters_multiple(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("filter_params, expected_count", filter_data_default)
+@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA)
 async def test_get_users_list_count_with_filters_default(
         client_async: AsyncClient,
         general_factory: GeneralFactory,

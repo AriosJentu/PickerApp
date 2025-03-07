@@ -10,6 +10,7 @@ from tests.types import InputData, RouteBaseFixture
 from tests.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 
+import tests.params.routes.account as params
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
 
@@ -63,33 +64,9 @@ async def test_get_current_user(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "update_data, expected_status, error_substr",
-    [
-        ({"email":      "updated_email@example.com"},                                   200,    ""), 
-        ({"username":   "newusername"},                                                 200,    ""), 
-        ({"password":   "NewPassword123!"},                                             200,    ""),
-        ({"email":      "updated_email@example.com",    "username":     "newusername"}, 200,    ""), 
-        ({"email":      "invalid-email"},                                               422,    "Invalid email format"),
-        ({"username":   ""},                                                            422,    "Username must be at least 3 characters long."),
-        ({"password":   "weakpass"},                                                    422,    "Password must contain"),
-        ({"email":      "invalid-email",                "username":     ""},            422,    "Username must be at least 3 characters long."), 
-    ]
-)
-@pytest.mark.parametrize(
-    "duplicate_email, expected_status_email, error_email_substr",
-    [
-        (False, 200,    ""),
-        (True,  400,    "User with this email already exists"),
-    ]
-)
-@pytest.mark.parametrize(
-    "duplicate_username, expected_status_username, error_username_substr",
-    [
-        (False, 200,    ""),
-        (True,  400,    "User with this username already exists"),
-    ]
-)
+@pytest.mark.parametrize("update_data, expected_status, error_substr", params.UPDATE_USER_DATA_STATUS_ERROR)
+@pytest.mark.parametrize("duplicate_email, expected_status_email, error_email_substr", params.UPDATE_USER_DUPLICATE_EMAIL_EXPECT_ERROR)
+@pytest.mark.parametrize("duplicate_username, expected_status_username, error_username_substr", params.UPDATE_USER_DUPLICATE_USERNAME_EXPECT_ERROR)
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_update_current_user(
         client_async: AsyncClient,

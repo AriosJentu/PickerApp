@@ -9,9 +9,11 @@ from app.enums.user import UserRole
 from app.enums.lobby import LobbyStatus
 
 from tests.types import InputData, RouteBaseFixture
-from tests.constants import Roles, LOBBIES_COUNT
+from tests.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 
+import tests.params.routes.lobby as params
+from tests.params.routes.common import get_exists_status_error_params, get_user_creator_access_error_params
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
@@ -49,21 +51,8 @@ async def test_lobbies_routes_require_auth(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "lobby_data, expected_status, error_substr",
-    [
-        ({"name":   "New Lobby"},   200,    ""),
-        ({"name":   "   "},         422,    "Lobby name cannot be empty"),
-        ({},                        422,    "Field required"),
-    ]
-)
-@pytest.mark.parametrize(
-    "algorithm_exists, expected_status_algorithm, error_algorithm_substr",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Algorithm not found"),
-    ]
-)
+@pytest.mark.parametrize("lobby_data, expected_status, error_substr", params.LOBBY_DATA_STATUS_ERROR)
+@pytest.mark.parametrize("algorithm_exists, expected_status_algorithm, error_algorithm_substr", get_exists_status_error_params("Algorithm"))
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_create_lobby(
         client_async: AsyncClient,
@@ -106,21 +95,15 @@ async def test_create_lobby(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "lobby_exists, expected_status, error_substr",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Lobby not found"),
-    ]
-)
+@pytest.mark.parametrize("lobby_exists, expected_status, error_substr", get_exists_status_error_params("Lobby"))
 @pytest.mark.parametrize("role", Roles.LIST)
 async def test_get_lobby_info(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
-        role: UserRole,
         lobby_exists: bool,
         expected_status: int,
-        error_substr: str
+        error_substr: str,
+        role: UserRole,
 ):
     
     base_user_data = await general_factory.create_base_user(role)
@@ -141,31 +124,9 @@ async def test_get_lobby_info(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "update_data, expected_status_update, error_substr_update",
-    [
-        ({"name":   "Updated Lobby"},               200,    ""),
-        ({"status": LobbyStatus.ARCHIVED},          200,    ""),
-        ({"name":   "   "},                         422,    "Lobby name cannot be empty"),
-        ({},                                        400,    "Lobby update data not provided"),
-    ]
-)
-@pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status_access, error_substr_access",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control lobby"),
-    ]
-)
-@pytest.mark.parametrize(
-    "lobby_exists, expected_status_lobby, error_substr_lobby",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Lobby not found"),
-    ]
-)
+@pytest.mark.parametrize("update_data, expected_status_update, error_substr_update", params.LOBBY_UPDATE_DATA_STATUS_ERROR)
+@pytest.mark.parametrize("role, is_lobby_owner, expected_status_access, error_substr_access", get_user_creator_access_error_params("lobby"))
+@pytest.mark.parametrize("lobby_exists, expected_status_exists, error_substr_exists", get_exists_status_error_params("Lobby"))
 async def test_update_lobby(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -174,10 +135,10 @@ async def test_update_lobby(
         lobby_exists: bool,
         expected_status_update: int,
         expected_status_access: int,
-        expected_status_lobby: int,
+        expected_status_exists: int,
         error_substr_update: str,
         error_substr_access: str,
-        error_substr_lobby: str,
+        error_substr_exists: str,
         role: UserRole,
 ):
 
@@ -187,16 +148,16 @@ async def test_update_lobby(
     
     route = f"/api/v1/lobby/{lobby_data.id}"
     response: Response = await client_async.put(route, json=update_data, headers=base_user_data.headers)
-    json_data = response.json()
 
+    json_data = response.json()
     if expected_status_update == 422:
         assert response.status_code == expected_status_update, f"Expected {expected_status_update}, got {response.status_code}"
         assert error_substr_update in str(json_data["detail"]), f"Expected validation error '{error_substr_update}', got: {json_data['detail']}"
         return
 
     if not lobby_exists:
-        assert response.status_code == expected_status_lobby, f"Expected {expected_status_lobby}, got {response.status_code}"
-        assert error_substr_lobby in str(json_data["detail"]), f"Expected error '{error_substr_lobby}', got: {json_data['detail']}"
+        assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
+        assert error_substr_exists in str(json_data["detail"]), f"Expected error '{error_substr_exists}', got: {json_data['detail']}"
         return
 
     if expected_status_access != 200:
@@ -218,32 +179,18 @@ async def test_update_lobby(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status_access, error_substr_access",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control lobby"),
-    ]
-)
-@pytest.mark.parametrize(
-    "lobby_exists, expected_status_lobby, error_substr_lobby",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Lobby not found"),
-    ]
-)
+@pytest.mark.parametrize("role, is_lobby_owner, expected_status_access, error_substr_access", get_user_creator_access_error_params("lobby"))
+@pytest.mark.parametrize("lobby_exists, expected_status_lobby, error_substr_lobby", get_exists_status_error_params("Lobby"))
 async def test_close_lobby(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
-        role: UserRole,
         is_lobby_owner: bool,
         lobby_exists: bool,
         expected_status_access: int,
         expected_status_lobby: int,
         error_substr_access: str,
-        error_substr_lobby: str
+        error_substr_lobby: str,
+        role: UserRole,
 ):
 
     base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
@@ -269,32 +216,18 @@ async def test_close_lobby(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status_access, error_substr_access",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control lobby"),
-    ]
-)
-@pytest.mark.parametrize(
-    "lobby_exists, expected_status_lobby, error_substr_lobby",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Lobby not found"),
-    ]
-)
+@pytest.mark.parametrize("role, is_lobby_owner, expected_status_access, error_substr_access", get_user_creator_access_error_params("lobby"))
+@pytest.mark.parametrize("lobby_exists, expected_status_lobby, error_substr_lobby", get_exists_status_error_params("Lobby"))
 async def test_delete_lobby(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
-        role: UserRole,
         is_lobby_owner: bool,
         lobby_exists: bool,
         expected_status_access: int,
         expected_status_lobby: int,
         error_substr_access: str,
-        error_substr_lobby: str
+        error_substr_lobby: str,
+        role: UserRole,
 ):
 
     base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
@@ -320,30 +253,16 @@ async def test_delete_lobby(
     assert lobby_data.data.name in json_data["description"], f"Deleted lobby with incorrect name"
 
 
-filter_data = [
-    (None,                              LOBBIES_COUNT),
-    ({"id":             1},             1),
-    ({"name":           "2"},           1),
-    ({"name":           "Test Lobby"},  LOBBIES_COUNT),
-    ({"host_id":        0},             LOBBIES_COUNT),
-    ({"host_id":        1},             0),
-    ({"algorithm_id":   1},             LOBBIES_COUNT),
-    ({"sort_by":        "id"},          LOBBIES_COUNT),
-    ({"sort_order":     "desc"},        LOBBIES_COUNT),
-    ({"limit":          2},             2),
-    ({"offset":         1},             LOBBIES_COUNT-1),
-]
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data)
+@pytest.mark.parametrize("filter_params, expected_count", params.LOBBY_FILTER_DATA)
 async def test_get_lobbies_list_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         create_test_lobbies: list[Lobby],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = "/api/v1/lobby/list"
@@ -358,14 +277,14 @@ async def test_get_lobbies_list_with_filters(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data)
+@pytest.mark.parametrize("filter_params, expected_count", params.LOBBY_FILTER_DATA)
 async def test_get_lobbies_list_count_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         create_test_lobbies: list[Lobby],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = "/api/v1/lobby/list-count"

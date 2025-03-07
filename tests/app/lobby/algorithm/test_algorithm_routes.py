@@ -8,9 +8,11 @@ from app.db.base import Algorithm
 from app.enums.user import UserRole
 
 from tests.types import InputData, RouteBaseFixture
-from tests.constants import Roles, ALGORITHMS_COUNT
+from tests.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 
+import tests.params.routes.algorithm as params
+from tests.params.routes.common import get_exists_status_error_params, get_user_creator_access_error_params
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
@@ -48,51 +50,7 @@ async def test_algorithm_routes_require_auth(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize(
-    "algorithm_data, expected_status, error_substr",
-    [
-        (
-            {"name": "Valid Algorithm", "algorithm": "BB PP T", "teams_count": 2},
-            200, ""
-        ),
-        (
-            {"name": "Invalid Step", "algorithm": "MM FS P", "teams_count": 2},
-            422, "Step 'MM' containings incorrect symbols"
-        ),
-        (
-            {"name": "Wrong Step Size", "algorithm": "BBB PPP T", "teams_count": 2},
-            422, "Size of the step 'BBB' must be equal to teams count"
-        ),
-        (
-            {"name": "  ", "algorithm": "BB PP T", "teams_count": 2},
-            422, "Algorithm name cannot be empty"
-        ),
-        (
-            {"name": "Missing Algorithm", "algorithm": "", "teams_count": 2},
-            422, "Algorithm should contain at least one step"
-        ),
-        (
-            {"name": "Negative Teams Count", "algorithm": "BB PP T", "teams_count": -1},
-            422, "Teams count should be in between 2 and 16"
-        ),
-        (
-            {}, 
-            422, "Field required"
-        ),
-        (
-            {"name": "No Algorithm"}, 
-            422, "Field required"
-        ),
-        (
-            {"algorithm": "BB PP T"}, 
-            422, "Field required"
-        ),
-        (
-            {"name": "No Teams Count", "algorithm": "BB PP T"}, 
-            422, "Field required"
-        ),
-    ]
-)
+@pytest.mark.parametrize("algorithm_data, expected_status, error_substr", params.ALGORITHM_DATA_STATUS_ERROR)
 async def test_create_algorithm(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -122,20 +80,14 @@ async def test_create_algorithm(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize(
-    "algorithm_exists, expected_status, error_substr",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Algorithm not found"),
-    ]
-)
+@pytest.mark.parametrize("algorithm_exists, expected_status, error_substr", get_exists_status_error_params("Algorithm"))
 async def test_get_algorithm_info(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
-        role: UserRole,
         algorithm_exists: bool,
         expected_status: int,
-        error_substr: str
+        error_substr: str,
+        role: UserRole,
 ):
     
     base_user_data = await general_factory.create_base_user(role)
@@ -156,82 +108,23 @@ async def test_get_algorithm_info(
     assert json_data["teams_count"] == algorithm_data.data.teams_count, "Algorithm teams count does not match"
 
 
-# TODO: Update, because now I have `404` when data is empty
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "update_data, expected_status, error_substr",
-    [
-        (
-            {"name": "Valid Algorithm", "algorithm": "BB PP T", "teams_count": 2},
-            200, ""
-        ),
-        (
-            {"name": "Invalid Step", "algorithm": "MM FS P", "teams_count": 2},
-            422, "Step 'MM' containings incorrect symbols"
-        ),
-        (
-            {"name": "Wrong Step Size", "algorithm": "BBB PPP T", "teams_count": 2},
-            422, "Size of the step 'BBB' must be equal to teams count"
-        ),
-        (
-            {"name": "  ", "algorithm": "BB PP T", "teams_count": 2},
-            422, "Algorithm name cannot be empty"
-        ),
-        (
-            {"name": "Missing Algorithm", "algorithm": "", "teams_count": 2},
-            422, "Algorithm should contain at least one step"
-        ),
-        (
-            {"name": "Negative Teams Count", "algorithm": "BB PP T", "teams_count": -1},
-            422, "Teams count should be in between 2 and 16"
-        ),
-        (
-            {}, 
-            422, "Field required"
-        ),
-        (
-            {"name": "No Algorithm"}, 
-            422, "Field required"
-        ),
-        (
-            {"algorithm": "BB PP T"}, 
-            422, "Field required"
-        ),
-        (
-            {"name": "No Teams Count", "algorithm": "BB PP T"}, 
-            422, "Field required"
-        ),
-    ]
-)
-@pytest.mark.parametrize(
-    "role, is_creator, expected_status_access, error_substr_access",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control algorithm"),
-    ]
-)
-@pytest.mark.parametrize(
-    "algorithm_exists, expected_status_exists, error_substr_exists",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Algorithm not found"),
-    ]
-)
+@pytest.mark.parametrize("update_data, expected_status_update, error_substr_update", params.ALGORITHM_DATA_STATUS_ERROR)
+@pytest.mark.parametrize("role, is_creator, expected_status_access, error_substr_access", get_user_creator_access_error_params("algorithm"))
+@pytest.mark.parametrize("algorithm_exists, expected_status_exists, error_substr_exists", get_exists_status_error_params("Algorithm"))
 async def test_update_algorithm(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
-        role: UserRole,
+        update_data: InputData,
         is_creator: bool,
         algorithm_exists: bool,
+        expected_status_update: int,
         expected_status_access: int,
         expected_status_exists: int,
-        update_data: InputData,
-        expected_status: int,
-        error_substr: str,
+        error_substr_update: str,
         error_substr_access: str,
         error_substr_exists: str,
+        role: UserRole,
 ):
     
     base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
@@ -242,19 +135,24 @@ async def test_update_algorithm(
     response: Response = await client_async.put(route, json=update_data, headers=base_user_data.headers)
 
     json_data = response.json()
-    if expected_status != 200:
-        assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
-        assert error_substr in str(json_data["detail"]), f"Expected validation error '{error_substr}', got: {json_data["detail"]}"
+    if expected_status_update == 422:
+        assert response.status_code == expected_status_update, f"Expected {expected_status_update}, got {response.status_code}"
+        assert error_substr_update in str(json_data["detail"]), f"Expected validation error '{error_substr_update}', got: {json_data['detail']}"
         return
     
     if not algorithm_exists:
         assert response.status_code == expected_status_exists, f"Expected {expected_status_exists}, got {response.status_code}"
         assert error_substr_exists in json_data["detail"], f"Expected error message '{error_substr_exists}', got: {json_data["detail"]}"
         return
-
-    assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+    
     if expected_status_access != 200:
-        assert error_substr_access in json_data["detail"], f"Expected error message '{error_substr_access}', got: {json_data["detail"]}"
+        assert response.status_code == expected_status_access, f"Expected {expected_status_access}, got {response.status_code}"
+        assert error_substr_access in str(json_data["detail"]), f"Expected error '{error_substr_access}', got: {json_data['detail']}"
+        return
+
+    assert response.status_code == expected_status_update, f"Expected {expected_status_update}, got {response.status_code}"
+    if expected_status_update == 400:
+        assert error_substr_update in str(json_data["detail"]), f"Expected error '{error_substr_update}', got: {json_data['detail']}"
         return
     
     assert json_data["name"] == update_data["name"], "Algorithm name was not updated"
@@ -263,32 +161,18 @@ async def test_update_algorithm(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "role, is_creator, expected_status_access, error_substr_access",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control algorithm"),
-    ]
-)
-@pytest.mark.parametrize(
-    "algorithm_exists, expected_status_exists, error_substr_exists",
-    [
-        (True,  200,    ""),
-        (False, 404,    "Algorithm not found"),
-    ]
-)
+@pytest.mark.parametrize("role, is_creator, expected_status_access, error_substr_access", get_user_creator_access_error_params("algorithm"))
+@pytest.mark.parametrize("algorithm_exists, expected_status_exists, error_substr_exists", get_exists_status_error_params("Algorithm"))
 async def test_delete_algorithm(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
-        role: UserRole,
         is_creator: bool,
         algorithm_exists: bool,
         expected_status_access: int,
         expected_status_exists: int,
         error_substr_access: str,
         error_substr_exists: str,
+        role: UserRole,
 ):
 
     base_user_data, base_creator_data = await general_factory.create_base_users_creator(role)
@@ -313,29 +197,16 @@ async def test_delete_algorithm(
     assert algorithm_data.data.name in json_data["description"], "Algorithm name is not in response description"
 
 
-filter_data = [
-    (None,                                  ALGORITHMS_COUNT),
-    ({"id":             1},                 1),
-    ({"name":           "2"},               1),
-    ({"name":           "Test Algorithm"},  ALGORITHMS_COUNT),
-    ({"teams_count":    2},                 ALGORITHMS_COUNT),
-    ({"teams_count":    3},                 0),
-    ({"sort_by":        "id"},              ALGORITHMS_COUNT),
-    ({"sort_order":     "desc"},            ALGORITHMS_COUNT),
-    ({"limit":          2},                 2),
-    ({"offset":         1},                 ALGORITHMS_COUNT-1),
-]
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data)
+@pytest.mark.parametrize("filter_params, expected_count", params.ALGORITHM_FILTER_DATA)
 async def test_get_algorithms_list_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         create_test_algorithms: list[Algorithm],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = "/api/v1/algorithm/list"
@@ -350,14 +221,14 @@ async def test_get_algorithms_list_with_filters(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data)
+@pytest.mark.parametrize("filter_params, expected_count", params.ALGORITHM_FILTER_DATA)
 async def test_get_algorithms_list_count_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
         create_test_algorithms: list[Algorithm],
-        role: UserRole,
         filter_params: InputData,
-        expected_count: int
+        expected_count: int,
+        role: UserRole,
 ):
     
     route = "/api/v1/algorithm/list-count"

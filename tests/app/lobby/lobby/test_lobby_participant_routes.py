@@ -9,9 +9,11 @@ from app.enums.user import UserRole
 from app.enums.lobby import LobbyParticipantRole
 
 from tests.types import InputData, RouteBaseFixture
-from tests.constants import Roles, PARTICIPANTS_COUNT
+from tests.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 
+import tests.params.routes.lobby_participants as params
+from tests.params.routes.common import get_user_creator_access_error_params
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
@@ -50,15 +52,7 @@ async def test_lobby_participants_routes_require_auth(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("with_team", [True, False])
-@pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status, error_substr",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control lobby"),
-    ]
-)
+@pytest.mark.parametrize("role, is_lobby_owner, expected_status, error_substr", get_user_creator_access_error_params("lobby"))
 async def test_add_participant(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -97,20 +91,8 @@ async def test_add_participant(
 
 # TODO: Update, because now I have `404` when data is empty
 @pytest.mark.asyncio
-@pytest.mark.parametrize("update_data", [
-    {"role":        LobbyParticipantRole.PLAYER}, 
-    {"team_id":     None},
-    {"is_active":   False},
-])
-@pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status, error_substr",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control lobby"),
-    ]
-)
+@pytest.mark.parametrize("update_data", params.PARTICIPANTS_UPDATE_DATA) 
+@pytest.mark.parametrize("role, is_lobby_owner, expected_status, error_substr", get_user_creator_access_error_params("lobby"))
 async def test_edit_participant(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -220,15 +202,7 @@ async def test_leave_lobby(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "role, is_lobby_owner, expected_status, error_substr",
-    [
-        (UserRole.ADMIN,        False,  200,    ""),
-        (UserRole.MODERATOR,    False,  200,    ""),
-        (UserRole.USER,         True,   200,    ""),
-        (UserRole.USER,         False,  403,    "No access to control lobby"),
-    ]
-)
+@pytest.mark.parametrize("role, is_lobby_owner, expected_status, error_substr", get_user_creator_access_error_params("lobby"))
 async def test_kick_from_lobby(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -268,21 +242,9 @@ async def test_kick_from_lobby(
     assert json_data["detail"] == "Participant not found", f"Expected that participant already not in lobby"
 
 
-filter_data = [
-    (None,                                                  PARTICIPANTS_COUNT),
-    ({"id":         1},                                     1),
-    ({"user_id":    3},                                     1),
-    ({"team_id":    1},                                     0),
-    ({"role":       LobbyParticipantRole.SPECTATOR.value},  PARTICIPANTS_COUNT),
-    ({"sort_by":    "id"},                                  PARTICIPANTS_COUNT),
-    ({"sort_order": "desc"},                                PARTICIPANTS_COUNT),
-    ({"limit":      2},                                     2),
-    ({"offset":     1},                                     PARTICIPANTS_COUNT-1),
-]
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data)
+@pytest.mark.parametrize("filter_params, expected_count", params.PARTICIPANTS_FILTER_DATA)
 async def test_get_lobby_participants_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,
@@ -305,7 +267,7 @@ async def test_get_lobby_participants_with_filters(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", filter_data)
+@pytest.mark.parametrize("filter_params, expected_count", params.PARTICIPANTS_FILTER_DATA)
 async def test_get_lobby_participants_count_with_filters(
         client_async: AsyncClient,
         general_factory: GeneralFactory,

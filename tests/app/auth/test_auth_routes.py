@@ -12,6 +12,7 @@ from tests.types import InputData, OutputData, RouteBaseFixture
 from tests.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 
+import tests.params.routes.auth as params
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
 
@@ -44,31 +45,7 @@ async def test_auth_routes_require_auth(
     await check_access_for_unauthenticated_users(client_async, protected_route)
 
 
-@pytest.mark.parametrize(
-    "data, expected_status, expected_response",
-    [
-        (
-            {"username": "defaultuser",     "email": "defaultuser@example.com",     "password": "SecurePassword1!"},
-            201,
-            {"username": "defaultuser",     "email": "defaultuser@example.com",     "role": "user"},
-        ),
-        (
-            {"username": "a",               "email": "defaultuser@example.com",     "password": "SecurePassword1!"},
-            422,
-            {"detail": "Username must be at least 3 characters long"},
-        ),
-        (
-            {"username": "defaultuser",     "email": "invalidemail",                "password": "SecurePassword1!"},
-            422,
-            {"detail": "An email address must have an @-sign"},
-        ),
-        (
-            {"username": "defaultuser",     "email": "defaultuser@example.com",     "password": "123"},
-            422,
-            {"detail": "Password must be at least 8 characters long"},
-        ),
-    ],
-)
+@pytest.mark.parametrize("data, expected_status, expected_response", params.REGISTER_DATA_STATUS_RESPONSE)
 @pytest.mark.asyncio
 async def test_register_user(
         client_async: AsyncClient, 
@@ -92,29 +69,7 @@ async def test_register_user(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "creation_data, data, expected_status, expected_response",
-    [
-        (
-            {"username": "testuser", "email": "test@example.com", "password": "SecurePassword1!", "role": UserRole.USER},
-            {"username": "testuser", "password": "SecurePassword1!"},
-            200,
-            {"token_type": "bearer"},
-        ),
-        (
-            {"username": "testuser", "email": "test@example.com", "password": "SecurePassword1!", "role": UserRole.USER},
-            {"username": "testuser", "password": "WrongPassword"},
-            401,
-            {"detail": "Incorrect username or password"},
-        ),
-        (
-            {"username": "nonexistent", "email": "nonexistent@example.com", "password": "SomePassword", "role": UserRole.USER},
-            {"username": "nonexistent", "password": "SomePassword"},
-            401,
-            {"detail": "Incorrect username or password"},
-        ),
-    ]
-)
+@pytest.mark.parametrize("creation_data, data, expected_status, expected_response", params.LOGIN_CREATE_DATA_STATUS_RESPONSE)
 async def test_login_user(
         client_async: AsyncClient,
         user_factory: UserFactory,

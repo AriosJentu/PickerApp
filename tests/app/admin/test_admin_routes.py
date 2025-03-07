@@ -10,6 +10,8 @@ from tests.types import RouteBaseFixture
 from tests.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 
+import tests.params.routes.admin as params
+from tests.params.routes.common import get_role_status_response_for_admin_params
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
 
@@ -40,20 +42,15 @@ async def test_admin_routes_require_auth(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "role, expected_status, response_substr", 
-    [
-        (UserRole.USER,         403,    "Access denied"),
-        (UserRole.MODERATOR,    403,    "Access denied"),
-        (UserRole.ADMIN,        200,    "inactive tokens from base")
-    ]
-)
+@pytest.mark.parametrize("tokens_response_substr", params.ADMIN_TOKENS_RESPONSE)
+@pytest.mark.parametrize("role, expected_status, response_substr", get_role_status_response_for_admin_params())
 async def test_clear_inactive_tokens(
         client_async: AsyncClient, 
         general_factory: GeneralFactory,
-        role: UserRole,
         response_substr: str,
+        tokens_response_substr: str,
         expected_status: int,
+        role: UserRole,
 ):
     
     route = "/api/v1/admin/clear-tokens"
@@ -63,4 +60,8 @@ async def test_clear_inactive_tokens(
     assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
 
     json_data = response.json()
+    if expected_status == 200:
+        assert tokens_response_substr in str(json_data["detail"]), f"Unexpected response data: {json_data}"
+        return 
+    
     assert response_substr in str(json_data["detail"]), f"Unexpected response data: {json_data}"
