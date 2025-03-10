@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 1
+    MIN_TEAMS_COUNT: int = 2
+    MAX_TEAMS_COUNT: int = 16
 
     DB_USER: str
     DB_PASSWORD: str

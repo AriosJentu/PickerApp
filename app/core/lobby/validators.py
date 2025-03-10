@@ -1,5 +1,17 @@
 from typing import Optional
 
+from app.core.config import settings
+
+
+def validate_teams_count(teams_count: Optional[int]) -> Optional[int]:
+    if teams_count is None:
+        return None
+
+    if not (settings.MIN_TEAMS_COUNT <= teams_count <= settings.MAX_TEAMS_COUNT):
+        raise ValueError(f"Teams count should be in between {settings.MIN_TEAMS_COUNT} and {settings.MAX_TEAMS_COUNT} ({teams_count=})")
+    
+    return teams_count
+
 
 def validate_algorithm(algorithm: Optional[str], teams_count: Optional[int]) -> Optional[str]:
     if algorithm is None:
@@ -8,9 +20,7 @@ def validate_algorithm(algorithm: Optional[str], teams_count: Optional[int]) -> 
     if not algorithm.strip():
         raise ValueError("Algorithm should contain at least one step")
 
-    if teams_count < 2:
-        raise ValueError("Teams count must be not less than 2.")
-
+    teams_count = validate_teams_count(teams_count)
     steps = algorithm.split()
     valid_steps = {"B", "P", "T"}
 
@@ -28,16 +38,6 @@ def validate_algorithm(algorithm: Optional[str], teams_count: Optional[int]) -> 
             raise ValueError(f"Step 'T' must be separated from algorithm ({step=})")
 
     return algorithm
-
-
-def validate_teams_count(teams_count: Optional[int]) -> Optional[int]:
-    if teams_count is None:
-        return None
-
-    if teams_count < 2 or teams_count > 16:
-        raise ValueError(f"Teams count should be in between 2 and 16 ({teams_count=})")
-    
-    return teams_count
 
 
 def validate_name(name: Optional[str], obj_type: str = "Lobby") -> Optional[str]:
