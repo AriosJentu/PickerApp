@@ -1,11 +1,16 @@
 from app.enums.user import UserRole
 
 
-def get_exists_status_error_params(name: str):
-    return [
+def get_exists_status_error_params(name: str, with_empty_data: bool = False):
+    result = [
         (True,  200,    ""),
         (False, 404,    f"{name} not found"),
     ]
+    
+    if with_empty_data:
+        result.append( (None, 200, "") )
+    
+    return result
 
 
 def get_user_creator_access_error_params(name: str):
