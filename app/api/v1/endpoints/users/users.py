@@ -14,14 +14,14 @@ from app.schemas.auth.user import (
 )
 from app.enums.user import UserRole
 
-from app.core.security.user import (
+from app.core.user.user import (
     get_user_by_params,
     deactivate_old_tokens_user,
-    ensure_user_identifier,
     update_user,
     delete_user,
     get_list_of_users,
 )
+from app.core.utils.user import ensure_user_identifier
 from app.core.security.access import (
     check_user_regular_role, 
     check_user_admin_role, 

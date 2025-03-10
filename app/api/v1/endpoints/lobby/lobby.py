@@ -22,7 +22,7 @@ from app.schemas.lobby.lobby_participant import (
 )
 
 from app.models.auth.user import User
-from app.core.security.user import get_user_by_id
+from app.core.user.user import get_user_by_id
 from app.core.security.access import (
     process_has_access_or, 
     check_user_regular_role,

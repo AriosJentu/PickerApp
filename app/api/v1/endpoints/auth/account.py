@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_async_session
 from app.core.security.password import get_password_hash
 from app.core.security.access import check_user_regular_role
-from app.core.security.user import (
+from app.core.user.user import (
     get_current_user, 
     get_user_by_username, 
     get_user_by_email,

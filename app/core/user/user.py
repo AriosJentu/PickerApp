@@ -9,7 +9,8 @@ from app.core.dependencies import get_oauth2_scheme
 from app.schemas.auth.user import UserCreate, UserUpdateSecure, UserUpdate
 from app.enums.user import UserRole
 
-from app.core.security.token import (
+from app.core.security.token import jwt_process_username_from_payload
+from app.core.user.token import (
     create_access_token,
     create_refresh_token,
     verify_token, 
@@ -28,7 +29,6 @@ from app.crud.auth.user import (
     UserExistType,
 )
 
-from app.exceptions.token import HTTPTokenExceptionInvalid
 from app.exceptions.user import (
     HTTPUserExceptionNotFound,
     HTTPUserExceptionNoDataProvided,
@@ -76,17 +76,6 @@ async def get_user_by_params(
     return None
 
 
-def ensure_user_identifier(
-    get_user_id: Optional[int] = None,
-    get_username: Optional[str] = None,
-    get_email: Optional[str] = None
-):
-    if not (get_user_id or get_username or get_email):
-        raise HTTPUserExceptionNoDataProvided(
-            detail="No data provided: 'get_user_id', 'get_username' or 'get_email'"
-        )
-
-
 async def get_users_last_token(db: AsyncSession, user: User, token_type: str = "active") -> Token:
     return await db_get_users_last_token(db, user, token_type)
 
@@ -108,17 +97,6 @@ async def refresh_user_tokens(db: AsyncSession, user: User, refresh_token: str) 
     return new_access_token, refresh_token
 
 
-def process_username_from_payload(
-    payload: dict
-) -> str:
-    
-    username = payload.get("sub")
-    if username is None:
-        raise HTTPTokenExceptionInvalid()
-    
-    return username
-    
-
 async def get_current_user_by_token_type(
     db: AsyncSession = Depends(get_async_session),
     token_str: str = Depends(get_oauth2_scheme()),
@@ -126,7 +104,7 @@ async def get_current_user_by_token_type(
 ) -> User:
     
     payload = await verify_token(db, token_str, token_type)
-    username = process_username_from_payload(payload)
+    username = jwt_process_username_from_payload(payload)
     user = await get_user_by_username(db, username)
     if user is None:
         raise HTTPUserExceptionNotFound()

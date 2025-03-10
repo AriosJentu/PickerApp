@@ -4,7 +4,7 @@ from fastapi import Depends
 
 from app.enums.user import UserRole
 from app.models.auth.user import User
-from app.core.security.user import get_current_user, get_current_user_refresh
+from app.core.user.user import get_current_user, get_current_user_refresh
 from app.exceptions.user import (
     HTTPUserUnauthorized, 
     HTTPUserExceptionAccessDenied,

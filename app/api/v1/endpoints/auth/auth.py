@@ -9,7 +9,7 @@ from app.core.security.password import (
     verify_password,
 )
 
-from app.core.security.user import (
+from app.core.user.user import (
     get_user_by_username,
     get_users_last_token,
     deactivate_old_tokens_user,

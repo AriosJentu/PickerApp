@@ -7,7 +7,7 @@ from app.models.auth.user import User
 from app.core.security.access import check_user_admin_role
 from app.db.session import get_async_session
 
-from app.core.security.token import drop_all_inactive_tokens
+from app.core.user.token import drop_all_inactive_tokens
 
 
 router = APIRouter()
