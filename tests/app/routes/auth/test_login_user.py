@@ -53,7 +53,7 @@ class TestLoginUser(BaseTestLoginUser):
         json_data = response.json()
 
         assert response.status_code == 409, f"Expected 409, got {response.status_code}"
-        assert "User is already logged in" in json_data["detail"], f"Expected error 'User is already logged in', got '{json_data['detail']}'"
+        assert "User is already logged in" in json_data["detail"], f"Expected error 'User is already logged in', got '{json_data["detail"]}'"
 
 
     @pytest.mark.asyncio
@@ -63,7 +63,7 @@ class TestLoginUser(BaseTestLoginUser):
         json_data = response.json()
 
         assert response.status_code == 422, f"Expected 422, got {response.status_code}"
-        assert error_message in str(json_data["detail"]), f"Expected error '{error_message}', got '{json_data['detail']}'"
+        assert error_message in str(json_data["detail"]), f"Expected error '{error_message}', got '{json_data["detail"]}'"
 
 
     @pytest.mark.asyncio

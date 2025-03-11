@@ -15,6 +15,10 @@ class BaseTestSetup:
         return await general_factory.create_base_user(role)
     
     @pytest.fixture
+    async def base_user_other(self, general_factory: GeneralFactory, role_other: UserRole) -> BaseUserData:
+        return await general_factory.create_base_user(role_other, prefix="otheruser")
+    
+    @pytest.fixture
     async def base_user_refresh(self, general_factory: GeneralFactory, role: UserRole) -> BaseUserData:
         return await general_factory.create_base_user(role, is_refresh_token=True)
 

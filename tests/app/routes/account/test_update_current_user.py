@@ -72,7 +72,7 @@ class TestUpdateUser(BaseTestUpdateUser):
         json_data = response.json()
 
         assert response.status_code == 422, f"Expected {422}, got {response.status_code}"
-        assert error_substr in str(json_data["detail"]), f"Expected validation error '{error_substr}', got: '{json_data['detail']}'"
+        assert error_substr in str(json_data["detail"]), f"Expected validation error '{error_substr}', got: '{json_data["detail"]}'"
 
 
     @pytest.mark.asyncio
@@ -94,7 +94,7 @@ class TestUpdateUser(BaseTestUpdateUser):
 
         assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
         if expected_status != 200:
-            assert error_substr in str(json_data["detail"]), f"Expected error '{error_substr}', got '{json_data['detail']}'"
+            assert error_substr in str(json_data["detail"]), f"Expected error '{error_substr}', got '{json_data["detail"]}'"
 
 
     @pytest.mark.asyncio
@@ -116,7 +116,7 @@ class TestUpdateUser(BaseTestUpdateUser):
 
         assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}"
         if expected_status != 200:
-            assert error_substr in str(json_data["detail"]), f"Expected error '{error_substr}', got '{json_data['detail']}'"
+            assert error_substr in str(json_data["detail"]), f"Expected error '{error_substr}', got '{json_data["detail"]}'"
 
 
     @pytest.mark.asyncio
@@ -127,6 +127,7 @@ class TestUpdateUser(BaseTestUpdateUser):
             updated_user_token: str
     ):
         assert updated_user_token is not None, "Access token was not received after update"
+
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("update_data", params.UPDATE_USER_DATA_VALID)

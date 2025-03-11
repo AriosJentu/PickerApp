@@ -12,47 +12,32 @@ ROUTES = [
     ("DELETE",  "/api/v1/algorithm/1",           Roles.ALL_ROLES),
 ]
 
-ALGORITHM_DATA_STATUS_ERROR = [
-    (
-        {"name": "Valid Algorithm", "algorithm": "BB PP T", "teams_count": 2},
-        200, ""
-    ),
-    (
-        {"name": "Invalid Step", "algorithm": "MM FS P", "teams_count": 2},
-        422, "Step 'MM' containings incorrect symbols"
-    ),
-    (
-        {"name": "Wrong Step Size", "algorithm": "BBB PPP T", "teams_count": 2},
-        422, "Size of the step 'BBB' must be equal to teams count"
-    ),
-    (
-        {"name": "  ", "algorithm": "BB PP T", "teams_count": 2},
-        422, "Algorithm name cannot be empty"
-    ),
-    (
-        {"name": "Missing Algorithm", "algorithm": "", "teams_count": 2},
-        422, "Algorithm should contain at least one step"
-    ),
-    (
-        {"name": "Negative Teams Count", "algorithm": "BB PP T", "teams_count": -1},
-        422, "Teams count should be in between 2 and 16"
-    ),
-    (
-        {}, 
-        422, "Field required"
-    ),
-    (
-        {"name": "No Algorithm"}, 
-        422, "Field required"
-    ),
-    (
-        {"algorithm": "BB PP T"}, 
-        422, "Field required"
-    ),
-    (
-        {"name": "No Teams Count", "algorithm": "BB PP T"}, 
-        422, "Field required"
-    ),
+ALGORITHM_VALID_DATA = [
+    {"name":    "Valid Algorithm 1",    "algorithm":    "BB PP T",      "teams_count": 2},
+    {"name":    "Valid Algorithm 1",    "algorithm":    "BP BP T",      "teams_count": 2},
+    {"name":    "Valid Algorithm 1",    "algorithm":    "BBB PPP T",    "teams_count": 3},
+    {"name":    "Valid Algorithm 1",    "algorithm":    "BPB PBP T",    "teams_count": 3},
+]
+
+ALGORITHM_INVALID_DATA = [
+    ({"name":   "Invalid Step",         "algorithm":    "MM FS P",      "teams_count": 2},  "Step 'MM' containings incorrect symbols"),
+    ({"name":   "Wrong Step Size",      "algorithm":    "BBB PPP T",    "teams_count": 2},  "Size of the step 'BBB' must be equal to teams count"),
+    ({"name":   "  ",                   "algorithm":    "BB PP T",      "teams_count": 2},  "Algorithm name cannot be empty"),
+    ({"name":   "Missing Algorithm",    "algorithm":    "",             "teams_count": 2},  "Algorithm should contain at least one step"),
+    ({"name":   "Negative Teams Count", "algorithm":    "BB PP T",      "teams_count": -1}, "Teams count should be in between"),
+]
+
+ALGORITHM_VALID_UPDATE_DATA = [
+    {"algorithm":   "BB PP T",          "teams_count":  2},
+    {"algorithm":   "BBB PPP T",        "teams_count":  3},
+    {"name":        "Valid Algorithm",  "algorithm":    "BBB PPP T",    "teams_count":  3},
+]
+
+ALGORITHM_FIELD_REQUIRED = [
+    {},
+    {"name": "No Algorithm"}, 
+    {"algorithm": "BB PP T"}, 
+    {"name": "No Teams Count", "algorithm": "BB PP T"}, 
 ]
 
 ALGORITHM_FILTER_DATA = [
