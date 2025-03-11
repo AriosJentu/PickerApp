@@ -23,6 +23,7 @@ from app.core.security.token import jwt_is_token_expired
 from app.core.security.validators import validate_username, validate_password
 
 from app.core.security.access import (
+    is_available_to_relogin,
     check_user_regular_role, 
     check_user_regular_role_refresh,
 )
@@ -76,7 +77,7 @@ async def login_user_(
         raise HTTPUserExceptionIncorrectData()
     
     token = await get_users_last_token(db, user)
-    if token and not jwt_is_token_expired(token):
+    if token and not jwt_is_token_expired(token) and not is_available_to_relogin():
         raise HTTPUserExceptionAlreadyLoggedIn()
 
     access_token, refresh_token = await create_user_tokens(db, user)
