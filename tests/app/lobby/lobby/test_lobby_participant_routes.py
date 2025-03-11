@@ -4,50 +4,38 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.db.base import LobbyParticipant
 from app.enums.user import UserRole
 from app.enums.lobby import LobbyParticipantRole
 
-from tests.types import InputData, RouteBaseFixture
+from tests.types import InputData
 from tests.constants import Roles
+from tests.classes.routes import BaseRoutesTest
+from tests.classes.lists import BaseListsTest
 from tests.factories.general_factory import GeneralFactory
 
 import tests.params.routes.lobby_participant as params
 from tests.params.routes.common import get_user_creator_access_error_params
-from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
-from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
 
 
-all_routes = [
-    ("GET",     "/api/v1/lobby/1/participants-count",   Roles.ALL_ROLES),
-    ("GET",     "/api/v1/lobby/1/participants",         Roles.ALL_ROLES),
-    ("POST",    "/api/v1/lobby/1/participants",         Roles.ALL_ROLES),
-    ("PUT",     "/api/v1/lobby/1/participants/1",       Roles.ALL_ROLES),
-    ("DELETE",  "/api/v1/lobby/1/participants/1",       Roles.ALL_ROLES),
-    ("POST",    "/api/v1/lobby/1/connect",              Roles.ALL_ROLES),
-    ("DELETE",  "/api/v1/lobby/1/leave",                Roles.ALL_ROLES),
-]
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.parametrize("protected_route", get_protected_routes(params.ROUTES), indirect=True)
+class TestLobbyParticipantRoutes(BaseRoutesTest):
+    pass
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
+
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.usefixtures("create_test_participants")
+@pytest.mark.usefixtures("test_lobby_id")
 @pytest.mark.parametrize("role", Roles.LIST)
-async def test_lobby_participants_routes_access(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        protected_route: RouteBaseFixture,
-        role: UserRole
-):
-    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
-async def test_lobby_participants_routes_require_auth(
-        client_async: AsyncClient,
-        protected_route: RouteBaseFixture,
-):
-    await check_access_for_unauthenticated_users(client_async, protected_route)
+@pytest.mark.parametrize("filter_params, expected_count", params.PARTICIPANTS_FILTER_DATA)
+class TestLobbyParticipantLists(BaseListsTest):
+    
+    obj_type = "participants"
+    @pytest.fixture(autouse=True)
+    def setup_routes(self, test_lobby_id: int):
+        self.route = f"/api/v1/lobby/{test_lobby_id}/participants"
+        self.route_count = f"/api/v1/lobby/{test_lobby_id}/participants-count"
 
 
 @pytest.mark.asyncio
@@ -240,49 +228,3 @@ async def test_kick_from_lobby(
 
     json_data = response.json()
     assert json_data["detail"] == "Participant not found", f"Expected that participant already not in lobby"
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", params.PARTICIPANTS_FILTER_DATA)
-async def test_get_lobby_participants_with_filters(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        test_lobby_id: int,
-        create_test_participants: list[LobbyParticipant],
-        filter_params: InputData,
-        expected_count: int,
-        role: UserRole,
-):
-    
-    route = f"/api/v1/lobby/{test_lobby_id}/participants"
-    await check_list_responces(
-        client_async, general_factory, role, route, 
-        expected_count=expected_count,
-        is_total_count=False, 
-        filter_params=filter_params,
-        obj_type="participants"
-    )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", params.PARTICIPANTS_FILTER_DATA)
-async def test_get_lobby_participants_count_with_filters(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        test_lobby_id: int,
-        create_test_participants: list[LobbyParticipant],
-        filter_params: InputData,
-        expected_count: int,
-        role: UserRole,
-):
-    
-    route = f"/api/v1/lobby/{test_lobby_id}/participants-count"
-    await check_list_responces(
-        client_async, general_factory, role, route, 
-        expected_count=expected_count,
-        is_total_count=True, 
-        filter_params=filter_params,
-        obj_type="participants"
-    )

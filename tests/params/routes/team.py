@@ -1,5 +1,14 @@
-from tests.constants import TEAMS_COUNT
+from tests.constants import Roles, TEAMS_COUNT
 
+
+ROUTES = [
+    ("POST",    "/api/v1/teams/",            Roles.ALL_ROLES),
+    ("GET",     "/api/v1/teams/list-count",  Roles.ALL_ROLES),
+    ("GET",     "/api/v1/teams/list",        Roles.ALL_ROLES),
+    ("GET",     "/api/v1/teams/1",           Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/teams/1",           Roles.ALL_ROLES),
+    ("DELETE",  "/api/v1/teams/1",           Roles.ALL_ROLES),
+]
 
 TEAM_DATA_STATUS_ERROR =     [
     ({"name":   "New Team"},    200,    ""),

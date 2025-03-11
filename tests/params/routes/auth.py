@@ -1,5 +1,14 @@
 from app.enums.user import UserRole
 
+from tests.constants import Roles
+
+
+ROUTES = [
+    ("POST", "/api/v1/auth/register",   None),
+    ("POST", "/api/v1/auth/login",      None),
+    ("POST", "/api/v1/auth/logout",     Roles.ALL_ROLES),
+    ("POST", "/api/v1/auth/refresh",    Roles.ALL_ROLES),
+]
 
 REGISTER_DATA_STATUS_RESPONSE = [
     (

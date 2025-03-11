@@ -4,48 +4,33 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.db.base import Algorithm
 from app.enums.user import UserRole
 
-from tests.types import InputData, RouteBaseFixture
+from tests.types import InputData
 from tests.constants import Roles
+from tests.classes.routes import BaseRoutesTest
+from tests.classes.lists import BaseListsTest
 from tests.factories.general_factory import GeneralFactory
 
 import tests.params.routes.algorithm as params
 from tests.params.routes.common import get_exists_status_error_params, get_user_creator_access_error_params
-from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
-from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
 
 
-all_routes = [
-    ("POST",    "/api/v1/algorithm/",            Roles.ALL_ROLES),
-    ("GET",     "/api/v1/algorithm/list-count",  Roles.ALL_ROLES),
-    ("GET",     "/api/v1/algorithm/list",        Roles.ALL_ROLES),
-    ("GET",     "/api/v1/algorithm/1",           Roles.ALL_ROLES),
-    ("PUT",     "/api/v1/algorithm/1",           Roles.ALL_ROLES),
-    ("DELETE",  "/api/v1/algorithm/1",           Roles.ALL_ROLES),
-]
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.parametrize("protected_route", get_protected_routes(params.ROUTES), indirect=True)
+class TestAlgorithmRoutes(BaseRoutesTest):
+    pass
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
+
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.usefixtures("create_test_algorithms")
 @pytest.mark.parametrize("role", Roles.LIST)
-async def test_algorithm_routes_access(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        protected_route: RouteBaseFixture,
-        role: UserRole
-):
-    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
-async def test_algorithm_routes_require_auth(
-        client_async: AsyncClient,
-        protected_route: RouteBaseFixture,
-):
-    await check_access_for_unauthenticated_users(client_async, protected_route)
+@pytest.mark.parametrize("filter_params, expected_count", params.ALGORITHM_FILTER_DATA)
+class TestAlgorithmLists(BaseListsTest):
+    route = "/api/v1/algorithm/list"
+    route_count = "/api/v1/algorithm/list-count"
+    obj_type = "algorithms"
 
 
 @pytest.mark.asyncio
@@ -195,47 +180,3 @@ async def test_delete_algorithm(
 
     assert json_data["id"] == algorithm_data.id, "Algorithm ID is not correct"
     assert algorithm_data.data.name in json_data["description"], "Algorithm name is not in response description"
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", params.ALGORITHM_FILTER_DATA)
-async def test_get_algorithms_list_with_filters(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        create_test_algorithms: list[Algorithm],
-        filter_params: InputData,
-        expected_count: int,
-        role: UserRole,
-):
-    
-    route = "/api/v1/algorithm/list"
-    await check_list_responces(
-        client_async, general_factory, role, route, 
-        expected_count=expected_count,
-        is_total_count=False, 
-        filter_params=filter_params,
-        obj_type="algorithms"
-    )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", params.ALGORITHM_FILTER_DATA)
-async def test_get_algorithms_list_count_with_filters(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        create_test_algorithms: list[Algorithm],
-        filter_params: InputData,
-        expected_count: int,
-        role: UserRole,
-):
-    
-    route = "/api/v1/algorithm/list-count"
-    await check_list_responces(
-        client_async, general_factory, role, route, 
-        expected_count=expected_count,
-        is_total_count=True, 
-        filter_params=filter_params,
-        obj_type="algorithms"
-    )

@@ -1,7 +1,17 @@
 from app.enums.lobby import LobbyStatus
 
-from tests.constants import LOBBIES_COUNT
+from tests.constants import Roles, LOBBIES_COUNT
 
+
+ROUTES = [
+    ("POST",    "/api/v1/lobby/",               Roles.ALL_ROLES),
+    ("GET",     "/api/v1/lobby/list-count",     Roles.ALL_ROLES),
+    ("GET",     "/api/v1/lobby/list",           Roles.ALL_ROLES),
+    ("GET",     "/api/v1/lobby/1",              Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/lobby/1",              Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/lobby/1/close",        Roles.ALL_ROLES),
+    ("DELETE",  "/api/v1/lobby/1",              Roles.ALL_ROLES),
+]
 
 LOBBY_DATA_STATUS_ERROR = [
     ({"name":   "New Lobby"},   200,    ""),

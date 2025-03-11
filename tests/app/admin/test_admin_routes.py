@@ -6,39 +6,18 @@ from httpx import AsyncClient
 
 from app.enums.user import UserRole
 
-from tests.types import RouteBaseFixture
-from tests.constants import Roles
+from tests.classes.routes import BaseRoutesTest
 from tests.factories.general_factory import GeneralFactory
 
 import tests.params.routes.admin as params
 from tests.params.routes.common import get_role_status_response_for_admin_params
-from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
 
 
-all_routes = [
-    ("DELETE",  "/api/v1/admin/clear-tokens", Roles.ADMIN),
-]
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
-@pytest.mark.parametrize("role", Roles.LIST)
-async def test_admin_routes_access(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        protected_route: RouteBaseFixture,
-        role: UserRole
-):
-    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
-async def test_admin_routes_require_auth(
-        client_async: AsyncClient, 
-        protected_route: RouteBaseFixture,
-):
-    await check_access_for_unauthenticated_users(client_async, protected_route)
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.parametrize("protected_route", get_protected_routes(params.ROUTES), indirect=True)
+class TestAdminRoutes(BaseRoutesTest):
+    pass
 
 
 @pytest.mark.asyncio

@@ -1,7 +1,16 @@
 from app.enums.user import UserRole
 
-from tests.constants import USERS_COUNT
+from tests.constants import Roles, USERS_COUNT
 
+
+ROUTES = [
+    ("GET",     "/api/v1/users/list",       Roles.ALL_ROLES),
+    ("GET",     "/api/v1/users/list-count", Roles.ALL_ROLES),
+    ("GET",     "/api/v1/users/",           Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/users/",           Roles.ADMIN),
+    ("DELETE",  "/api/v1/users/",           Roles.ADMIN),
+    ("DELETE",  "/api/v1/users/tokens",     Roles.ADMIN),
+]
 
 USERS_EXIST_STATUS_ERROR = [
     (True,  200,    "",                 {}),

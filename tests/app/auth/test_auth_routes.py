@@ -4,45 +4,20 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.enums.user import UserRole
-
 from tests.factories.user_factory import UserFactory
 
-from tests.types import InputData, OutputData, RouteBaseFixture
-from tests.constants import Roles
+from tests.types import InputData, OutputData
+from tests.classes.routes import BaseRoutesTest
 from tests.factories.general_factory import GeneralFactory
 
 import tests.params.routes.auth as params
-from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.routes_utils import get_protected_routes
 
 
-all_routes = [
-    ("POST", "/api/v1/auth/register",   None),
-    ("POST", "/api/v1/auth/login",      None),
-    ("POST", "/api/v1/auth/logout",     Roles.ALL_ROLES),
-    ("POST", "/api/v1/auth/refresh",    Roles.ALL_ROLES),
-]
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
-@pytest.mark.parametrize("role", Roles.LIST)
-async def test_auth_routes_access(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        protected_route: RouteBaseFixture,
-        role: UserRole
-):
-    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
-async def test_auth_routes_require_auth(
-        client_async: AsyncClient,
-        protected_route: RouteBaseFixture,
-):
-    await check_access_for_unauthenticated_users(client_async, protected_route)
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.parametrize("protected_route", get_protected_routes(params.ROUTES), indirect=True)
+class TestAuthRoutes(BaseRoutesTest):
+    pass
 
 
 @pytest.mark.parametrize("data, expected_status, expected_response", params.REGISTER_DATA_STATUS_RESPONSE)

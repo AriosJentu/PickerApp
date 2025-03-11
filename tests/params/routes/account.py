@@ -1,3 +1,13 @@
+from tests.constants import Roles
+
+
+ROUTES = [
+    ("GET",     "/api/v1/account/",             Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/account/",             Roles.ALL_ROLES),
+    ("DELETE",  "/api/v1/account/",             Roles.ALL_ROLES),
+    ("GET",     "/api/v1/account/check-token",  Roles.ALL_ROLES),
+]
+
 UPDATE_USER_DATA_STATUS_ERROR = [
     ({"email":      "updated_email@example.com"},                                   200,    ""), 
     ({"username":   "newusername"},                                                 200,    ""), 

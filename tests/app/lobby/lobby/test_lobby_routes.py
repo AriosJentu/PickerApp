@@ -4,50 +4,34 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.db.base import Lobby 
 from app.enums.user import UserRole
 from app.enums.lobby import LobbyStatus
 
-from tests.types import InputData, RouteBaseFixture
+from tests.types import InputData
 from tests.constants import Roles
+from tests.classes.routes import BaseRoutesTest
+from tests.classes.lists import BaseListsTest
 from tests.factories.general_factory import GeneralFactory
 
 import tests.params.routes.lobby as params
 from tests.params.routes.common import get_exists_status_error_params, get_user_creator_access_error_params
-from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
-from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
 
 
-all_routes = [
-    ("POST",    "/api/v1/lobby/",               Roles.ALL_ROLES),
-    ("GET",     "/api/v1/lobby/list-count",     Roles.ALL_ROLES),
-    ("GET",     "/api/v1/lobby/list",           Roles.ALL_ROLES),
-    ("GET",     "/api/v1/lobby/1",              Roles.ALL_ROLES),
-    ("PUT",     "/api/v1/lobby/1",              Roles.ALL_ROLES),
-    ("PUT",     "/api/v1/lobby/1/close",        Roles.ALL_ROLES),
-    ("DELETE",  "/api/v1/lobby/1",              Roles.ALL_ROLES),
-]
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.parametrize("protected_route", get_protected_routes(params.ROUTES), indirect=True)
+class TestLobbyRoutes(BaseRoutesTest):
+    pass
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
+
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.usefixtures("create_test_lobbies")
 @pytest.mark.parametrize("role", Roles.LIST)
-async def test_lobbies_routes_access(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        protected_route: RouteBaseFixture,
-        role: UserRole
-):
-    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
-async def test_lobbies_routes_require_auth(
-        client_async: AsyncClient,
-        protected_route: RouteBaseFixture,
-):
-    await check_access_for_unauthenticated_users(client_async, protected_route)
+@pytest.mark.parametrize("filter_params, expected_count", params.LOBBY_FILTER_DATA)
+class TestLobbyLists(BaseListsTest):
+    route = "/api/v1/lobby/list"
+    route_count = "/api/v1/lobby/list-count"
+    obj_type = "lobbies"
 
 
 @pytest.mark.asyncio
@@ -251,47 +235,3 @@ async def test_delete_lobby(
     assert response.status_code == 200, f"Expected 200, got {response.status_code}"
     assert json_data["id"] == lobby_data.id, f"Expected {lobby_data.id}, got {json_data['id']}"
     assert lobby_data.data.name in json_data["description"], f"Deleted lobby with incorrect name"
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", params.LOBBY_FILTER_DATA)
-async def test_get_lobbies_list_with_filters(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        create_test_lobbies: list[Lobby],
-        filter_params: InputData,
-        expected_count: int,
-        role: UserRole,
-):
-    
-    route = "/api/v1/lobby/list"
-    await check_list_responces(
-        client_async, general_factory, role, route, 
-        expected_count=expected_count,
-        is_total_count=False, 
-        filter_params=filter_params,
-        obj_type="lobbies"
-    )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", params.LOBBY_FILTER_DATA)
-async def test_get_lobbies_list_count_with_filters(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        create_test_lobbies: list[Lobby],
-        filter_params: InputData,
-        expected_count: int,
-        role: UserRole,
-):
-    
-    route = "/api/v1/lobby/list-count"
-    await check_list_responces(
-        client_async, general_factory, role, route, 
-        expected_count=expected_count,
-        is_total_count=True, 
-        filter_params=filter_params,
-        obj_type="lobbies"
-    )

@@ -1,5 +1,16 @@
 from tests.constants import ALGORITHMS_COUNT
 
+from tests.constants import Roles
+
+
+ROUTES = [
+    ("POST",    "/api/v1/algorithm/",            Roles.ALL_ROLES),
+    ("GET",     "/api/v1/algorithm/list-count",  Roles.ALL_ROLES),
+    ("GET",     "/api/v1/algorithm/list",        Roles.ALL_ROLES),
+    ("GET",     "/api/v1/algorithm/1",           Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/algorithm/1",           Roles.ALL_ROLES),
+    ("DELETE",  "/api/v1/algorithm/1",           Roles.ALL_ROLES),
+]
 
 ALGORITHM_DATA_STATUS_ERROR = [
     (

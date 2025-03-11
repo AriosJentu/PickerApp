@@ -7,45 +7,32 @@ from httpx import AsyncClient
 from app.db.base import Team
 from app.enums.user import UserRole
 
-from tests.types import InputData, RouteBaseFixture
+from tests.types import InputData
 from tests.constants import Roles
+from tests.classes.routes import BaseRoutesTest
+from tests.classes.lists import BaseListsTest
 from tests.factories.general_factory import GeneralFactory
 
 import tests.params.routes.team as params
 from tests.params.routes.common import get_exists_status_error_params, get_user_creator_access_error_params
-from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
 
 
-all_routes = [
-    ("POST",    "/api/v1/teams/",            Roles.ALL_ROLES),
-    ("GET",     "/api/v1/teams/list-count",  Roles.ALL_ROLES),
-    ("GET",     "/api/v1/teams/list",        Roles.ALL_ROLES),
-    ("GET",     "/api/v1/teams/1",           Roles.ALL_ROLES),
-    ("PUT",     "/api/v1/teams/1",           Roles.ALL_ROLES),
-    ("DELETE",  "/api/v1/teams/1",           Roles.ALL_ROLES),
-]
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.parametrize("protected_route", get_protected_routes(params.ROUTES), indirect=True)
+class TestTeamRoutes(BaseRoutesTest):
+    pass
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
+
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.usefixtures("create_test_teams")
 @pytest.mark.parametrize("role", Roles.LIST)
-async def test_teams_routes_access(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        protected_route: RouteBaseFixture,
-        role: UserRole
-):
-    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
-async def test_teams_routes_require_auth(
-        client_async: AsyncClient,
-        protected_route: RouteBaseFixture,
-):
-    await check_access_for_unauthenticated_users(client_async, protected_route)
+@pytest.mark.parametrize("filter_params, expected_count", params.TEAM_FILTER_DATA)
+class TestTeamLists(BaseListsTest):
+    route = "/api/v1/teams/list"
+    route_count = "/api/v1/teams/list-count"
+    obj_type = "teams"
 
 
 @pytest.mark.asyncio

@@ -4,54 +4,43 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.db.base import User
 from app.enums.user import UserRole
 
-from tests.types import InputData, RouteBaseFixture
+from tests.types import InputData
 from tests.constants import Roles
+from tests.classes.routes import BaseRoutesTest
+from tests.classes.lists import BaseListsTest
 from tests.factories.general_factory import GeneralFactory
 
 import tests.params.routes.users as params
 from tests.params.routes.common import get_role_status_response_for_admin_params
-from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
-from tests.utils.test_lists import check_list_responces
 from tests.utils.routes_utils import get_protected_routes
 
 
-all_routes = [
-    ("GET",     "/api/v1/users/list",       Roles.ALL_ROLES),
-    ("GET",     "/api/v1/users/list-count", Roles.ALL_ROLES),
-    ("GET",     "/api/v1/users/",           Roles.ALL_ROLES),
-    ("PUT",     "/api/v1/users/",           Roles.ADMIN),
-    ("DELETE",  "/api/v1/users/",           Roles.ADMIN),
-    ("DELETE",  "/api/v1/users/tokens",     Roles.ADMIN),
-]
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.parametrize("protected_route", get_protected_routes(params.ROUTES), indirect=True)
+class TestUserRoutes(BaseRoutesTest):
+    pass
 
-default_roles_access = [
-    (UserRole.USER,         403),
-    (UserRole.MODERATOR,    403),
-    (UserRole.ADMIN,        200),
-]
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.usefixtures("create_multiple_test_users_with_tokens")
 @pytest.mark.parametrize("role", Roles.LIST)
-async def test_users_routes_access(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        protected_route: RouteBaseFixture,
-        role: UserRole
-):
-    await check_access_for_authenticated_users(client_async, general_factory, protected_route, role)
+@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA_MULTIPLE)
+class TestMultipleUsersLists(BaseListsTest):
+    route = "/api/v1/users/list"
+    route_count = "/api/v1/users/list-count"
+    obj_type = "users"
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("protected_route", get_protected_routes(all_routes), indirect=True)
-async def test_users_routes_require_auth(
-        client_async: AsyncClient,
-        protected_route: RouteBaseFixture,
-):
-    await check_access_for_unauthenticated_users(client_async, protected_route)
+@pytest.mark.usefixtures("client_async")
+@pytest.mark.usefixtures("create_test_users")
+@pytest.mark.parametrize("role", [UserRole.USER])
+@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA)
+class TestBaseUsersLists(BaseListsTest):
+    route = "/api/v1/users/list"
+    route_count = "/api/v1/users/list-count"
+    obj_type = "users"
 
 
 @pytest.mark.asyncio
@@ -207,87 +196,3 @@ async def test_clear_user_tokens(
     assert json_data["username"] == base_updatable_data.user.username, "Username does not match"
     assert json_data["email"] == base_updatable_data.user.email, "Email does not match"
     assert json_data["detail"] == f"Tokens for user with ID {base_updatable_data.user.id} has been deactivated", "Unexpected response message"
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA_MULTIPLE)
-async def test_get_users_list_with_filters_multiple(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        create_multiple_test_users_with_tokens: list[tuple[User, str]],
-        filter_params: InputData,
-        expected_count: int,
-        role: UserRole,
-):
-    
-    route = "/api/v1/users/list"
-    await check_list_responces(
-        client_async, general_factory, role, route, 
-        expected_count=expected_count,
-        is_total_count=False, 
-        filter_params=filter_params,
-        obj_type="users"
-    )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA)
-async def test_get_users_list_with_filters_default(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        create_test_users: list[User],
-        filter_params: InputData,
-        expected_count: int
-):
-    
-    route = "/api/v1/users/list"
-    await check_list_responces(
-        client_async, general_factory, UserRole.USER, route, 
-        expected_count=expected_count,
-        is_total_count=False, 
-        filter_params=filter_params,
-        obj_type="users"
-    )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("role", Roles.LIST)
-@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA_MULTIPLE)
-async def test_get_users_list_count_with_filters_multiple(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        create_multiple_test_users_with_tokens: list[tuple[User, str]],
-        filter_params: InputData,
-        expected_count: int,
-        role: UserRole,
-):
-    
-    route = "/api/v1/users/list-count"
-    await check_list_responces(
-        client_async, general_factory, role, route, 
-        expected_count=expected_count,
-        is_total_count=True, 
-        filter_params=filter_params,
-        obj_type="users"
-    )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("filter_params, expected_count", params.USERS_FILTER_DATA)
-async def test_get_users_list_count_with_filters_default(
-        client_async: AsyncClient,
-        general_factory: GeneralFactory,
-        create_test_users: list[User],
-        filter_params: InputData,
-        expected_count: int
-):
-    
-    route = "/api/v1/users/list-count"
-    await check_list_responces(
-        client_async, general_factory, UserRole.USER, route, 
-        expected_count=expected_count,
-        is_total_count=True, 
-        filter_params=filter_params,
-        obj_type="users"
-    )
