@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta, timezone
 
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 from uuid import uuid4
 
 from app.db.base import Token
 
 from app.core.config import settings
-from app.exceptions.token import HTTPTokenExceptionInvalid
+from app.exceptions.token import HTTPTokenExceptionInvalid, HTTPTokenExceptionExpired
 
 
 async def jwt_create_token(data: dict, delta: timedelta, token_type: str) -> Token:
@@ -46,8 +46,19 @@ def jwt_decode_token(token_str: str) -> dict:
     try:
         payload = jwt.decode(token_str, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
+    
+    except ExpiredSignatureError:
+        raise HTTPTokenExceptionExpired()
+    
     except JWTError:
         raise HTTPTokenExceptionInvalid()
+    
+def jwt_is_token_expired(token: Token) -> bool:
+    try:
+        jwt_decode_token(token.token)
+    except HTTPTokenExceptionExpired:
+        return True
+    return False
     
 
 def jwt_process_username_from_payload(

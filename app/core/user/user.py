@@ -76,7 +76,7 @@ async def get_user_by_params(
     return None
 
 
-async def get_users_last_token(db: AsyncSession, user: User, token_type: str = "active") -> Token:
+async def get_users_last_token(db: AsyncSession, user: User, token_type: str = "access") -> Optional[Token]:
     return await db_get_users_last_token(db, user, token_type)
 
 

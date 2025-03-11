@@ -22,7 +22,7 @@ async def db_is_token_exist(db: AsyncSession, token_str: str) -> bool:
     return token_in_db is not None
 
 
-async def db_get_users_last_token(db: AsyncSession, user: User, token_type: str = "active") -> Optional[Token]:
+async def db_get_users_last_token(db: AsyncSession, user: User, token_type: str = "access") -> Optional[Token]:
     tokens = await db.execute(select(Token).filter(Token.user_id == user.id, Token.token_type == token_type, Token.is_active == True).order_by(Token.expires_at.desc()))
     return tokens.scalars().first()
 

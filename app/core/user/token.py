@@ -16,8 +16,8 @@ from app.crud.auth.token import (
 )
 
 from app.exceptions.token import (
+    HTTPTokenExceptionInvalid,
     HTTPTokenExceptionInvalidType,
-    HTTPTokenExceptionInvalidOrExpired,
 )
 
 from app.core.security.token import jwt_create_access_token, jwt_create_refresh_token, jwt_decode_token
@@ -57,6 +57,6 @@ async def verify_token(
         raise HTTPTokenExceptionInvalidType()
     
     if not await db_is_token_exist(db, token_str):
-        raise HTTPTokenExceptionInvalidOrExpired()
+        raise HTTPTokenExceptionInvalid()
     
     return payload

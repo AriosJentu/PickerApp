@@ -57,11 +57,11 @@ class HTTPUserExceptionIncorrectData(HTTPUserException):
         
         
 class HTTPUserExceptionIncorrectFormData(HTTPUserException):
-    def __init__(self):
+    def __init__(self, detail: str = "Username must be at least 3 characters long"):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Username must be at least 3 characters long"
-        )    
+            detail=detail
+        ) 
 
 
 class HTTPUserUnauthorized(HTTPUserException):

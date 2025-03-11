@@ -9,6 +9,12 @@ from app.exceptions.user import (
     HTTPUserExceptionAccessDenied,
 )
 
+from app.core.config import settings
+
+
+def is_available_to_relogin() -> bool:
+    return bool(settings.AVALIABLE_TO_RELOGIN)
+
 
 def process_has_access(
     user: User, 

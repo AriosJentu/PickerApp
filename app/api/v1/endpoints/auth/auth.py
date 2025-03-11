@@ -19,7 +19,8 @@ from app.core.user.user import (
     create_user,
 )
 
-from app.core.security.validators import validate_username
+from app.core.security.token import jwt_is_token_expired
+from app.core.security.validators import validate_username, validate_password
 
 from app.core.security.access import (
     check_user_regular_role, 
@@ -66,14 +67,16 @@ async def login_user_(
     
     try:
         validate_username(form_data.username)
-    except ValueError:
-        raise HTTPUserExceptionIncorrectFormData()
+        validate_password(form_data.password)
+    except ValueError as error:
+        raise HTTPUserExceptionIncorrectFormData(str(error))
 
     user = await get_user_by_username(db, form_data.username)
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPUserExceptionIncorrectData()
     
-    if await get_users_last_token(db, user):
+    token = await get_users_last_token(db, user)
+    if token and not jwt_is_token_expired(token):
         raise HTTPUserExceptionAlreadyLoggedIn()
 
     access_token, refresh_token = await create_user_tokens(db, user)
