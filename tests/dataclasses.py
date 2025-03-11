@@ -9,7 +9,7 @@ from tests.types import InputData
 T = TypeVar("T")
 
 @dataclass
-class TestBaseUserData:
+class BaseUserData:
     user: User
     access_token: str
     refresh_token: str
@@ -17,6 +17,6 @@ class TestBaseUserData:
 
 
 @dataclass
-class TestObjectData(Generic[T]):
+class BaseObjectData(Generic[T]):
     id: int
     data: Optional[T]

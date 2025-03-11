@@ -21,12 +21,13 @@ class UserFactory:
     async def create(self, 
             prefix: str = "defaultuser", 
             role: UserRole = UserRole.USER, 
-            suffix: str = ""
+            suffix: str = "",
+            password: str = "SecurePassword1!"
     ) -> User:
         data = {
             "username": f"{prefix}{suffix}",
             "email": f"{prefix}{suffix}@example.com",
-            "password": "SecurePassword1!",
+            "password": password,
             "role": role
         }
 

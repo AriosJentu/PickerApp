@@ -12,30 +12,22 @@ ROUTES = [
     ("DELETE",  "/api/v1/users/tokens",     Roles.ADMIN),
 ]
 
-USERS_EXIST_STATUS_ERROR = [
-    (True,  200,    "",                 {}),
-    (False, 404,    "No data provided", {}),
-    (False, 404,    "User not found",   {"get_user_id":     -1}),
-    (False, 404,    "User not found",   {"get_username":    "someunexistantname"}),
-    (False, 404,    "User not found",   {"get_email":       "unexistant@example.com"}),
+USERS_NONEXISTANT_DATA = [
+    {"get_user_id":     -1}, 
+    {"get_username":    "non_existant_username"},
+    {"get_email":       "nonexistant@blackhole.org"},
 ]
 
-USERS_PARAMS_STATUS_EXISTS_ERROR = [
-    ({"get_user_id":    1},                         200,    True,   ""),
-    ({"get_username":   "testuser"},                200,    True,   ""),
-    ({"get_email":      "testuser@example.com"},    200,    True,   ""),
-    ({"get_user_id":    999},                       404,    False,  "User not found"),
-    ({"get_username":   "nonexistent"},             404,    False,  "User not found"),
-    ({"get_email":      "noemail@example.com"},     404,    False,  "User not found"),
+USERS_UPDATE_VALID_DATA = [
+    {"email":       "new_email@example.com"},
+    {"username":    "somenewname"},
+    {"password":    "NewPassword123!"}
 ]
 
-USERS_UPDATE_DATA_STATUS_ERROR = [
-    ({"email":          "new_email@example.com"},                   200, ""),
-    ({"username":       "somenewname"},                             200, ""),
-    ({"password":       "NewPassword123!"},                         200, ""),
-    ({"username":       ""},                                        422, "Username must be at least 3 characters long."),
-    ({"password":       "InvalidPassword"},                         422, "Password must contain"),
-    ({"email":          "invalid-email"},                           422, "Invalid email format"),
+USERS_UPDATE_INVALID_DATA = [
+    ({"username":   ""},                "Username must be at least 3 characters long."),
+    ({"password":   "InvalidPassword"}, "Password must contain"),
+    ({"email":      "invalid-email"},   "Invalid email format"),
 ]
 
 USERS_FILTER_DATA_MULTIPLE = [

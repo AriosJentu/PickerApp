@@ -8,15 +8,22 @@ ROUTES = [
     ("GET",     "/api/v1/account/check-token",  Roles.ALL_ROLES),
 ]
 
-UPDATE_USER_DATA_STATUS_ERROR = [
-    ({"email":      "updated_email@example.com"},                                   200,    ""), 
-    ({"username":   "newusername"},                                                 200,    ""), 
-    ({"password":   "NewPassword123!"},                                             200,    ""),
-    ({"email":      "updated_email@example.com",    "username":     "newusername"}, 200,    ""), 
-    ({"email":      "invalid-email"},                                               422,    "Invalid email format"),
-    ({"username":   ""},                                                            422,    "Username must be at least 3 characters long."),
-    ({"password":   "weakpass"},                                                    422,    "Password must contain"),
-    ({"email":      "invalid-email",                "username":     ""},            422,    "Username must be at least 3 characters long."), 
+UPDATE_USER_DATA_VALID = [
+    {"email":       "updated_email@example.com"},
+    {"username":    "newusername"},
+    {"password":    "NewPassword123!"},
+    {"email":       "updated_email@example.com",    "username": "newusername"}
+]
+
+UPDATE_USER_DATA_INVALID = [
+    ({"email":      "invalid-email"},                       "Invalid email format"),
+    ({"username":   ""},                                    "Username must be at least 3 characters long"),
+    ({"password":   "weakpass"},                            "Password must contain"),
+    ({"email":      "invalid-email",    "username": ""},    "Username must be at least 3 characters long"),
+]
+
+UPDATE_USER_DATA_DUPLICATES = [
+    {"email":       "updated_email@example.com",    "username": "newusername"}
 ]
 
 UPDATE_USER_DUPLICATE_EMAIL_EXPECT_ERROR = [
