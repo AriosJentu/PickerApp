@@ -1,5 +1,4 @@
 from typing import Optional
-from functools import wraps
 from fastapi import Depends
 
 from app.enums.user import UserRole

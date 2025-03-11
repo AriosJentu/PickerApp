@@ -241,15 +241,15 @@ async def add_participant_(
     
     process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyAccessDenied)
 
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPUserExceptionNotFound()
+    
     team = None
     if team_id is not None:
         team = await get_team_by_id(db, team_id)
         if not team:
             raise HTTPTeamNotFound()
-    
-    user = await get_user_by_id(db, user_id)
-    if not user:
-        raise HTTPUserExceptionNotFound()
     
     if not await is_participant_already_in_lobby(db, user, lobby):
         return await add_lobby_participant(db, user, lobby, team)
