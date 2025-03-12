@@ -1,27 +1,30 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.base import User, Algorithm, Lobby, Team
+from app.db.base import User, Algorithm, Lobby, LobbyParticipant, Team
 from app.enums.user import UserRole
 
 from tests.dataclasses import BaseUserData, BaseObjectData
 from tests.types import InputData
+
 from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory
 from tests.factories.algorithm_factory import AlgorithmFactory
 from tests.factories.lobby_factory import LobbyFactory
 from tests.factories.team_factory import TeamFactory
+from tests.factories.participant_factory import ParticipantFactory
 
 from tests.utils.user_utils import create_user_with_tokens
 
 class GeneralFactory:
 
-    def __init__(self, 
+    def __init__(self,
             db_async: AsyncSession,
             user_factory: UserFactory,
             token_factory: TokenFactory,
             algorithm_factory: AlgorithmFactory,
             lobby_factory: LobbyFactory,
             team_factory: TeamFactory,
+            participant_factory: ParticipantFactory
     ):
         self.db_async = db_async
         self.user_factory = user_factory
@@ -29,9 +32,10 @@ class GeneralFactory:
         self.algorithm_factory = algorithm_factory
         self.lobby_factory = lobby_factory
         self.team_factory = team_factory
+        self.participant_factory = participant_factory
 
 
-    async def create_base_user(self, 
+    async def create_base_user(self,
             role: UserRole = UserRole.USER,
             is_refresh_token: bool = False,
             prefix: str = "testuser",
@@ -88,33 +92,47 @@ class GeneralFactory:
 
     async def create_conditional_algorithm(self,
         user: User,
-        is_algorithm_exists: bool = True
+        is_algorithm_exists: bool = True,
+        i: int = 1
     ) -> BaseObjectData[Algorithm]:
         if not is_algorithm_exists:
             return BaseObjectData(-1, None)
         
-        algorithm = await self.algorithm_factory.create(user)
+        algorithm = await self.algorithm_factory.create(user, i)
         return BaseObjectData(algorithm.id, algorithm)
     
 
     async def create_conditional_lobby(self,
         user: User,
-        is_lobby_exists: bool = True
+        is_lobby_exists: bool = True,
+        i: int = 1
     ) -> BaseObjectData[Lobby]:
         if not is_lobby_exists:
             return BaseObjectData(-1, None)
         
-        algorithm_data = await self.create_conditional_algorithm(user)
-        lobby = await self.lobby_factory.create(user, algorithm_data.data)
+        algorithm_data = await self.create_conditional_algorithm(user, i)
+        lobby = await self.lobby_factory.create(user, algorithm_data.data, i)
         return BaseObjectData(lobby.id, lobby)
     
 
     async def create_conditional_team(self,
         lobby: Lobby, 
-        is_team_exists: bool = True
+        is_team_exists: bool = True,
+        i: int = 1
     ) -> BaseObjectData[Team]:
         if not is_team_exists:
             return BaseObjectData(-1, None)
         
-        team = await self.team_factory.create(lobby)
+        team = await self.team_factory.create(lobby, i)
         return BaseObjectData(team.id, team)
+    
+    async def create_conditional_participant(self,
+        lobby: Lobby,
+        is_participant_exists: bool = True,
+        i: int = 1
+    ) -> BaseObjectData[LobbyParticipant]:
+        if not is_participant_exists:
+            return BaseObjectData(-1, None)
+        
+        participant = await self.participant_factory.create(lobby, i)
+        return BaseObjectData(participant.id, participant)

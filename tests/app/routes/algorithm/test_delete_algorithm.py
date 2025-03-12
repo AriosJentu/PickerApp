@@ -69,7 +69,7 @@ class TestDeleteAlgorithm(BaseTestDeleteAlgorithm):
         json_data = response.json()
         
         assert response.status_code == 403, f"Expected 403, got {response.status_code}"
-        assert "No access to control algorithm" in json_data["detail"], f"Expected 'No access to control algorithm', got '{json_data['detail']}'"
+        assert "No access to control algorithm" in json_data["detail"], f"Expected 'No access to control algorithm', got '{json_data["detail"]}'"
 
 
     @pytest.mark.asyncio
@@ -84,12 +84,12 @@ class TestDeleteAlgorithm(BaseTestDeleteAlgorithm):
         json_data = response.json()
         
         assert response.status_code == 404, f"Expected 404, got {response.status_code}"
-        assert "Algorithm not found" in json_data["detail"], f"Expected error message 'Algorithm not found', got: '{json_data['detail']}'"
+        assert "Algorithm not found" in json_data["detail"], f"Expected error message 'Algorithm not found', got: '{json_data["detail"]}'"
 
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("role", Roles.LIST)
     @pytest.mark.parametrize("algorithm_exists", [True, False])
+    @pytest.mark.parametrize("role", Roles.LIST)
     async def test_delete_algorithm_unauthorized(self,
             client_async: AsyncClient,
             algorithm: BaseObjectData[Algorithm]

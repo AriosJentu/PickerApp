@@ -24,11 +24,11 @@ class BaseTestUpdateAlgorithm(BaseTestSetup):
 @pytest.mark.usefixtures("client_async")
 @pytest.mark.usefixtures("general_factory")
 class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
-
+    
     @pytest.mark.asyncio
     @pytest.mark.parametrize("algorithm_exists", [True])
-    @pytest.mark.parametrize("role", Roles.LIST)
     @pytest.mark.parametrize("update_data", params.ALGORITHM_VALID_UPDATE_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST)
     async def test_update_algorithm_success(self,
             client_async: AsyncClient,
             algorithm: BaseObjectData[Algorithm],
@@ -40,6 +40,7 @@ class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
 
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         assert json_data["id"] == algorithm.id, "Algorithm ID does not match"
+        assert json_data["creator"]["id"] == base_user.user.id, "Algorithm Creator ID does not match"
         
         if "name" in update_data:
             assert json_data["name"] == update_data["name"], "Algorithm name was not updated"
@@ -51,9 +52,9 @@ class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("algorithm_exists", [True])
+    @pytest.mark.parametrize("update_data", params.ALGORITHM_VALID_UPDATE_DATA)
     @pytest.mark.parametrize("role", Roles.LIST_MODERATORS)
     @pytest.mark.parametrize("role_other", Roles.LIST)
-    @pytest.mark.parametrize("update_data", params.ALGORITHM_VALID_UPDATE_DATA)
     async def test_update_algorithm_success_moderators(self,
             client_async: AsyncClient,
             algorithm_other: BaseObjectData[Algorithm],
@@ -76,8 +77,8 @@ class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("algorithm_exists", [True])
-    @pytest.mark.parametrize("role", Roles.LIST)
     @pytest.mark.parametrize("update_data, error_substr", params.ALGORITHM_INVALID_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST)
     async def test_update_algorithm_invalid_data(self,
             client_async: AsyncClient,
             algorithm: BaseObjectData[Algorithm],
@@ -94,9 +95,9 @@ class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("algorithm_exists", [True])
+    @pytest.mark.parametrize("update_data", params.ALGORITHM_VALID_UPDATE_DATA)
     @pytest.mark.parametrize("role", Roles.LIST_USER)
     @pytest.mark.parametrize("role_other", Roles.LIST)
-    @pytest.mark.parametrize("update_data", params.ALGORITHM_VALID_UPDATE_DATA)
     async def test_update_algorithm_forbidden(self,
             client_async: AsyncClient,
             algorithm_other: BaseObjectData[Algorithm],
@@ -112,8 +113,8 @@ class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("algorithm_exists", [False])
-    @pytest.mark.parametrize("role", Roles.LIST)
     @pytest.mark.parametrize("update_data", params.ALGORITHM_VALID_UPDATE_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST)
     async def test_update_algorithm_not_found(self,
             client_async: AsyncClient,
             algorithm: BaseObjectData[Algorithm],
@@ -128,9 +129,9 @@ class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
 
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("role", Roles.LIST)
     @pytest.mark.parametrize("algorithm_exists", [True, False])
     @pytest.mark.parametrize("update_data", params.ALGORITHM_FIELD_REQUIRED)
+    @pytest.mark.parametrize("role", Roles.LIST)
     async def test_update_algorithm_field_required(self,
             client_async: AsyncClient,
             algorithm: BaseObjectData[Algorithm],
@@ -145,9 +146,9 @@ class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
 
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("role", Roles.LIST)
     @pytest.mark.parametrize("algorithm_exists", [True, False])
     @pytest.mark.parametrize("update_data", params.ALGORITHM_VALID_UPDATE_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST)
     async def test_update_algorithm_unauthorized(self,
             client_async: AsyncClient,
             algorithm: BaseObjectData[Algorithm],

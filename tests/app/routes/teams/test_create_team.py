@@ -26,9 +26,9 @@ class BaseTestCreateTeam(BaseTestSetup):
 class TestCreateTeam(BaseTestCreateTeam):
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("role", Roles.LIST)
     @pytest.mark.parametrize("lobby_exists", [True])
     @pytest.mark.parametrize("input_data", params.TEAM_VALID_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST)
     async def test_create_team_success(self,
             client_async: AsyncClient,
             lobby: BaseObjectData[Lobby],
@@ -47,10 +47,10 @@ class TestCreateTeam(BaseTestCreateTeam):
         
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("role", Roles.LIST_MODERATORS)
-    @pytest.mark.parametrize("role_other", Roles.LIST)
     @pytest.mark.parametrize("lobby_exists", [True])
     @pytest.mark.parametrize("input_data", params.TEAM_VALID_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST_MODERATORS)
+    @pytest.mark.parametrize("role_other", Roles.LIST)
     async def test_create_team_success_moderators(self,
             client_async: AsyncClient,
             lobby_other: BaseObjectData[Lobby],
@@ -69,9 +69,9 @@ class TestCreateTeam(BaseTestCreateTeam):
 
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("role", Roles.LIST)
     @pytest.mark.parametrize("lobby_exists", [True])
     @pytest.mark.parametrize("input_data, expected_error", params.TEAM_INVALID_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST)
     async def test_create_team_invalid_data(self,
             client_async: AsyncClient,
             lobby: BaseObjectData[Lobby],
@@ -90,10 +90,10 @@ class TestCreateTeam(BaseTestCreateTeam):
 
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("role", Roles.LIST_USER)
-    @pytest.mark.parametrize("role_other", Roles.LIST)
     @pytest.mark.parametrize("lobby_exists", [True])
     @pytest.mark.parametrize("input_data", params.TEAM_VALID_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST_USER)
+    @pytest.mark.parametrize("role_other", Roles.LIST)
     async def test_create_team_forbidden(self,
             client_async: AsyncClient,
             lobby_other: BaseObjectData[Lobby],
@@ -111,9 +111,9 @@ class TestCreateTeam(BaseTestCreateTeam):
 
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("role", Roles.LIST)
     @pytest.mark.parametrize("lobby_exists", [False])
     @pytest.mark.parametrize("input_data", params.TEAM_VALID_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST)
     async def test_create_team_not_found(self,
             client_async: AsyncClient,
             lobby: BaseObjectData[Lobby],

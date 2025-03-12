@@ -266,5 +266,6 @@ def general_factory(
         algorithm_factory: AlgorithmFactory, 
         lobby_factory: LobbyFactory,
         team_factory: TeamFactory,
+        participant_factory: ParticipantFactory
 ):
-    return GeneralFactory(db_async, user_factory, token_factory, algorithm_factory, lobby_factory, team_factory)
+    return GeneralFactory(db_async, user_factory, token_factory, algorithm_factory, lobby_factory, team_factory, participant_factory)
