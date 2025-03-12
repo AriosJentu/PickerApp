@@ -122,13 +122,6 @@ async def test_algorithm(
     return await algorithm_factory.create(user, user.id)
 
 
-@pytest_asyncio.fixture
-async def test_algorithm_id(
-        test_algorithm: Algorithm, 
-) -> int:
-    return test_algorithm.id
-
-
 @pytest.fixture
 async def test_lobby(
         user_factory: UserFactory, 
@@ -141,32 +134,6 @@ async def test_lobby(
 @pytest_asyncio.fixture
 async def test_lobby_id(test_lobby: Lobby) -> int:
     return test_lobby.id
-
-
-@pytest.fixture
-async def test_team(
-        team_factory: TeamFactory, 
-        test_lobby: Lobby
-) -> Team:
-    return await team_factory.create(test_lobby)
-
-
-@pytest_asyncio.fixture
-async def test_team_id(test_team: Team) -> int:
-    return test_team.id
-
-
-@pytest.fixture
-async def test_participant(
-        participant_factory: ParticipantFactory, 
-        test_lobby: Lobby
-) -> LobbyParticipant:
-    return await participant_factory.create(test_lobby)
-
-
-@pytest_asyncio.fixture
-async def test_participant_id(test_participant: LobbyParticipant) -> int:
-    return test_participant.id
 
 
 @pytest_asyncio.fixture

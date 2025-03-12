@@ -16,7 +16,6 @@ class ParticipantFactory:
             "user_id": user.id,
             "lobby_id": lobby.id
         }
-        
         participant = LobbyParticipant(**data)
         return await db_create_lobby_participant(self.db_async, participant)
 
