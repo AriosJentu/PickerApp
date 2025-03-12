@@ -27,26 +27,29 @@ class BaseTestSetup:
         return await general_factory.create_base_user(UserRole.ADMIN, prefix="adminuser")
     
     @pytest.fixture
-    async def base_user_creator(self, general_factory: GeneralFactory, role: UserRole) -> tuple[BaseUserData, ...]:
-        return await general_factory.create_base_users_creator(role)
-
-    @pytest.fixture
-    async def base_user_creator_additional(self, general_factory: GeneralFactory, role: UserRole) -> tuple[BaseUserData, ...]:
-        return await general_factory.create_base_users_creator_aditional(role)
-    
-    @pytest.fixture
     async def base_user_headers(self, base_user: BaseUserData) -> InputData:
         return base_user.headers
         
     @pytest.fixture
     async def algorithm(self, general_factory: GeneralFactory, base_user: BaseUserData, algorithm_exists: bool) -> BaseObjectData[Algorithm]:
-        return await general_factory.create_conditional_algorithm(base_user.user, algorithm_exists)  
+        return await general_factory.create_conditional_algorithm(base_user.user, algorithm_exists)
+    
+    @pytest.fixture
+    async def algorithm_other(self, general_factory: GeneralFactory, base_user_other: BaseUserData, algorithm_exists: bool) -> BaseObjectData[Algorithm]:
+        return await general_factory.create_conditional_algorithm(base_user_other.user, algorithm_exists)
 
     @pytest.fixture
-    async def lobby(self, general_factory: GeneralFactory, base_user_creator: tuple[BaseUserData, ...], lobby_exists: bool) -> BaseObjectData[Lobby]:
-        creator = base_user_creator[1].user
-        return await general_factory.create_conditional_lobby(creator, lobby_exists)
+    async def lobby(self, general_factory: GeneralFactory, base_user: BaseUserData, lobby_exists: bool) -> BaseObjectData[Lobby]:
+        return await general_factory.create_conditional_lobby(base_user.user, lobby_exists)
+    
+    @pytest.fixture
+    async def lobby_other(self, general_factory: GeneralFactory, base_user_other: BaseUserData, lobby_exists: bool) -> BaseObjectData[Lobby]:
+        return await general_factory.create_conditional_lobby(base_user_other.user, lobby_exists)
 
     @pytest.fixture
     async def team(self, general_factory: GeneralFactory, lobby: BaseObjectData[Lobby], team_exists: bool) -> BaseObjectData[Team]:
         return await general_factory.create_conditional_team(lobby.data, team_exists)
+    
+    @pytest.fixture
+    async def team_other(self, general_factory: GeneralFactory, lobby_other: BaseObjectData[Lobby], team_exists: bool) -> BaseObjectData[Team]:
+        return await general_factory.create_conditional_team(lobby_other.data, team_exists)

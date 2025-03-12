@@ -10,16 +10,18 @@ ROUTES = [
     ("DELETE",  "/api/v1/teams/1",           Roles.ALL_ROLES),
 ]
 
-TEAM_DATA_STATUS_ERROR =     [
-    ({"name":   "New Team"},    200,    ""),
-    ({"name":   "   "},         422,    "Team name cannot be empty"),
-    ({},                        422,    "Field required"),
+TEAM_VALID_DATA = [
+    {"name":    "New Team"},
 ]
 
-TEAM_UPDATE_DATA_STATUS_ERROR =     [
-    ({"name":   "Updated Team"},    200,    ""),
-    ({"name":   "   "},             422,    "Team name cannot be empty"),
-    ({},                            400,    "Team update data not provided"),
+TEAM_INVALID_DATA = [
+    ({"name":   "   "}, "Team name cannot be empty"),
+    ({},                "Field required"),
+]
+
+TEAM_UPDATE_INVALID_DATA = [
+    ({"name":   "   "}, "Team name cannot be empty"),
+    ({},                "Team update data not provided"),
 ]
 
 TEAM_FILTER_DATA = [

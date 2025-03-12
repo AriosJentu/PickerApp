@@ -51,20 +51,20 @@ class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("algorithm_exists", [True])
-    @pytest.mark.parametrize("role", Roles.LIST)
-    @pytest.mark.parametrize("role_other", Roles.LIST_MODERATORS)
+    @pytest.mark.parametrize("role", Roles.LIST_MODERATORS)
+    @pytest.mark.parametrize("role_other", Roles.LIST)
     @pytest.mark.parametrize("update_data", params.ALGORITHM_VALID_UPDATE_DATA)
     async def test_update_algorithm_success_moderators(self,
             client_async: AsyncClient,
-            algorithm: BaseObjectData[Algorithm],
-            base_user_other: BaseUserData,
+            algorithm_other: BaseObjectData[Algorithm],
+            base_user: BaseUserData,
             update_data: InputData
     ):
-        response = await self._send_put_request(client_async, algorithm, update_data, base_user_other.headers)
+        response = await self._send_put_request(client_async, algorithm_other, update_data, base_user.headers)
         json_data = response.json()
 
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        assert json_data["id"] == algorithm.id, "Algorithm ID does not match"
+        assert json_data["id"] == algorithm_other.id, "Algorithm ID does not match"
         
         if "name" in update_data:
             assert json_data["name"] == update_data["name"], "Algorithm name was not updated"
@@ -94,16 +94,16 @@ class TestUpdateAlgorithm(BaseTestUpdateAlgorithm):
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("algorithm_exists", [True])
-    @pytest.mark.parametrize("role", Roles.LIST)
-    @pytest.mark.parametrize("role_other", Roles.LIST_USER)
+    @pytest.mark.parametrize("role", Roles.LIST_USER)
+    @pytest.mark.parametrize("role_other", Roles.LIST)
     @pytest.mark.parametrize("update_data", params.ALGORITHM_VALID_UPDATE_DATA)
     async def test_update_algorithm_forbidden(self,
             client_async: AsyncClient,
-            algorithm: BaseObjectData[Algorithm],
-            base_user_other: BaseUserData,
+            algorithm_other: BaseObjectData[Algorithm],
+            base_user: BaseUserData,
             update_data: InputData
     ):
-        response = await self._send_put_request(client_async, algorithm, update_data, base_user_other.headers)
+        response = await self._send_put_request(client_async, algorithm_other, update_data, base_user.headers)
         json_data = response.json()
         
         assert response.status_code == 403, f"Expected 403, got {response.status_code}"
