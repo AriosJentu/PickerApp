@@ -16,7 +16,7 @@ class HTTPLobbyAlgorithmNotFound(HTTPLobbyException):
 class HTTPLobbyAlgorithmUpdateDataNotProvided(HTTPLobbyException):
     def __init__(self):
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Algorithm update data not provided",
         )
 
@@ -32,7 +32,7 @@ class HTTPLobbyNotFound(HTTPLobbyException):
 class HTTPLobbyUpdateDataNotProvided(HTTPLobbyException):
     def __init__(self):
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Lobby update data not provided",
         )
 
@@ -80,7 +80,7 @@ class HTTPTeamNotFound(HTTPLobbyException):
 class HTTPTeamUpdateDataNotProvided(HTTPLobbyException):
     def __init__(self):
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Team update data not provided",
         )
 
@@ -120,6 +120,6 @@ class HTTPLobbyParticipantNotFound(HTTPLobbyException):
 class HTTPLobbyParticipantUpdateDataNotProvided(HTTPLobbyException):
     def __init__(self):
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Participant update data not provided",
         )
