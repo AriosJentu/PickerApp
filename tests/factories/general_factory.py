@@ -126,6 +126,7 @@ class GeneralFactory:
         team = await self.team_factory.create(lobby, i)
         return BaseObjectData(team.id, team)
     
+    
     async def create_conditional_participant(self,
         lobby: Lobby,
         is_participant_exists: bool = True,
@@ -135,4 +136,12 @@ class GeneralFactory:
             return BaseObjectData(-1, None)
         
         participant = await self.participant_factory.create(lobby, i)
+        return BaseObjectData(participant.id, participant)
+    
+
+    async def create_participant_from_user(self,
+        user: BaseUserData,
+        lobby: Lobby
+    ) -> BaseObjectData[LobbyParticipant]:
+        participant = await self.participant_factory.create_from_user(user.user, lobby)
         return BaseObjectData(participant.id, participant)

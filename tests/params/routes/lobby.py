@@ -1,29 +1,54 @@
-from app.enums.lobby import LobbyStatus
+from app.enums.lobby import LobbyStatus, LobbyParticipantRole
 
-from tests.constants import Roles, LOBBIES_COUNT
+from tests.constants import Roles, LOBBIES_COUNT, PARTICIPANTS_COUNT
 
 
 ROUTES = [
-    ("POST",    "/api/v1/lobby/",               Roles.ALL_ROLES),
-    ("GET",     "/api/v1/lobby/list-count",     Roles.ALL_ROLES),
-    ("GET",     "/api/v1/lobby/list",           Roles.ALL_ROLES),
-    ("GET",     "/api/v1/lobby/1",              Roles.ALL_ROLES),
-    ("PUT",     "/api/v1/lobby/1",              Roles.ALL_ROLES),
-    ("PUT",     "/api/v1/lobby/1/close",        Roles.ALL_ROLES),
-    ("DELETE",  "/api/v1/lobby/1",              Roles.ALL_ROLES),
+    ("POST",    "/api/v1/lobby/",                       Roles.ALL_ROLES),
+    ("GET",     "/api/v1/lobby/list-count",             Roles.ALL_ROLES),
+    ("GET",     "/api/v1/lobby/list",                   Roles.ALL_ROLES),
+    ("GET",     "/api/v1/lobby/1",                      Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/lobby/1",                      Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/lobby/1/close",                Roles.ALL_ROLES),
+    ("DELETE",  "/api/v1/lobby/1",                      Roles.ALL_ROLES),
+    ("GET",     "/api/v1/lobby/1/participants-count",   Roles.ALL_ROLES),
+    ("GET",     "/api/v1/lobby/1/participants",         Roles.ALL_ROLES),
+    ("POST",    "/api/v1/lobby/1/participants",         Roles.ALL_ROLES),
+    ("PUT",     "/api/v1/lobby/1/participants/1",       Roles.ALL_ROLES),
+    ("DELETE",  "/api/v1/lobby/1/participants/1",       Roles.ALL_ROLES),
+    ("POST",    "/api/v1/lobby/1/connect",              Roles.ALL_ROLES),
+    ("DELETE",  "/api/v1/lobby/1/leave",                Roles.ALL_ROLES),
 ]
 
-LOBBY_DATA_STATUS_ERROR = [
-    ({"name":   "New Lobby"},   200,    ""),
-    ({"name":   "   "},         422,    "Lobby name cannot be empty"),
-    ({},                        422,    "Field required"),
+LOBBY_VALID_DATA = [
+    {"name":    "Lobby Name"},
 ]
 
-LOBBY_UPDATE_DATA_STATUS_ERROR = [
-    ({"name":   "Updated Lobby"},               200,    ""),
-    ({"status": LobbyStatus.ARCHIVED},          200,    ""),
-    ({"name":   "   "},                         422,    "Lobby name cannot be empty"),
-    ({},                                        400,    "Lobby update data not provided"),
+LOBBY_INVALID_DATA = [
+    ({"name":   "   "}, "Lobby name cannot be empty"),
+    ({},                "Field required"),
+]
+
+LOBBY_VALID_UPDATE_DATA = [
+    {"name":    "Updated Lobby"},
+    {"status":  LobbyStatus.ARCHIVED},
+]
+
+LOBBY_INVALID_UPDATE_DATA = [
+    ({"name":   "   "}, "Lobby name cannot be empty"),
+    ({},                "Lobby update data not provided"),
+]
+
+LOBBY_PARTICIPANT_VALID_UPDATE_DATA = [
+    {"role":        LobbyParticipantRole.PLAYER}, 
+    {"role":        LobbyParticipantRole.SPECTATOR}, 
+    {"team_id":     None},
+    {"is_active":   False},
+    {"is_active":   True},
+]
+
+LOBBY_PARTICIPANT_INVALID_UPDATE_DATA = [
+    ({},    "Participant update data not provided"),
 ]
 
 LOBBY_FILTER_DATA = [
@@ -38,4 +63,16 @@ LOBBY_FILTER_DATA = [
     ({"sort_order":     "desc"},        LOBBIES_COUNT),
     ({"limit":          2},             2),
     ({"offset":         1},             LOBBIES_COUNT-1),
+]
+
+PARTICIPANTS_FILTER_DATA = [
+    (None,                                                  PARTICIPANTS_COUNT),
+    ({"id":         1},                                     1),
+    ({"user_id":    3},                                     1),
+    ({"team_id":    1},                                     0),
+    ({"role":       LobbyParticipantRole.SPECTATOR.value},  PARTICIPANTS_COUNT),
+    ({"sort_by":    "id"},                                  PARTICIPANTS_COUNT),
+    ({"sort_order": "desc"},                                PARTICIPANTS_COUNT),
+    ({"limit":      2},                                     2),
+    ({"offset":     1},                                     PARTICIPANTS_COUNT-1),
 ]

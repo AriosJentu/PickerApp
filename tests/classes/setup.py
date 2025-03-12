@@ -75,3 +75,7 @@ class BaseTestSetup:
         if lobby_other.data:
             return await general_factory.create_conditional_participant(lobby_other.data, participant_exists, 3)
         return BaseObjectData(-1, True)
+    
+    @pytest.fixture
+    async def base_participant(self, general_factory: GeneralFactory, base_user: BaseUserData, lobby: BaseObjectData[Lobby]) -> BaseObjectData[LobbyParticipant]:
+        return await general_factory.create_participant_from_user(base_user, lobby.data)
