@@ -11,17 +11,12 @@ from app.crud.lobby.lobby_participant import (
     db_get_lobby_participant_by_user_id,
     db_create_lobby_participant,
     db_update_lobby_participant,
-    db_delete_lobby_participant,
-    db_get_list_of_lobby_participants,
+    db_get_list_of_lobby_participants
 )
 
 
 async def get_lobby_participant_by_id(db: AsyncSession, lobby: Lobby, participant_id: int) -> Optional[LobbyParticipant]:
     return await db_get_lobby_participant_by_id(db, lobby, participant_id)
-
-
-async def get_lobby_participant_by_user_id(db: AsyncSession, lobby: Lobby, user_id: int, is_active: Optional[bool] = None) -> Optional[LobbyParticipant]:
-    return await db_get_lobby_participant_by_user_id(db, lobby, user_id, is_active)
 
 
 async def get_lobby_participant_by_user(db: AsyncSession, user: User, lobby: Lobby, is_active: Optional[bool] = None) -> Optional[LobbyParticipant]:
@@ -61,10 +56,6 @@ async def leave_lobby_participant(db: AsyncSession, participant: LobbyParticipan
 
 async def update_lobby_participant(db: AsyncSession, participant: LobbyParticipant, update_data: LobbyParticipantUpdate) -> Optional[LobbyParticipant]:
     return await db_update_lobby_participant(db, participant, update_data)
-
-
-async def delete_lobby_participant(db: AsyncSession, participant: LobbyParticipant) -> bool:
-    return await db_delete_lobby_participant(db, participant)
 
 
 async def get_list_of_lobby_participants(

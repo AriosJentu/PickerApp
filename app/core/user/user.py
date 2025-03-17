@@ -36,7 +36,6 @@ from app.exceptions.user import (
 
 
 type UserTokens = tuple[Token, Token]
-type UserIdentifier = int | str
 
 
 async def get_user_by_id(db: AsyncSession, get_user_id: int) -> Optional[User]:

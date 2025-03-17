@@ -46,23 +46,6 @@ class GeneralFactory:
         headers = {"Authorization": f"Bearer {refresh_token if is_refresh_token else access_token}"}
         
         return BaseUserData(user, access_token, refresh_token, headers)
-
-
-    async def create_base_users_creator(self,
-        role: UserRole = UserRole.USER
-    ) -> tuple[BaseUserData, ...]:
-        user = await self.create_base_user(role)
-        creator = await self.create_base_user(prefix="creator_user")
-        return user, creator
-    
-
-    async def create_base_users_creator_aditional(self,
-        role: UserRole = UserRole.USER
-    ) -> tuple[BaseUserData, ...]:
-        user = await self.create_base_user(role)
-        creator = await self.create_base_user(prefix="creator_user")
-        user_to_add = await self.create_base_user(prefix="user_to_add")
-        return user, creator, user_to_add
     
 
     async def create_extra_user(self,

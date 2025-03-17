@@ -2,13 +2,12 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete, func, asc, desc
+from sqlalchemy import update, func, asc, desc
 from sqlalchemy.orm import selectinload
 
 from app.enums.lobby import LobbyParticipantRole
 from app.models.lobby.lobby import Lobby
 from app.models.lobby.lobby_participant import LobbyParticipant
-from app.models.lobby.team import Team
 from app.schemas.lobby.lobby import LobbyParticipantUpdate
 
 
@@ -22,10 +21,6 @@ async def db_create_lobby_participant(db: AsyncSession, participant: LobbyPartic
 async def db_get_lobby_participant_by_key_value(db: AsyncSession, lobby: Lobby, key: str, value: str | int) -> Optional[LobbyParticipant]:
     result = await db.execute(
         select(LobbyParticipant)
-        # .options(
-        #     selectinload(LobbyParticipant.lobby), 
-        #     selectinload(LobbyParticipant.team),
-        # )
         .filter(
             getattr(LobbyParticipant, key) == value,
             LobbyParticipant.lobby_id == lobby.id
@@ -62,12 +57,6 @@ async def db_update_lobby_participant(db: AsyncSession, participant: LobbyPartic
 
     await db.refresh(participant)
     return participant
-
-
-async def db_delete_lobby_participant(db: AsyncSession, participant: LobbyParticipant) -> bool:
-    await db.execute(delete(LobbyParticipant).where(participant.id == participant.id))
-    await db.commit()
-    return True
 
 
 async def db_get_list_of_lobby_participants(
