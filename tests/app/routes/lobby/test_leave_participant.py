@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -15,7 +16,7 @@ from tests.classes.setup import BaseTestSetup
 class BaseTestLeaveLobby(BaseTestSetup):
     route = "/api/v1/lobby/{lobby_id}/leave"
 
-    async def _send_delete_request(self, client_async: AsyncClient, lobby: BaseObjectData[Lobby], headers: InputData | None = None) -> Response:
+    async def _send_delete_request(self, client_async: AsyncClient, lobby: BaseObjectData[Lobby], headers: Optional[InputData] = None) -> Response:
         return await client_async.delete(self.route.format(lobby_id=lobby.id), headers=headers or {})
 
 

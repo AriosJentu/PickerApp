@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -17,7 +18,7 @@ import tests.params.routes.lobby as params
 class BaseTestCreateLobby(BaseTestSetup):
     route = "/api/v1/lobby/"
 
-    async def _send_post_request(self, client_async: AsyncClient, json_data: InputData, headers: InputData | None = None) -> Response:
+    async def _send_post_request(self, client_async: AsyncClient, json_data: InputData, headers: Optional[InputData] = None) -> Response:
         return await client_async.post(self.route, json=json_data, headers=headers or {})
 
 

@@ -3,11 +3,9 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete, func, asc, desc
-from sqlalchemy.orm import selectinload
 
 from app.enums.lobby import LobbyStatus
 from app.models.lobby.lobby import Lobby
-from app.models.lobby.algorithm import Algorithm
 from app.schemas.lobby.lobby import LobbyUpdate
 
 
@@ -21,10 +19,6 @@ async def db_create_lobby(db: AsyncSession, lobby: Lobby) -> Lobby:
 async def db_get_lobby_by_key_value(db: AsyncSession, key: str, value: str | int) -> Optional[Lobby]:
     result = await db.execute(
         select(Lobby)
-        # .options(
-        #     selectinload(Lobby.host), 
-        #     selectinload(Lobby.algorithm).selectinload(Algorithm.creator),
-        # )
         .filter(getattr(Lobby, key) == value)
     )
     return result.scalars().first()

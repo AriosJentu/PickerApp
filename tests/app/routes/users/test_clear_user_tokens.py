@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -15,7 +16,7 @@ import tests.params.routes.users as params
 class BaseTestClearUserTokens(BaseTestSetup):
     route = "/api/v1/users/tokens"
 
-    async def _send_delete_request(self, client_async, params: InputData, headers: InputData | None = None) -> Response:
+    async def _send_delete_request(self, client_async, params: InputData, headers: Optional[InputData] = None) -> Response:
         return await client_async.delete(self.route, params=params, headers=headers or {})
 
 

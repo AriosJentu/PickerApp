@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -25,7 +26,7 @@ class BaseTestUpdateUser(BaseTestSetup):
             duplicate_email: bool,
             duplicate_username: bool,
             expected_status: int
-    ) -> User | None:
+    ) -> Optional[User]:
         
         duplicate_email = duplicate_email and "email" in update_data
         duplicate_username = duplicate_username and "username" in update_data

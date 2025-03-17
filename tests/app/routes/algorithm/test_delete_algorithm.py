@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -15,7 +16,7 @@ from tests.classes.setup import BaseTestSetup
 class BaseTestDeleteAlgorithm(BaseTestSetup):
     route = "/api/v1/algorithm/{algorithm_id}"
 
-    async def _send_delete_request(self, client_async: AsyncClient, algorithm: BaseObjectData[Algorithm], headers: InputData | None = None) -> Response:
+    async def _send_delete_request(self, client_async: AsyncClient, algorithm: BaseObjectData[Algorithm], headers: Optional[InputData] = None) -> Response:
         return await client_async.delete(self.route.format(algorithm_id=algorithm.id), headers=headers or {})
 
 

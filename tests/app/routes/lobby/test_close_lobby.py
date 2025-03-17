@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -16,7 +17,7 @@ from tests.classes.setup import BaseTestSetup
 class BaseTestCloseLobby(BaseTestSetup):
     route = "/api/v1/lobby/{lobby_id}/close"
 
-    async def _send_put_request(self, client_async: AsyncClient, lobby: BaseObjectData[Lobby], headers: InputData | None = None) -> Response:
+    async def _send_put_request(self, client_async: AsyncClient, lobby: BaseObjectData[Lobby], headers: Optional[InputData] = None) -> Response:
         return await client_async.put(self.route.format(lobby_id=lobby.id), headers=headers or {})
 
 

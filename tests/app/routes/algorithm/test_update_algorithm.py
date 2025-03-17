@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -17,7 +18,7 @@ import tests.params.routes.algorithm as params
 class BaseTestUpdateAlgorithm(BaseTestSetup):
     route = "/api/v1/algorithm/{algorithm_id}"
 
-    async def _send_put_request(self, client_async: AsyncClient, algorithm: BaseObjectData[Algorithm], json_data: InputData, headers: InputData | None = None) -> Response:
+    async def _send_put_request(self, client_async: AsyncClient, algorithm: BaseObjectData[Algorithm], json_data: InputData, headers: Optional[InputData] = None) -> Response:
         return await client_async.put(self.route.format(algorithm_id=algorithm.id), json=json_data, headers=headers or {})
 
 

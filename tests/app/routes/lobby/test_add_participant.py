@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -15,7 +16,7 @@ from tests.classes.setup import BaseTestSetup
 class BaseTestAddParticipant(BaseTestSetup):
     route = "/api/v1/lobby/{lobby_id}/participants"
 
-    def get_params_from_user(self, user: BaseUserData | None = None):
+    def get_params_from_user(self, user: Optional[BaseUserData] = None):
         if user:
             return {"user_id": user.user.id}
         return {"user_id": -1}
@@ -24,8 +25,8 @@ class BaseTestAddParticipant(BaseTestSetup):
         client_async: AsyncClient,
         lobby: BaseObjectData[Lobby],
         team: BaseObjectData[Team],
-        user: BaseUserData | None = None,
-        headers: InputData | None = None
+        user: Optional[BaseUserData] = None,
+        headers: Optional[InputData] = None
     ) -> Response:
         params = self.get_params_from_user(user)
         

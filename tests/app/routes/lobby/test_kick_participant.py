@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -19,7 +20,7 @@ class BaseTestKickParticipant(BaseTestSetup):
             client_async: AsyncClient,
             lobby: BaseObjectData[Lobby],
             participant: BaseObjectData[LobbyParticipant],
-            headers: InputData | None = None
+            headers: Optional[InputData] = None
     ) -> Response:
         return await client_async.delete(self.route.format(lobby_id=lobby.id, participant_id=participant.id), headers=headers or {})
 

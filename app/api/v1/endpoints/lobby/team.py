@@ -166,19 +166,3 @@ async def delete_team_(
         raise HTTPLobbyInternalError("Delete team error")
     
     return LobbyResponse(id=team_id, description=f"Team '{team.name}' deleted successfully")
-
-
-# @router.get("/{team_id}/participants", response_model=list[LobbyParticipantRead])
-# async def get_team_participants_(
-#     team_id: int,
-#     db: AsyncSession = Depends(get_async_session),
-# ):
-#     team = await get_team_participants(db, team_id)
-
-#     if not team:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="Team not found.",
-#         )
-    
-#     return team

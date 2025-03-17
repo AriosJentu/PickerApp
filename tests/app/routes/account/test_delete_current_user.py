@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -14,7 +15,7 @@ from tests.classes.setup import BaseTestSetup
 class BaseTestDeleteUser(BaseTestSetup):
     route = "/api/v1/account/"
 
-    async def _send_delete_request(self, client_async: AsyncClient, headers: InputData | None = None) -> Response:
+    async def _send_delete_request(self, client_async: AsyncClient, headers: Optional[InputData] = None) -> Response:
         return await client_async.delete(self.route, headers=headers or {})
     
 

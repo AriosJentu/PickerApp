@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.base import User, Algorithm, Lobby, LobbyParticipant, Team
@@ -69,7 +70,7 @@ class GeneralFactory:
             is_duplicate_email: bool = False,
             is_duplicate_username: bool = False,
             is_failed: bool = False
-    ) -> User | None:
+    ) -> Optional[User]:
         
         if is_failed:
             return

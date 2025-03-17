@@ -1,10 +1,9 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
-
-from app.enums.user import UserRole
 
 from tests.types import InputData
 from tests.constants import Roles
@@ -17,7 +16,7 @@ import tests.params.routes.users as params
 class BaseTestUpdateUser(BaseTestSetup):
     route = "/api/v1/users/"
 
-    async def _send_put_request(self, client_async: AsyncClient, params: InputData, json_data: InputData, headers: InputData | None = None) -> Response:
+    async def _send_put_request(self, client_async: AsyncClient, params: InputData, json_data: InputData, headers: Optional[InputData] = None) -> Response:
         return await client_async.put(self.route, params=params, json=json_data, headers=headers or {})
 
 

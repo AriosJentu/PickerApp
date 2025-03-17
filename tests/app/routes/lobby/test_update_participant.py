@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -22,7 +23,7 @@ class BaseTestEditParticipant(BaseTestSetup):
             lobby: BaseObjectData[Lobby],
             participant: BaseObjectData[LobbyParticipant],
             json_data: InputData,
-            headers: InputData | None = None
+            headers: Optional[InputData] = None
     ) -> Response:
         return await client_async.put(self.route.format(lobby_id=lobby.id, participant_id=participant.id), json=json_data, headers=headers or {})
 

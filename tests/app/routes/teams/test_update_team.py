@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -17,7 +18,7 @@ import tests.params.routes.team as params
 class BaseTestUpdateTeam(BaseTestSetup):
     route = "/api/v1/teams/{team_id}"
 
-    async def _send_put_request(self, client_async: AsyncClient, team: BaseObjectData[Team], json_data: InputData, headers: InputData | None = None) -> Response:
+    async def _send_put_request(self, client_async: AsyncClient, team: BaseObjectData[Team], json_data: InputData, headers: Optional[InputData] = None) -> Response:
         return await client_async.put(self.route.format(team_id=team.id), json=json_data, headers=headers or {})
 
 

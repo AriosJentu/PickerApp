@@ -1,5 +1,6 @@
 import pytest
 
+from typing import Optional
 from fastapi import Response
 
 from httpx import AsyncClient
@@ -14,7 +15,7 @@ from tests.classes.setup import BaseTestSetup
 class BaseTestGetUser(BaseTestSetup):
     route = "/api/v1/account/"
 
-    async def _send_get_request(self, client_async: AsyncClient, headers: InputData | None = None) -> Response:
+    async def _send_get_request(self, client_async: AsyncClient, headers: Optional[InputData] = None) -> Response:
         return await client_async.get(self.route, headers=headers or {})
     
 
