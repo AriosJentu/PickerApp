@@ -1,4 +1,4 @@
-from app.enums.lobby import LobbyStatus, LobbyParticipantRole
+from app.modules.lobby.lobby.enums import LobbyStatus, LobbyParticipantRole
 
 from tests.constants import Roles, LOBBIES_COUNT, PARTICIPANTS_COUNT
 

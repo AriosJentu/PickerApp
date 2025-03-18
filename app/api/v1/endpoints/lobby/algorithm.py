@@ -3,10 +3,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.enums.user import UserRole
-from app.models.auth.user import User
+from app.modules.auth.user.enums import UserRole
+from app.modules.auth.user.models import User
 
-from app.schemas.lobby.algorithm import (
+from app.modules.lobby.algorithm.schemas import (
     AlgorithmCreate, 
     AlgorithmRead,
     AlgorithmUpdate,
@@ -14,9 +14,9 @@ from app.schemas.lobby.algorithm import (
     AlgorithmsListCountResponse,
 )
 
-from app.db.session import get_async_session
+from app.dependencies.database import get_async_session
 
-from app.core.lobby.algorithm import (
+from app.modules.lobby.algorithm.service import (
     get_algorithm_by_id,
     create_algorithm,
     update_algorithm,
@@ -28,7 +28,7 @@ from app.core.security.access import (
     check_user_regular_role,
 )
 
-from app.exceptions.lobby import (
+from app.modules.lobby.lobby.exceptions import (
     HTTPLobbyInternalError,
     HTTPLobbyAlgorithmNotFound,
     HTTPLobbyAlgorithmAccessDenied,

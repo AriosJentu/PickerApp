@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_async_session
+from app.dependencies.database import get_async_session
 from app.core.security.password import get_password_hash
 from app.core.security.access import check_user_regular_role
-from app.core.user.user import (
+from app.modules.auth.user.service import (
     get_current_user, 
     get_user_by_username, 
     get_user_by_email,
@@ -12,11 +12,11 @@ from app.core.user.user import (
     delete_user,
 )
 
-from app.models.auth.user import User
-from app.schemas.auth.user import UserRead, UserUpdateSecure
-from app.schemas.auth.token import TokenResponse, TokenStatus
+from app.modules.auth.user.models import User
+from app.modules.auth.user.schemas import UserRead, UserUpdateSecure
+from app.modules.auth.token.schemas import TokenResponse, TokenStatus
 
-from app.exceptions.user import (
+from app.modules.auth.user.exceptions import (
     HTTPUserExceptionUsernameAlreadyExists,
     HTTPUserExceptionEmailAlreadyExists,
     HTTPUserInternalError

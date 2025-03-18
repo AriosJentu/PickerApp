@@ -5,8 +5,8 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.db.base import Lobby
-from app.enums.lobby import LobbyStatus
+from app.modules.db.base import Lobby
+from app.modules.lobby.lobby.enums import LobbyStatus
 
 from tests.types import InputData
 from tests.constants import Roles

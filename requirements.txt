@@ -13,3 +13,4 @@ argon2-cffi
 pytest
 pytest-cov
 pytest_asyncio
+redis

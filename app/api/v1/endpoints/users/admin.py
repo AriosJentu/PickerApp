@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.auth.token import TokenCleanResponse
+from app.modules.auth.token.schemas import TokenCleanResponse
 
-from app.models.auth.user import User
+from app.modules.auth.user.models import User
 from app.core.security.access import check_user_admin_role
-from app.db.session import get_async_session
+from app.dependencies.database import get_async_session
 
-from app.core.user.token import drop_all_inactive_tokens
+from app.modules.auth.token.service import drop_all_inactive_tokens
 
 
 router = APIRouter()

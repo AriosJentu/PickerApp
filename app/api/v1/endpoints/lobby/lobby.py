@@ -3,11 +3,11 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_async_session
+from app.dependencies.database import get_async_session
 
-from app.enums.user import UserRole
-from app.enums.lobby import LobbyStatus, LobbyParticipantRole
-from app.schemas.lobby.lobby import (
+from app.modules.auth.user.enums import UserRole
+from app.modules.lobby.lobby.enums import LobbyStatus, LobbyParticipantRole
+from app.modules.lobby.lobby.schemas import (
     LobbyCreate, 
     LobbyRead, 
     LobbyUpdate, 
@@ -16,19 +16,19 @@ from app.schemas.lobby.lobby import (
     LobbiesListCountResponse,
     LobbyParticipantsCountResponse,
 )
-from app.schemas.lobby.lobby_participant import (
+from app.modules.lobby.participant.schemas import (
     LobbyParticipantRead,
     LobbyParticipantWithLobbyRead,
 )
 
-from app.models.auth.user import User
-from app.core.user.user import get_user_by_id
+from app.modules.auth.user.models import User
+from app.modules.auth.user.service import get_user_by_id
 from app.core.security.access import (
     process_has_access_or, 
     check_user_regular_role,
 )
 
-from app.core.lobby.lobby import (
+from app.modules.lobby.lobby.service import (
     get_lobby_by_id,
     create_lobby,
     update_lobby,
@@ -36,7 +36,7 @@ from app.core.lobby.lobby import (
     delete_lobby,
     get_list_of_lobbies,
 )
-from app.core.lobby.lobby_participant import (
+from app.modules.lobby.participant.service import (
     get_lobby_participant_by_id,
     get_lobby_participant_by_user,
     update_lobby_participant,
@@ -45,12 +45,12 @@ from app.core.lobby.lobby_participant import (
     add_lobby_participant,
     leave_lobby_participant,
 )
-from app.core.lobby.algorithm import get_algorithm_by_id
-from app.core.lobby.team import (
+from app.modules.lobby.algorithm.service import get_algorithm_by_id
+from app.modules.lobby.team.service import (
     get_team_by_id,
 )
 
-from app.exceptions.lobby import (
+from app.modules.lobby.lobby.exceptions import (
     HTTPLobbyAlgorithmNotFound,
     HTTPLobbyNotFound,
     HTTPLobbyAccessDenied,
@@ -62,7 +62,7 @@ from app.exceptions.lobby import (
     HTTPTeamNotFound,
 )
 
-from app.exceptions.user import HTTPUserExceptionNotFound
+from app.modules.auth.user.exceptions import HTTPUserExceptionNotFound
 
 
 router = APIRouter()

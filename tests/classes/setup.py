@@ -1,7 +1,7 @@
 import pytest
 
-from app.db.base import Algorithm, Lobby, LobbyParticipant, Team
-from app.enums.user import UserRole
+from app.modules.db.base import Algorithm, Lobby, LobbyParticipant, Team
+from app.modules.auth.user.enums import UserRole
 
 from tests.types import InputData
 from tests.dataclasses import BaseUserData, BaseObjectData

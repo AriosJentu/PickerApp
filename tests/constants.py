@@ -1,6 +1,6 @@
 from typing import Final
 
-from app.enums.user import UserRole
+from app.modules.auth.user.enums import UserRole
 
 
 USERS_COUNT:        Final[int] = 3

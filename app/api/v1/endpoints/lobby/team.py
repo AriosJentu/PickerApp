@@ -3,21 +3,21 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.enums.user import UserRole
-from app.models.auth.user import User
+from app.modules.auth.user.enums import UserRole
+from app.modules.auth.user.models import User
 
-from app.schemas.lobby.lobby import LobbyResponse
-from app.schemas.lobby.team import (
+from app.modules.lobby.lobby.schemas import LobbyResponse
+from app.modules.lobby.team.schemas import (
     TeamCreate, 
     TeamUpdate, 
     TeamReadWithLobby, 
     TeamListCountResponse,
 )
 
-from app.db.session import get_async_session
+from app.dependencies.database import get_async_session
 
-from app.core.lobby.lobby import get_lobby_by_id
-from app.core.lobby.team import (
+from app.modules.lobby.lobby.service import get_lobby_by_id
+from app.modules.lobby.team.service import (
     get_team_by_id,
     create_team,
     update_team,
@@ -29,7 +29,7 @@ from app.core.security.access import (
     check_user_regular_role,
 )
 
-from app.exceptions.lobby import (
+from app.modules.lobby.lobby.exceptions import (
     HTTPLobbyNotFound,
     HTTPLobbyTeamAccessDenied,
     HTTPLobbyInternalError,

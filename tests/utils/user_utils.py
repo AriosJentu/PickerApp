@@ -1,5 +1,5 @@
-from app.db.base import User
-from app.enums.user import UserRole
+from app.modules.db.base import User
+from app.modules.auth.user.enums import UserRole
 
 from tests.factories.user_factory import UserFactory
 from tests.factories.token_factory import TokenFactory

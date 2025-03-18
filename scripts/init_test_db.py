@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
 from app.core.config import settings
-from app.db.base import Base
+from app.modules.db.base import Base
 
 
 load_dotenv()

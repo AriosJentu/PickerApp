@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.enums.user import UserRole
+from app.modules.auth.user.enums import UserRole
 
 
 type AllowedRoles = tuple[UserRole, ...]

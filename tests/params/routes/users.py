@@ -1,4 +1,4 @@
-from app.enums.user import UserRole
+from app.modules.auth.user.enums import UserRole
 
 from tests.constants import Roles, USERS_COUNT
 

@@ -3,7 +3,7 @@ import string
 
 from typing import Optional
 
-from app.exceptions.user import HTTPUserExceptionNoDataProvided
+from app.modules.auth.user.exceptions import HTTPUserExceptionNoDataProvided
 
 
 def ensure_user_identifier(

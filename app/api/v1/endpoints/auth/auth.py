@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_async_session
-from app.core.dependencies import get_oauth2_scheme
+from app.dependencies.database import get_async_session
+from app.dependencies.oauth import get_oauth2_scheme
 from app.core.security.password import (
     get_password_hash, 
     verify_password,
 )
 
-from app.core.user.user import (
+from app.modules.auth.user.service import (
     get_user_by_username,
     get_users_last_token,
     deactivate_old_tokens_user,
@@ -28,12 +28,12 @@ from app.core.security.access import (
     check_user_regular_role_refresh,
 )
 
-from app.models.auth.user import User
-from app.schemas.auth.user import UserCreate, UserRead
-from app.schemas.auth.auth import LogoutResponse
-from app.schemas.auth.token import TokenResponse
+from app.modules.auth.user.models import User
+from app.modules.auth.user.schemas import UserCreate, UserRead
+from app.modules.auth.auth.schemas import LogoutResponse
+from app.modules.auth.token.schemas import TokenResponse
 
-from app.exceptions.user import (
+from app.modules.auth.user.exceptions import (
     HTTPUserExceptionUsernameAlreadyExists, 
     HTTPUserExceptionEmailAlreadyExists,
     HTTPUserExceptionIncorrectData,

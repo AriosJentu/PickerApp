@@ -2,8 +2,8 @@ import pytest
 
 from pydantic import ValidationError
 
-from app.schemas.lobby.lobby import LobbyParticipantCreate, LobbyParticipantUpdate
-from app.enums.lobby import LobbyParticipantRole
+from app.modules.lobby.lobby.schemas import LobbyParticipantCreate, LobbyParticipantUpdate
+from app.modules.lobby.lobby.enums import LobbyParticipantRole
 from tests.types import InputData
 
 

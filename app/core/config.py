@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     DB_NAME: str
     DB_NAME_TEST: str
 
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_DB: int
+
     def __get_database_url__(self, dbname: str, engine: str) -> str:
         return  f"postgresql+{engine}://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{dbname}"
 

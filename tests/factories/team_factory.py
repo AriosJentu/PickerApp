@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.base import Team, Lobby
-from app.crud.lobby.team import db_create_team
+from app.modules.db.base import Team, Lobby
+from app.modules.lobby.team.crud import db_create_team
 
 
 class TeamFactory:

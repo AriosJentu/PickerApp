@@ -2,7 +2,7 @@ import pytest
 
 from pydantic import ValidationError
 
-from app.schemas.lobby.algorithm import AlgorithmCreate, AlgorithmUpdate
+from app.modules.lobby.algorithm.schemas import AlgorithmCreate, AlgorithmUpdate
 from tests.types import InputData
 
 

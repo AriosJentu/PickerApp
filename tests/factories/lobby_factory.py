@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.base import Lobby, User, Algorithm
-from app.crud.lobby.lobby import db_create_lobby
+from app.modules.db.base import Lobby, User, Algorithm
+from app.modules.lobby.lobby.crud import db_create_lobby
 
 
 class LobbyFactory:

@@ -7,9 +7,9 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.base import User
-from app.enums.user import UserRole
-from app.schemas.auth.user import UserCreate, UserRead 
+from app.modules.db.base import User
+from app.modules.auth.user.enums import UserRole
+from app.modules.auth.user.schemas import UserCreate, UserRead 
 from tests.types import InputData
 
 

@@ -1,10 +1,10 @@
 from typing import Optional
 from fastapi import Depends
 
-from app.enums.user import UserRole
-from app.models.auth.user import User
-from app.core.user.user import get_current_user, get_current_user_refresh
-from app.exceptions.user import (
+from app.modules.auth.user.enums import UserRole
+from app.modules.auth.user.models import User
+from app.modules.auth.user.service import get_current_user, get_current_user_refresh
+from app.modules.auth.user.exceptions import (
     HTTPUserUnauthorized, 
     HTTPUserExceptionAccessDenied,
 )

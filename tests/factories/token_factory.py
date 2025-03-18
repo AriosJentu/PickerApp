@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.base import User
-from app.core.user.user import create_user_tokens
+from app.modules.db.base import User
+from app.modules.auth.user.service import create_user_tokens
 
 
 class TokenFactory:

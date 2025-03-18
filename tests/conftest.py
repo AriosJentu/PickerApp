@@ -16,9 +16,9 @@ from httpx import ASGITransport, AsyncClient
 from app.main import app
 from app.core.config import settings
 
-from app.db.session import get_async_session
-from app.db.base import Base, User, Algorithm, Lobby, Team, LobbyParticipant
-from app.enums.user import UserRole
+from app.dependencies.database import get_async_session
+from app.modules.db.base import Base, User, Algorithm, Lobby, Team, LobbyParticipant
+from app.modules.auth.user.enums import UserRole
 
 from tests.types import RouteBaseFixture
 from tests.constants import (

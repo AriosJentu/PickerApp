@@ -2,7 +2,7 @@ import pytest
 
 from pydantic import ValidationError
 
-from app.schemas.lobby.team import TeamCreate, TeamUpdate
+from app.modules.lobby.team.schemas import TeamCreate, TeamUpdate
 from tests.types import InputData
 
 

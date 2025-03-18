@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.base import Algorithm, User
-from app.crud.lobby.algorithm import db_create_algorithm
+from app.modules.db.base import Algorithm, User
+from app.modules.lobby.algorithm.crud import db_create_algorithm
 
 
 class AlgorithmFactory:

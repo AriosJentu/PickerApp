@@ -3,10 +3,10 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError, ExpiredSignatureError
 from uuid import uuid4
 
-from app.db.base import Token
+from app.modules.db.base import Token
 
 from app.core.config import settings
-from app.exceptions.token import HTTPTokenExceptionInvalid, HTTPTokenExceptionExpired
+from app.modules.auth.token.exceptions import HTTPTokenExceptionInvalid, HTTPTokenExceptionExpired
 
 
 async def jwt_create_token(data: dict, delta: timedelta, token_type: str) -> Token:

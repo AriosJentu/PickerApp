@@ -5,7 +5,7 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.enums.user import UserRole
+from app.modules.auth.user.enums import UserRole
 
 from tests.types import InputData
 from tests.constants import Roles

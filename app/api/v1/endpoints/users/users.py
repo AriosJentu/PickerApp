@@ -4,17 +4,17 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security.password import get_password_hash
-from app.models.auth.user import User
-from app.schemas.auth.user import (
+from app.modules.auth.user.models import User
+from app.modules.auth.user.schemas import (
     UserReadRegular,
     UserRead,
     UserUpdate, 
     UserResponce, 
     UserListCountResponse,
 )
-from app.enums.user import UserRole
+from app.modules.auth.user.enums import UserRole
 
-from app.core.user.user import (
+from app.modules.auth.user.service import (
     get_user_by_params,
     deactivate_old_tokens_user,
     update_user,
@@ -26,9 +26,9 @@ from app.core.security.access import (
     check_user_regular_role, 
     check_user_admin_role, 
 )
-from app.db.session import get_async_session
+from app.dependencies.database import get_async_session
 
-from app.exceptions.user import (
+from app.modules.auth.user.exceptions import (
     HTTPUserExceptionNotFound,
     HTTPUserInternalError
 )

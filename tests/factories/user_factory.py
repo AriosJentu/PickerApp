@@ -1,11 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.base import User
-from app.enums.user import UserRole
+from app.modules.db.base import User
+from app.modules.auth.user.enums import UserRole
 
-from app.schemas.auth.user import UserUpdate
+from app.modules.auth.user.schemas import UserUpdate
 from app.core.security.password import get_password_hash
-from app.crud.auth.user import db_create_user
+from app.modules.auth.user.crud import db_create_user
 
 
 class UserFactory:
