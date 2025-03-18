@@ -2,9 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
-from app.core.lobby.validators import validate_name
-
 from app.modules.lobby.lobby.schemas import LobbyRead
+from app.modules.lobby.lobby.validators import LobbyValidator
 
 
 class TeamBase(BaseModel):
@@ -13,7 +12,7 @@ class TeamBase(BaseModel):
     
     @field_validator("name")
     def validate_name(cls, name: str):
-        return validate_name(name, "Team")
+        return LobbyValidator.name(name, "Team")
 
 
 class TeamCreate(TeamBase):
@@ -38,5 +37,5 @@ class TeamUpdate(BaseModel):
 
     @field_validator("name", mode="before")
     def validate_name(cls, name: Optional[str]):
-        return validate_name(name, "Team")
+        return LobbyValidator.name(name, "Team")
     

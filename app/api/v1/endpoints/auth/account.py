@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_async_session
-from app.core.security.password import get_password_hash
-from app.core.security.access import check_user_regular_role
+
 from app.modules.auth.user.service import (
     get_current_user, 
     get_user_by_username, 
@@ -12,9 +11,11 @@ from app.modules.auth.user.service import (
     delete_user,
 )
 
+from app.modules.auth.auth.password import PasswordManager
+from app.modules.auth.token.schemas import TokenResponse, TokenStatus
+from app.modules.auth.user.access import RoleChecker
 from app.modules.auth.user.models import User
 from app.modules.auth.user.schemas import UserRead, UserUpdateSecure
-from app.modules.auth.token.schemas import TokenResponse, TokenStatus
 
 from app.modules.auth.user.exceptions import (
     HTTPUserExceptionUsernameAlreadyExists,
@@ -27,7 +28,7 @@ router = APIRouter()
 
 @router.get("/", response_model=UserRead)
 async def get_current_user_(
-    current_user: User = Depends(check_user_regular_role)
+    current_user: User = Depends(RoleChecker.user)
 ):
     return current_user
 
@@ -35,7 +36,7 @@ async def get_current_user_(
 @router.put("/", response_model=TokenResponse)
 async def update_current_user_(
     user_update: UserUpdateSecure,
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ): 
     if user_update.email: 
@@ -50,7 +51,7 @@ async def update_current_user_(
         if user_by_username and user_by_username.id != current_user.id:
             raise HTTPUserExceptionUsernameAlreadyExists()
 
-    access_token, refresh_token = await update_user(db, current_user, user_update, get_password_hash)
+    access_token, refresh_token = await update_user(db, current_user, user_update, PasswordManager.hash)
     return TokenResponse(access_token=access_token.token, refresh_token=refresh_token.token, token_type="bearer")
 
 
@@ -66,7 +67,7 @@ async def delete_current_user_(
 
 @router.get("/check-token", response_model=TokenStatus)
 async def check_current_user_token(
-    current_user: User = Depends(check_user_regular_role)
+    current_user: User = Depends(RoleChecker.user)
 ):
     return TokenStatus(
         active=True,

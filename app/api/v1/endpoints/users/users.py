@@ -3,8 +3,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security.password import get_password_hash
+from app.dependencies.database import get_async_session
+
+from app.modules.auth.auth.password import PasswordManager
+from app.modules.auth.user.access import RoleChecker
+from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.models import User
+from app.modules.auth.user.validators import UserValidator
 from app.modules.auth.user.schemas import (
     UserReadRegular,
     UserRead,
@@ -12,7 +17,6 @@ from app.modules.auth.user.schemas import (
     UserResponce, 
     UserListCountResponse,
 )
-from app.modules.auth.user.enums import UserRole
 
 from app.modules.auth.user.service import (
     get_user_by_params,
@@ -21,16 +25,11 @@ from app.modules.auth.user.service import (
     delete_user,
     get_list_of_users,
 )
-from app.core.utils.user import ensure_user_identifier
-from app.core.security.access import (
-    check_user_regular_role, 
-    check_user_admin_role, 
-)
-from app.dependencies.database import get_async_session
 
 from app.modules.auth.user.exceptions import (
     HTTPUserExceptionNotFound,
-    HTTPUserInternalError
+    HTTPUserInternalError,
+    HTTPUserExceptionNoDataProvided
 )
 
 
@@ -44,7 +43,7 @@ async def get_users_count_on_conditions_(
     username: Optional[str] = Query(default=None),
     email: Optional[str] = Query(default=None),
     external_id: Optional[str] = Query(default=None),
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
     count = await get_list_of_users(db, id, role, username, email, external_id, only_count=True)
@@ -62,7 +61,7 @@ async def get_list_of_users_on_conditions_(
     sort_order: Optional[str] = Query(default="asc"),
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
     users = await get_list_of_users(db, id, role, username, email, external_id, sort_by, sort_order, limit, offset)
@@ -74,10 +73,14 @@ async def get_user_by_data_(
     get_user_id: Optional[int] = Query(default=None),
     get_username: Optional[str] = Query(default=None),
     get_email: Optional[str] = Query(default=None),
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
-    ensure_user_identifier(get_user_id, get_username, get_email)
+    try:
+        UserValidator.ensure_user_identifier(get_user_id, get_username, get_email)
+    except ValueError as e:
+        raise HTTPUserExceptionNoDataProvided(detail=str(e))
+    
     user = await get_user_by_params(db, get_user_id=get_user_id, get_username=get_username, get_email=get_email)
 
     if not user:
@@ -92,16 +95,20 @@ async def update_user_information_(
     get_user_id: Optional[int] = Query(default=None),
     get_username: Optional[str] = Query(default=None),
     get_email: Optional[str] = Query(default=None),
-    current_user: User = Depends(check_user_admin_role),
+    current_user: User = Depends(RoleChecker.admin),
     db: AsyncSession = Depends(get_async_session),
 ):
-    ensure_user_identifier(get_user_id, get_username, get_email)
+    try:
+        UserValidator.ensure_user_identifier(get_user_id, get_username, get_email)
+    except ValueError as e:
+        raise HTTPUserExceptionNoDataProvided(detail=str(e))
+
     user = await get_user_by_params(db, get_user_id=get_user_id, get_username=get_username, get_email=get_email)
 
     if not user:
         raise HTTPUserExceptionNotFound()
 
-    updated_user = await update_user(db, user, user_update, get_password_hash, False)
+    updated_user = await update_user(db, user, user_update, PasswordManager.hash, False)
     return updated_user
 
 
@@ -110,10 +117,14 @@ async def delete_user_from_base_(
     get_user_id: Optional[int] = Query(default=None),
     get_username: Optional[str] = Query(default=None),
     get_email: Optional[str] = Query(default=None),
-    current_user: User = Depends(check_user_admin_role),
+    current_user: User = Depends(RoleChecker.admin),
     db: AsyncSession = Depends(get_async_session),
 ):
-    ensure_user_identifier(get_user_id, get_username, get_email)
+    try:
+        UserValidator.ensure_user_identifier(get_user_id, get_username, get_email)
+    except ValueError as e:
+        raise HTTPUserExceptionNoDataProvided(detail=str(e))
+    
     user = await get_user_by_params(db, get_user_id=get_user_id, get_username=get_username, get_email=get_email)
 
     if not user:
@@ -136,10 +147,14 @@ async def clear_user_tokens_(
     get_user_id: Optional[int] = Query(default=None),
     get_username: Optional[str] = Query(default=None),
     get_email: Optional[str] = Query(default=None),
-    current_user: User = Depends(check_user_admin_role),
+    current_user: User = Depends(RoleChecker.admin),
     db: AsyncSession = Depends(get_async_session)
 ):
-    ensure_user_identifier(get_user_id, get_username, get_email)
+    try:
+        UserValidator.ensure_user_identifier(get_user_id, get_username, get_email)
+    except ValueError as e:
+        raise HTTPUserExceptionNoDataProvided(detail=str(e))
+    
     user = await get_user_by_params(db, get_user_id=get_user_id, get_username=get_username, get_email=get_email)
 
     if not user:

@@ -12,23 +12,20 @@ from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config import settings
-from app.core.security.password import get_password_hash
 
 from app.dependencies.database import get_async_session
 
 from app.modules.base import Base
+from app.modules.auth.auth.password import PasswordManager
 from app.modules.auth.user.schemas import UserUpdate
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.service import create_user
 
 
 def get_url_from_type(db_name: str = "main") -> str:
-    DATABASE_URL = settings.DATABASE_URL_SYNC
-    TEST_DATABASE_URL = settings.DATABASE_URL_TEST_SYNC
-
     if db_name == "main":
-        return DATABASE_URL    
-    return TEST_DATABASE_URL
+        return settings.DATABASE_URL_SYNC
+    return settings.DATABASE_URL_TEST_SYNC
 
 
 def get_name_from_type(db_name: str = "main") -> str:
@@ -129,10 +126,12 @@ async def create_admin():
     async for session in get_async_session():
         admin_data = UserUpdate(username="admin", email=settings.ADMIN_EMAIL, password=settings.ADMIN_PASSWORD, role=UserRole.ADMIN)
         try:
-            await create_user(session, admin_data, get_password_hash)
+            await create_user(session, admin_data, PasswordManager.hash)
             print("Administrator successfully created.")
+
         except IntegrityError as e:
             print(f"Problem with creating administrator: User already exists")
+        
         except Exception as e:
             print(f"Problem with creating administrator: {e}")
 
@@ -148,6 +147,7 @@ def parse_args():
     parser.add_argument("--create-admin", action="store_true", help="Creates an admin user in the selected database")
 
     return parser.parse_args()
+
 
 async def main():
     args = parse_args()

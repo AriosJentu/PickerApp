@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.auth.user.access import AccessControl, RoleChecker
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.models import User
 
@@ -24,10 +25,6 @@ from app.modules.lobby.team.service import (
     delete_team,
     get_list_of_teams,
 )
-from app.core.security.access import (
-    process_has_access_or, 
-    check_user_regular_role,
-)
 
 from app.modules.lobby.lobby.exceptions import (
     HTTPLobbyNotFound,
@@ -44,7 +41,7 @@ router = APIRouter()
 @router.post("/", response_model=TeamReadWithLobby)
 async def create_team_(
     team_data: TeamCreate,
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
     lobby = await get_lobby_by_id(db, team_data.lobby_id)
@@ -52,7 +49,8 @@ async def create_team_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyTeamAccessDenied)
+    condition = (lobby.host_id == current_user.id)
+    AccessControl.has_access_or(current_user, UserRole.MODERATOR, condition, HTTPLobbyTeamAccessDenied)
     
     team = await create_team(db, team_data)
     if not team:
@@ -66,7 +64,7 @@ async def get_count_of_teams_(
     id: Optional[int] = Query(default=None),
     name: Optional[str] = Query(default=None),
     lobby_id: Optional[int] = Query(default=None),
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
     
@@ -90,7 +88,7 @@ async def get_list_of_teams_(
     sort_order: Optional[str] = Query(default="asc"),
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
     
@@ -108,7 +106,7 @@ async def get_list_of_teams_(
 @router.get("/{team_id}", response_model=TeamReadWithLobby)
 async def get_team_info_(
     team_id: int,
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
     team = await get_team_by_id(db, team_id)
@@ -122,22 +120,22 @@ async def get_team_info_(
 async def update_team_(
     team_id: int,
     update_data: TeamUpdate,
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
     team = await get_team_by_id(db, team_id)
     if not team:
         raise HTTPTeamNotFound()
     
+    condition = True
     lobby_id = team.lobby_id
     if lobby_id:
         lobby = await get_lobby_by_id(db, lobby_id)
-        process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyTeamAccessDenied)
-    else:
-        process_has_access_or(current_user, UserRole.MODERATOR, True, exception=HTTPLobbyTeamAccessDenied)
+        condition = (lobby.host_id == current_user.id)
 
+    AccessControl.has_access_or(current_user, UserRole.MODERATOR, condition, HTTPLobbyTeamAccessDenied)
+    
     updated_team = await update_team(db, team, update_data)
-
     if not updated_team:
         raise HTTPTeamUpdateDataNotProvided()
     
@@ -147,19 +145,21 @@ async def update_team_(
 @router.delete("/{team_id}", response_model=LobbyResponse)
 async def delete_team_(
     team_id: int,
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
     team = await get_team_by_id(db, team_id)
     if not team:
         raise HTTPTeamNotFound()
     
+
+    condition = True
     lobby_id = team.lobby_id
     if lobby_id:
         lobby = await get_lobby_by_id(db, lobby_id)
-        process_has_access_or(current_user, UserRole.MODERATOR, lobby.host_id == current_user.id, exception=HTTPLobbyTeamAccessDenied)
-    else:
-        process_has_access_or(current_user, UserRole.MODERATOR, True, exception=HTTPLobbyTeamAccessDenied)
+        condition = (lobby.host_id == current_user.id)
+
+    AccessControl.has_access_or(current_user, UserRole.MODERATOR, condition, HTTPLobbyTeamAccessDenied)
     
     result = await delete_team(db, team)
     if not result:

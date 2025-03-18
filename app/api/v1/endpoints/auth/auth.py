@@ -4,10 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_async_session
 from app.dependencies.oauth import get_oauth2_scheme
-from app.core.security.password import (
-    get_password_hash, 
-    verify_password,
-)
 
 from app.modules.auth.user.service import (
     get_user_by_username,
@@ -20,18 +16,14 @@ from app.modules.auth.user.service import (
 )
 
 from app.core.security.token import jwt_is_token_expired
-from app.core.security.validators import validate_username, validate_password
 
-from app.core.security.access import (
-    is_available_to_relogin,
-    check_user_regular_role, 
-    check_user_regular_role_refresh,
-)
-
+from app.modules.auth.auth.schemas import LogoutResponse
+from app.modules.auth.auth.password import PasswordManager
+from app.modules.auth.token.schemas import TokenResponse
+from app.modules.auth.user.access import AccessControl, RoleChecker
 from app.modules.auth.user.models import User
 from app.modules.auth.user.schemas import UserCreate, UserRead
-from app.modules.auth.auth.schemas import LogoutResponse
-from app.modules.auth.token.schemas import TokenResponse
+from app.modules.auth.user.validators import UserValidator
 
 from app.modules.auth.user.exceptions import (
     HTTPUserExceptionUsernameAlreadyExists, 
@@ -57,7 +49,7 @@ async def register_user_(
     if email_exists:
         raise HTTPUserExceptionEmailAlreadyExists()
     
-    return await create_user(db, user, get_password_hash)
+    return await create_user(db, user, PasswordManager.hash)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -67,17 +59,17 @@ async def login_user_(
 ):
     
     try:
-        validate_username(form_data.username)
-        validate_password(form_data.password)
+        UserValidator.username(form_data.username)
+        UserValidator.password(form_data.password)
     except ValueError as error:
         raise HTTPUserExceptionIncorrectFormData(str(error))
 
     user = await get_user_by_username(db, form_data.username)
-    if not user or not verify_password(form_data.password, user.password):
+    if not user or not PasswordManager.verify(form_data.password, user.password):
         raise HTTPUserExceptionIncorrectData()
     
     token = await get_users_last_token(db, user)
-    if token and not jwt_is_token_expired(token) and not is_available_to_relogin():
+    if token and not jwt_is_token_expired(token) and not AccessControl.is_available_to_relogin():
         raise HTTPUserExceptionAlreadyLoggedIn()
 
     access_token, refresh_token = await create_user_tokens(db, user)
@@ -86,7 +78,7 @@ async def login_user_(
 
 @router.post("/logout", response_model=LogoutResponse)
 async def logout_user_(
-    current_user: User = Depends(check_user_regular_role),
+    current_user: User = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
     await deactivate_old_tokens_user(db, current_user)
@@ -95,7 +87,7 @@ async def logout_user_(
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_tokens_(
-    current_user: User = Depends(check_user_regular_role_refresh),
+    current_user: User = Depends(RoleChecker.user_refresh),
     refresh_token: str = Depends(get_oauth2_scheme()),
     db: AsyncSession = Depends(get_async_session)
 ):

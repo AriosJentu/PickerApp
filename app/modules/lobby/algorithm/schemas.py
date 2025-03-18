@@ -2,9 +2,8 @@ from typing import Optional, Self
 
 from pydantic import BaseModel, model_validator, field_validator
 
-from app.core.lobby.validators import validate_algorithm, validate_teams_count, validate_name
-
 from app.modules.auth.user.schemas import UserReadRegular
+from app.modules.lobby.lobby.validators import LobbyValidator
 
 
 class AlgorithmBase(BaseModel):
@@ -17,12 +16,12 @@ class AlgorithmBase(BaseModel):
 
     @field_validator("name")
     def validate_name(cls, name: str):
-        return validate_name(name, "Algorithm")
+        return LobbyValidator.name(name, "Algorithm")
     
 
     @field_validator("teams_count")
     def validate_teams_count(cls, teams_count: int):
-        return validate_teams_count(teams_count)
+        return LobbyValidator.teams_count(teams_count)
     
 
     @model_validator(mode="after")
@@ -33,7 +32,7 @@ class AlgorithmBase(BaseModel):
         if teams_count is None or algorithm is None:
             raise ValueError("Both 'teams_count' and 'algorithm' must be provided.")
 
-        validate_algorithm(algorithm, teams_count)
+        LobbyValidator.algorithm(algorithm, teams_count)
         return data
 
 
@@ -62,12 +61,12 @@ class AlgorithmUpdate(BaseModel):
 
     @field_validator("name", mode="before")
     def validate_name(cls, name: Optional[str]):
-        return validate_name(name, "Algorithm")
+        return LobbyValidator.name(name, "Algorithm")
     
 
     @field_validator("teams_count", mode="before")
     def validate_teams_count(cls, teams_count: Optional[int]):
-        return validate_teams_count(teams_count)
+        return LobbyValidator.teams_count(teams_count)
     
     
     @model_validator(mode="after")
@@ -78,7 +77,7 @@ class AlgorithmUpdate(BaseModel):
         if teams_count is None or algorithm is None:
             raise ValueError("Both 'teams_count' and 'algorithm' must be provided.")
 
-        validate_algorithm(algorithm, teams_count)
+        LobbyValidator.algorithm(algorithm, teams_count)
         return data
 
 

@@ -3,11 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, field_serializer, field_validator
 
 from app.modules.auth.user.enums import UserRole
-from app.core.security.validators import (
-    validate_username, 
-    validate_password, 
-    validate_email
-)
+from app.modules.auth.user.validators import UserValidator
 
 
 class UserReadRegular(BaseModel):
@@ -34,17 +30,17 @@ class UserCreate(BaseModel):
 
     @field_validator("username")
     def validate_username(cls, username: str):
-        return validate_username(username)
+        return UserValidator.username(username)
 
     
     @field_validator("password")
     def validate_password(cls, password: str):
-        return validate_password(password)
+        return UserValidator.password(password)
 
     
     @field_validator("email")
     def validate_email(cls, email: EmailStr):
-        return validate_email(email)
+        return UserValidator.email(email)
     
 
 class UserUpdateSecure(BaseModel):
@@ -56,17 +52,17 @@ class UserUpdateSecure(BaseModel):
     
     @field_validator("username", mode="before")
     def validate_username(cls, username: Optional[str]):
-        return validate_username(username)
+        return UserValidator.username(username)
     
     
     @field_validator("password", mode="before")
     def validate_password(cls, password: Optional[str]):
-        return validate_password(password)
+        return UserValidator.password(password)
     
     
     @field_validator("email", mode="before")
     def validate_email(cls, email: Optional[EmailStr]):
-        return validate_email(email)
+        return UserValidator.email(email)
     
 
 class UserUpdate(UserUpdateSecure):
