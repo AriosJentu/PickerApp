@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from app.modules.auth.user.models import User
 
-from tests.types import InputData
+from tests.utils.types import InputData
 
 T = TypeVar("T")
 

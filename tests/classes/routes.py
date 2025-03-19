@@ -4,8 +4,8 @@ from httpx import AsyncClient
 
 from app.modules.auth.user.enums import UserRole
 
-from tests.types import RouteBaseFixture
-from tests.constants import Roles
+from tests.utils.types import RouteBaseFixture
+from tests.utils.constants import Roles
 from tests.factories.general_factory import GeneralFactory
 from tests.utils.test_access import check_access_for_authenticated_users, check_access_for_unauthenticated_users
 

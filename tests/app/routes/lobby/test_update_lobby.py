@@ -10,9 +10,9 @@ from app.modules.lobby.lobby.models import Lobby
 from app.modules.lobby.participant.models import LobbyParticipant
 from app.modules.lobby.team.models import Team
 
-from tests.types import InputData
-from tests.constants import Roles
-from tests.dataclasses import BaseUserData, BaseObjectData
+from tests.utils.types import InputData
+from tests.utils.constants import Roles
+from tests.utils.dataclasses import BaseUserData, BaseObjectData
 from tests.classes.setup import BaseTestSetup
 
 import tests.params.routes.lobby as params

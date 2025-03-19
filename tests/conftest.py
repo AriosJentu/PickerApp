@@ -20,8 +20,8 @@ from app.dependencies.database import get_async_session
 from app.modules.db.base import Base, User, Algorithm, Lobby, Team, LobbyParticipant
 from app.modules.auth.user.enums import UserRole
 
-from tests.types import RouteBaseFixture
-from tests.constants import (
+from tests.utils.types import RouteBaseFixture
+from tests.utils.constants import (
     USERS_COUNT, 
     ALGORITHMS_COUNT, 
     LOBBIES_COUNT, 

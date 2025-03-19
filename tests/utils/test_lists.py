@@ -5,7 +5,7 @@ from httpx import AsyncClient
 
 from app.modules.auth.user.enums import UserRole
 
-from tests.types import InputData
+from tests.utils.types import InputData
 from tests.factories.general_factory import GeneralFactory
 
 

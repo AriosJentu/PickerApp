@@ -1,4 +1,4 @@
-from tests.constants import Roles, TEAMS_COUNT
+from tests.utils.constants import Roles, TEAMS_COUNT
 
 
 ROUTES = [

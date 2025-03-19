@@ -1,4 +1,4 @@
-from tests.types import Routes
+from tests.utils.types import Routes
 
 def get_protected_routes(all_routes: Routes) -> Routes:
     return [

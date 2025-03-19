@@ -1,6 +1,6 @@
 from app.modules.lobby.lobby.enums import LobbyStatus, LobbyParticipantRole
 
-from tests.constants import Roles, LOBBIES_COUNT, PARTICIPANTS_COUNT
+from tests.utils.constants import Roles, LOBBIES_COUNT, PARTICIPANTS_COUNT
 
 
 ROUTES = [

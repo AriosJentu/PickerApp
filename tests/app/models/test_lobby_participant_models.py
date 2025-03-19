@@ -4,7 +4,7 @@ from pydantic import ValidationError
 
 from app.modules.lobby.lobby.schemas import LobbyParticipantCreate, LobbyParticipantUpdate
 from app.modules.lobby.lobby.enums import LobbyParticipantRole
-from tests.types import InputData
+from tests.utils.types import InputData
 
 
 @pytest.mark.parametrize(

@@ -4,7 +4,7 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from tests.types import InputData
+from tests.utils.types import InputData
 from tests.factories.user_factory import UserFactory
 from tests.factories.general_factory import GeneralFactory
 from tests.classes.setup import BaseTestSetup

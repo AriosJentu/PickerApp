@@ -4,7 +4,7 @@ from httpx import AsyncClient
 
 from app.modules.auth.user.enums import UserRole
 
-from tests.types import RouteBaseFixture
+from tests.utils.types import RouteBaseFixture
 from tests.factories.general_factory import GeneralFactory
 
 

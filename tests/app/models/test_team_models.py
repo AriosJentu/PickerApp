@@ -3,7 +3,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.modules.lobby.team.schemas import TeamCreate, TeamUpdate
-from tests.types import InputData
+from tests.utils.types import InputData
 
 
 @pytest.mark.parametrize(

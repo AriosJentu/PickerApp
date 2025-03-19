@@ -1,6 +1,6 @@
-from tests.constants import ALGORITHMS_COUNT
+from tests.utils.constants import ALGORITHMS_COUNT
 
-from tests.constants import Roles
+from tests.utils.constants import Roles
 
 
 ROUTES = [

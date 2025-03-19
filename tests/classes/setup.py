@@ -6,8 +6,8 @@ from app.modules.lobby.lobby.models import Lobby
 from app.modules.lobby.participant.models import LobbyParticipant
 from app.modules.lobby.team.models import Team
 
-from tests.types import InputData
-from tests.dataclasses import BaseUserData, BaseObjectData
+from tests.utils.types import InputData
+from tests.utils.dataclasses import BaseUserData, BaseObjectData
 from tests.factories.general_factory import GeneralFactory
 
 

@@ -1,6 +1,6 @@
 from app.modules.auth.user.enums import UserRole
 
-from tests.constants import Roles, USERS_COUNT
+from tests.utils.constants import Roles, USERS_COUNT
 
 
 ROUTES = [

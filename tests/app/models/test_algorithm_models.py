@@ -3,7 +3,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.modules.lobby.algorithm.schemas import AlgorithmCreate, AlgorithmUpdate
-from tests.types import InputData
+from tests.utils.types import InputData
 
 
 @pytest.mark.parametrize(

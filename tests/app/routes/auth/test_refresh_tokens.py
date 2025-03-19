@@ -7,9 +7,9 @@ from httpx import AsyncClient
 
 from app.modules.auth.user.enums import UserRole
 
-from tests.types import InputData
-from tests.constants import Roles
-from tests.dataclasses import BaseUserData
+from tests.utils.types import InputData
+from tests.utils.constants import Roles
+from tests.utils.dataclasses import BaseUserData
 from tests.classes.setup import BaseTestSetup
 
 

@@ -5,8 +5,8 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from tests.types import InputData
-from tests.constants import Roles
+from tests.utils.types import InputData
+from tests.utils.constants import Roles
 from tests.classes.setup import BaseTestSetup
 
 

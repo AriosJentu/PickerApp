@@ -1,6 +1,6 @@
 import pytest
 
-from tests.constants import Roles
+from tests.utils.constants import Roles
 from tests.classes.routes import BaseRoutesTest
 from tests.classes.lists import BaseListsTest
 

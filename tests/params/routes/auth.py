@@ -1,6 +1,6 @@
 from app.modules.auth.user.enums import UserRole
 
-from tests.constants import Roles
+from tests.utils.constants import Roles
 
 
 ROUTES = [
