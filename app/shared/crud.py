@@ -68,8 +68,7 @@ class BaseCRUD(Generic[T]):
         return True
 
 
-    async def get_list(
-        self,
+    async def get_list(self,
         filters: Optional[dict[str, Any]] = None,
         sort_by: Optional[str] = "id",
         sort_order: Optional[str] = "asc",
@@ -91,25 +90,30 @@ class BaseCRUD(Generic[T]):
             if key not in filters and filter_field.default is not None:
                 filters[key] = filter_field.default
 
-        if filters:
-            conditions = []
-            
-            for key, value in filters.items():
-                if not (key in self.default_filters and value is not None):
-                    continue
+        conditions = []
+        custom_conditions = {}
 
-                column = getattr(self.model, key)
-                default_filter = self.default_filters[key]
-                condition = default_filter.apply_filter(column, value)
-                
-                if condition is not None:
-                    conditions.append(condition)
+        for key, value in filters.items():
+            if value is None or key not in self.default_filters:
+                continue
 
-            custom_conditions = self.custom_filters(filters)
-            conditions.extend(custom_conditions)
+            filter_field = self.default_filters[key]
+            if filter_field.is_dependent() and filters.get(filter_field.dependency) is not None:
+                continue
 
-            if conditions:
-                query = query.where(and_(*conditions))
+            if filter_field.ignore or not hasattr(self.model, key):  
+                custom_conditions[key] = value
+                continue 
+
+            column = getattr(self.model, key)
+            condition = filter_field.apply_filter(column, value)
+
+            if condition is not None:
+                conditions.append(condition)
+
+        conditions.extend(self.custom_filters(custom_conditions))
+        if conditions:
+            query = query.where(and_(*conditions))
 
         if only_count:
             count_query = select(func.count()).select_from(query.subquery())
@@ -124,7 +128,7 @@ class BaseCRUD(Generic[T]):
 
         result = await self.db.execute(query)
         return result.scalars().all()
-
+    
 
     def custom_filters(self, filters: dict[str, Any]) -> list[Any]:
         return []

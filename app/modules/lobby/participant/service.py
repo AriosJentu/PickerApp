@@ -2,72 +2,63 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.auth.user.models import User
-from app.modules.lobby.lobby.models import Lobby
+from app.modules.lobby.participant.crud import LobbyParticipantCRUD
 from app.modules.lobby.participant.models import LobbyParticipant
-from app.modules.lobby.team.models import Team
-
 from app.modules.lobby.lobby.enums import LobbyParticipantRole
 from app.modules.lobby.lobby.schemas import LobbyParticipantCreate, LobbyParticipantUpdate
 
-from app.modules.lobby.participant.crud_old import (
-    db_get_lobby_participant_by_id,
-    db_get_lobby_participant_by_user_id,
-    db_create_lobby_participant,
-    db_update_lobby_participant,
-    db_get_list_of_lobby_participants
-)
+
+async def get_lobby_participant_by_id(db: AsyncSession, lobby_id: int, participant_id: int) -> Optional[LobbyParticipant]:
+    crud = LobbyParticipantCRUD(db)
+    return await crud.get_by_id(lobby_id, participant_id)
 
 
-async def get_lobby_participant_by_id(db: AsyncSession, lobby: Lobby, participant_id: int) -> Optional[LobbyParticipant]:
-    return await db_get_lobby_participant_by_id(db, lobby, participant_id)
-
-
-async def get_lobby_participant_by_user(db: AsyncSession, user: User, lobby: Lobby, is_active: Optional[bool] = None) -> Optional[LobbyParticipant]:
-    return await db_get_lobby_participant_by_user_id(db, lobby, user.id, is_active)
+async def get_lobby_participant_by_user_id(db: AsyncSession, lobby_id: int, user_id: int, is_active: Optional[bool] = None) -> Optional[LobbyParticipant]:
+    crud = LobbyParticipantCRUD(db)
+    return await crud.get_by_user_id(lobby_id, user_id, is_active)
 
 
 async def create_lobby_participant(db: AsyncSession, participant: LobbyParticipant) -> LobbyParticipant:
-    return await db_create_lobby_participant(db, participant)
+    crud = LobbyParticipantCRUD(db)
+    return await crud.create(participant)
 
 
-async def is_participant_already_in_lobby(db: AsyncSession, user: User, lobby: Lobby) -> bool:
-    participant = await get_lobby_participant_by_user(db, user, lobby)
+async def is_participant_already_in_lobby(db: AsyncSession, lobby_id: int, user_id: int) -> bool:
+    participant = await get_lobby_participant_by_user_id(db, lobby_id, user_id)
     return participant is not None
 
 
-async def add_lobby_participant(db: AsyncSession, user: User, lobby: Lobby, team: Optional[Team] = None) -> LobbyParticipant:
+async def add_lobby_participant(db: AsyncSession, lobby_id: int, user_id: int, team_id: Optional[int] = None) -> LobbyParticipant:
    
-    team_id = None
-    if isinstance(team, Team):
-        team_id = team.id
-
+    crud = LobbyParticipantCRUD(db)
     participant_scheme = LobbyParticipantCreate(
-        user_id=user.id,
-        lobby_id=lobby.id,
+        user_id=user_id,
+        lobby_id=lobby_id,
         team_id=team_id,
         role=LobbyParticipantRole.SPECTATOR,
         is_active=True
     )
-    participant = LobbyParticipant.from_create(participant_scheme)
-    return await create_lobby_participant(db, participant)
+    new_participant = LobbyParticipant.from_create(participant_scheme)
+    return await crud.create(new_participant)
 
 
 async def leave_lobby_participant(db: AsyncSession, participant: LobbyParticipant) -> Optional[LobbyParticipant]:
+    crud = LobbyParticipantCRUD(db)
     update_data = LobbyParticipantUpdate(is_active=False)
-    return await db_update_lobby_participant(db, participant, update_data)
+    return await crud.update(participant, update_data)
 
 
 async def update_lobby_participant(db: AsyncSession, participant: LobbyParticipant, update_data: LobbyParticipantUpdate) -> Optional[LobbyParticipant]:
-    return await db_update_lobby_participant(db, participant, update_data)
+    crud = LobbyParticipantCRUD(db)
+    return await crud.update(participant, update_data)
 
 
 async def get_list_of_lobby_participants(
     db: AsyncSession, 
     id: Optional[int] = None,
     user_id: Optional[int] = None,
+    lobby_id: Optional[int] = None, 
     team_id: Optional[int] = None,
-    lobby: Optional[Lobby] = None, 
     role: Optional[LobbyParticipantRole] = None,
     is_active: Optional[bool] = None,
     sort_by: Optional[str] = "id",
@@ -77,4 +68,7 @@ async def get_list_of_lobby_participants(
     all_db_participants: Optional[bool] = False,
     only_count: Optional[bool] = False
 ) -> list[Optional[LobbyParticipant]] | int:
-    return await db_get_list_of_lobby_participants(db, id, user_id, team_id, lobby, role, is_active, sort_by, sort_order, limit, offset, all_db_participants, only_count)
+    
+    crud = LobbyParticipantCRUD(db)
+    filters = {"id": id, "user_id": user_id, "team_id": team_id, "lobby_id": lobby_id, "role": role, "is_active": is_active, "all_db_participants": all_db_participants}
+    return await crud.get_list(filters, sort_by, sort_order, limit, offset, only_count)

@@ -24,7 +24,7 @@ class User(Base):
     algorithms = relationship("Algorithm", back_populates="creator", cascade="all, delete-orphan")
 
     @classmethod
-    def from_create(cls, user_create: UserCreate | UserUpdate | UserUpdateSecure, get_password_hash: Callable[[str], str]) -> Self:
+    def from_create(cls, user_create: UserCreate | UserUpdate | UserUpdateSecure, password_hasher: Callable[[str], str]) -> Self:
         dump = user_create.model_dump()
-        dump["password"] = get_password_hash(user_create.password)
+        dump["password"] = password_hasher(user_create.password)
         return cls(**dump)

@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.modules.auth.token.exceptions import HTTPTokenExceptionInvalid, HTTPTokenExceptionExpired
 
 
-async def jwt_create_token(data: dict, delta: timedelta, token_type: str) -> Token:
+def jwt_create_token(data: dict, delta: timedelta, token_type: str) -> Token:
 
     expire = datetime.now(timezone.utc) + delta
     
@@ -32,14 +32,14 @@ async def jwt_create_token(data: dict, delta: timedelta, token_type: str) -> Tok
     return token
 
 
-async def jwt_create_access_token(data: dict) -> Token:
+def jwt_create_access_token(data: dict) -> Token:
     delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    return await jwt_create_token(data, delta, "access")
+    return jwt_create_token(data, delta, "access")
 
 
-async def jwt_create_refresh_token(data: dict) -> Token:
+def jwt_create_refresh_token(data: dict) -> Token:
     delta = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    return await jwt_create_token(data, delta, "refresh")
+    return jwt_create_token(data, delta, "refresh")
 
 
 def jwt_decode_token(token_str: str) -> dict:

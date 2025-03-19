@@ -5,30 +5,28 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.lobby.algorithm.models import Algorithm
 from app.modules.lobby.algorithm.schemas import AlgorithmCreate, AlgorithmUpdate
 
-from app.modules.lobby.algorithm.crud_old import (
-    db_get_algorithm_by_id,
-    db_create_algorithm,
-    db_update_algorithm,
-    db_delete_algorithm,
-    db_get_list_of_algorithms
-)
+from app.modules.lobby.algorithm.crud import AlgorithmCRUD
 
 
 async def get_algorithm_by_id(db: AsyncSession, algorithm_id: int) -> Optional[Algorithm]:
-    return await db_get_algorithm_by_id(db, algorithm_id)
+    crud = AlgorithmCRUD(db)
+    return await crud.get_by_id(algorithm_id)
 
 
 async def create_algorithm(db: AsyncSession, algorithm: AlgorithmCreate) -> Algorithm:
+    crud = AlgorithmCRUD(db)
     new_algorithm = Algorithm.from_create(algorithm)
-    return await db_create_algorithm(db, new_algorithm)
+    return await crud.create(new_algorithm)
 
 
 async def update_algorithm(db: AsyncSession, algorithm: Algorithm, update_data: AlgorithmUpdate) -> Algorithm:
-    return await db_update_algorithm(db, algorithm, update_data)
+    crud = AlgorithmCRUD(db)
+    return await crud.update(algorithm, update_data)
 
 
 async def delete_algorithm(db: AsyncSession, algorithm: Algorithm) -> bool:
-    return await db_delete_algorithm(db, algorithm)
+    crud = AlgorithmCRUD(db)
+    return await crud.delete(algorithm)
 
 
 async def get_list_of_algorithms(
@@ -43,4 +41,7 @@ async def get_list_of_algorithms(
     offset: Optional[int] = 0,
     only_count: Optional[bool] = False
 ) -> list[Optional[Algorithm]] | int:
-    return await db_get_list_of_algorithms(db, id, name, algorithm, teams_count, sort_by, sort_order, limit, offset, only_count)
+    
+    crud = AlgorithmCRUD(db)
+    filters = {"id": id, "name": name, "algorithm": algorithm, "teams_count": teams_count}
+    return await crud.get_list(filters, sort_by, sort_order, limit, offset, only_count)

@@ -2,14 +2,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.user.models import User
 from app.modules.lobby.algorithm.models import Algorithm
+from app.modules.lobby.lobby.crud import LobbyCRUD
 from app.modules.lobby.lobby.models import Lobby
-from app.modules.lobby.lobby.crud_old import db_create_lobby
 
 
 class LobbyFactory:
 
     def __init__(self, db_async: AsyncSession):
-        self.db_async = db_async
+        self.crud = LobbyCRUD(db_async)
 
     async def create(self, host: User, algorithm: Algorithm, i: int = 1) -> Lobby:
         data = {
@@ -19,4 +19,4 @@ class LobbyFactory:
             "algorithm_id": algorithm.id
         }
         lobby = Lobby(**data)
-        return await db_create_lobby(self.db_async, lobby)
+        return await self.crud.create(lobby)

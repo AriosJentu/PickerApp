@@ -8,7 +8,9 @@ from app.dependencies.oauth import get_oauth2_scheme
 
 from app.core.security.token import jwt_process_username_from_payload
 
+from app.modules.auth.token.crud import TokenCRUD
 from app.modules.auth.token.models import Token
+from app.modules.auth.user.crud import UserCRUD, UserExistType
 from app.modules.auth.user.models import User
 from app.modules.auth.user.schemas import UserCreate, UserUpdateSecure, UserUpdate
 from app.modules.auth.user.enums import UserRole
@@ -21,17 +23,6 @@ from app.modules.auth.token.service import (
     drop_inactive_tokens,
 )
 
-from app.modules.auth.token.crud_old import db_get_users_last_token
-from app.modules.auth.user.crud_old import (
-    db_create_user, 
-    db_get_user_by_key_value, 
-    db_is_user_exist, 
-    db_update_user, 
-    db_delete_user,
-    db_get_list_of_users,
-    UserExistType,
-)
-
 from app.modules.auth.user.exceptions import (
     HTTPUserExceptionNotFound,
     HTTPUserExceptionNoDataProvided,
@@ -42,15 +33,18 @@ type UserTokens = tuple[Token, Token]
 
 
 async def get_user_by_id(db: AsyncSession, get_user_id: int) -> Optional[User]:
-    return await db_get_user_by_key_value(db, "id", get_user_id)
+    crud = UserCRUD(db)
+    return await crud.get_by_id(get_user_id)
 
 
 async def get_user_by_username(db: AsyncSession, get_username: str) -> Optional[User]:
-    return await db_get_user_by_key_value(db, "username", get_username)
+    crud = UserCRUD(db)
+    return await crud.get_by_key_value("username", get_username)
 
 
 async def get_user_by_email(db: AsyncSession, get_email: str) -> Optional[User]:
-    return await db_get_user_by_key_value(db, "email", get_email)
+    crud = UserCRUD(db)
+    return await crud.get_by_key_value("email", get_email)
 
 
 async def get_user_by_params(
@@ -79,7 +73,8 @@ async def get_user_by_params(
 
 
 async def get_users_last_token(db: AsyncSession, user: User, token_type: str = "access") -> Optional[Token]:
-    return await db_get_users_last_token(db, user, token_type)
+    crud = TokenCRUD(db)
+    return await crud.get_users_last_token(user, token_type)
 
 
 async def deactivate_old_tokens_user(db: AsyncSession, user: User, token_type: str = "all"):
@@ -88,14 +83,14 @@ async def deactivate_old_tokens_user(db: AsyncSession, user: User, token_type: s
 
 async def create_user_tokens(db: AsyncSession, user: User) -> UserTokens:
     await deactivate_old_tokens_user(db, user)
-    access_token = await create_access_token(db, {"sub": user.username, "user_id": user.id})
-    refresh_token = await create_refresh_token(db, {"sub": user.username, "user_id": user.id})
+    access_token = await create_access_token(db, user)
+    refresh_token = await create_refresh_token(db, user)
     return access_token, refresh_token
 
 
 async def refresh_user_tokens(db: AsyncSession, user: User, refresh_token: str) -> UserTokens:
     await deactivate_old_tokens_user(db, user, "access")
-    new_access_token = await create_access_token(db, {"sub": user.username, "user_id": user.id})
+    new_access_token = await create_access_token(db, user)
     return new_access_token, refresh_token
 
 
@@ -129,30 +124,33 @@ async def get_current_user_refresh(
 
 
 async def is_user_exist(db: AsyncSession, user: User) -> UserExistType:
-    return await db_is_user_exist(db, user)    
+    crud = UserCRUD(db)
+    return await crud.is_user_exist(user)
 
 
 async def create_user(
     db: AsyncSession,
     user: UserCreate,
-    get_password_hash: Callable[[str], str]
+    password_hasher: Callable[[str], str]
 ) -> User:
-    new_user = User.from_create(user, get_password_hash)
-    return await db_create_user(db, new_user)
+    crud = UserCRUD(db)
+    new_user = User.from_create(user, password_hasher)
+    return await crud.create(new_user)
 
 
 async def update_user(
     db: AsyncSession, 
     user: User, 
     update_data: UserUpdateSecure | UserUpdate,
-    get_password_hash: Callable[[str], str],
+    password_hasher: Callable[[str], str],
     with_tokens: bool = True
 ) -> UserTokens | User:
     
     if update_data.password:
-        update_data.password = get_password_hash(update_data.password)
+        update_data.password = password_hasher(update_data.password)
         
-    user = await db_update_user(db, user, update_data)
+    crud = UserCRUD(db)
+    user = await crud.update(user, update_data)
     if not user:
         raise HTTPUserExceptionNoDataProvided("No update data provided")
 
@@ -163,9 +161,10 @@ async def update_user(
 
 
 async def delete_user(db: AsyncSession, user: User) -> bool:
+    crud = UserCRUD(db)
     await deactivate_old_tokens_user(db, user)
     await drop_inactive_tokens(db, user)
-    return await db_delete_user(db, user)
+    return await crud.delete(user)
 
 
 async def get_list_of_users(
@@ -181,4 +180,7 @@ async def get_list_of_users(
     offset: Optional[int] = 0,
     only_count: Optional[bool] = False
 ) -> list[Optional[User]] | int:
-    return await db_get_list_of_users(db, id, role, username, email, external_id, sort_by, sort_order, limit, offset, only_count)
+    
+    crud = UserCRUD(db)
+    filters = {"id": id, "role": role, "username": username, "email": email, "external_id": external_id}
+    return await crud.get_list(filters, sort_by, sort_order, limit, offset, only_count)

@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.lobby.lobby.enums import LobbyStatus
@@ -14,9 +16,19 @@ class LobbyCRUD(BaseCRUD[Lobby]):
         "name": FilterField(str),
         "host_id": FilterField(int),
         "algorithm_id": FilterField(int),
-        "status": FilterField(LobbyStatus)
+        "status": FilterField(LobbyStatus),
+        "only_active": FilterField(bool, True, ignore=True)
     }
 
 
     def __init__(self, db: AsyncSession):
         super().__init__(db, Lobby)
+
+
+    def custom_filters(self, filters: dict[str, Any]) -> list[Any]:
+        conditions = []
+
+        if filters.get("only_active"):
+            conditions.append(Lobby.status == LobbyStatus.ACTIVE)
+
+        return conditions

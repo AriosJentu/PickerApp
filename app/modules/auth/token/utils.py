@@ -10,6 +10,11 @@ from app.modules.auth.token.exceptions import HTTPTokenExceptionInvalid, HTTPTok
 class TokenManager:
 
     @staticmethod
+    def create_data(username: str, user_id: int) -> dict:
+        return {"sub": username, "user_id": user_id}
+    
+
+    @staticmethod
     def create_token(data: dict, expires_in: timedelta, token_type: str) -> str:
         expire = datetime.now(timezone.utc) + expires_in
     
@@ -31,7 +36,7 @@ class TokenManager:
 
     @classmethod
     def create_refresh_token(cls, data: dict) -> str:
-        delta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        delta = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
         return cls.create_token(data, delta, "refresh")
 
 

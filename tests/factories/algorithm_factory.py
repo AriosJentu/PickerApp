@@ -1,14 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.user.models import User
+from app.modules.lobby.algorithm.crud import AlgorithmCRUD
 from app.modules.lobby.algorithm.models import Algorithm
-from app.modules.lobby.algorithm.crud_old import db_create_algorithm
 
 
 class AlgorithmFactory:
 
     def __init__(self, db_async: AsyncSession):
-        self.db_async = db_async
+        self.crud = AlgorithmCRUD(db_async)
 
     async def create(self, creator: User, i: int = 1) -> Algorithm:
         data = {
@@ -19,4 +19,4 @@ class AlgorithmFactory:
             "creator_id": creator.id
         }
         algorithm = Algorithm(**data)
-        return await db_create_algorithm(self.db_async, algorithm)
+        return await self.crud.create(algorithm)

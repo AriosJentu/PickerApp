@@ -11,8 +11,10 @@ class FilterField:
     def __init__(
         self,
         field_type: type,
-        default: Any = None,
-        operator: Operator = None
+        default: Optional[Any] = None,
+        operator: Optional[Operator] = None,
+        dependency: Optional[str] = None,
+        ignore: Optional[bool] = False
     ):
         
         if operator is None:
@@ -23,10 +25,18 @@ class FilterField:
         self.field_type = field_type
         self.default = default
         self.operator = operator
+        self.dependency = dependency
+        self.ignore = ignore
 
 
     def apply_filter(self, column: ColumnElement, value: Any) -> Optional[ColumnElement]:
-        return self.operator(column, value)
+        if not self.ignore:
+            return self.operator(column, value)
+        return None
+    
+    
+    def is_dependent(self) -> bool:
+        return (self.dependency is not None)
 
 
     @staticmethod

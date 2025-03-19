@@ -36,7 +36,7 @@ from app.modules.lobby.lobby.service import (
 )
 from app.modules.lobby.participant.service import (
     get_lobby_participant_by_id,
-    get_lobby_participant_by_user,
+    get_lobby_participant_by_user_id,
     update_lobby_participant,
     get_list_of_lobby_participants,
     is_participant_already_in_lobby,
@@ -199,7 +199,7 @@ async def get_lobby_participants_count_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    participants_count = await get_list_of_lobby_participants(db, id, user_id, team_id, lobby, role, is_active, only_count=True)
+    participants_count = await get_list_of_lobby_participants(db, id, user_id, lobby_id, team_id, role, is_active, only_count=True)
     return LobbyParticipantsCountResponse(total_count=participants_count)
 
 
@@ -222,7 +222,7 @@ async def get_lobby_participants_(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    participants = await get_list_of_lobby_participants(db, id, user_id, team_id, lobby, role, is_active, sort_by, sort_order, limit, offset)
+    participants = await get_list_of_lobby_participants(db, id, user_id, lobby_id, team_id, role, is_active, sort_by, sort_order, limit, offset)
     return participants
 
 
@@ -246,16 +246,15 @@ async def add_participant_(
     if not user:
         raise HTTPUserExceptionNotFound()
     
-    team = None
     if team_id is not None:
         team = await get_team_by_id(db, team_id)
         if not team:
             raise HTTPTeamNotFound()
     
-    if not await is_participant_already_in_lobby(db, user, lobby):
-        return await add_lobby_participant(db, user, lobby, team)
+    if not await is_participant_already_in_lobby(db, lobby_id, user_id):
+        return await add_lobby_participant(db, lobby_id, user_id, team_id)
 
-    participant = await get_lobby_participant_by_user(db, user, lobby)
+    participant = await get_lobby_participant_by_user_id(db, lobby_id, user_id)
     if participant and participant.is_active:
         raise HTTPLobbyUserAlreadyIn()
     
@@ -279,7 +278,7 @@ async def edit_participant_(
     condition = (lobby.host_id == current_user.id)
     AccessControl.has_access_or(current_user, UserRole.MODERATOR, condition, HTTPLobbyAccessDenied)
     
-    participant = await get_lobby_participant_by_id(db, lobby, participant_id)
+    participant = await get_lobby_participant_by_id(db, lobby_id, participant_id)
     if not participant:
         raise HTTPLobbyParticipantNotFound()
     
@@ -301,10 +300,10 @@ async def connect_to_lobby_(
     if not lobby:
         raise HTTPLobbyNotFound()        
     
-    if not await is_participant_already_in_lobby(db, current_user, lobby):
-        return await add_lobby_participant(db, current_user, lobby)
+    if not await is_participant_already_in_lobby(db, lobby_id, current_user.id):
+        return await add_lobby_participant(db, lobby_id, current_user.id)
 
-    participant = await get_lobby_participant_by_user(db, current_user, lobby)
+    participant = await get_lobby_participant_by_user_id(db, lobby_id, current_user.id)
     if participant and participant.is_active:
         raise HTTPLobbyUserAlreadyIn()
     
@@ -323,7 +322,7 @@ async def leave_lobby(
     if not lobby:
         raise HTTPLobbyNotFound()
     
-    participant = await get_lobby_participant_by_user(db, current_user, lobby, True)
+    participant = await get_lobby_participant_by_user_id(db, lobby_id, current_user.id, True)
     if not participant:
         raise HTTPLobbyParticipantNotFound()
     
@@ -346,7 +345,7 @@ async def kick_from_lobby_(
     condition = (lobby.host_id == current_user.id)
     AccessControl.has_access_or(current_user, UserRole.MODERATOR, condition, HTTPLobbyAccessDenied)
     
-    participant = await get_lobby_participant_by_id(db, lobby, participant_id)
+    participant = await get_lobby_participant_by_id(db, lobby_id, participant_id)
     if not (participant and participant.is_active):
         raise HTTPLobbyParticipantNotFound()
     

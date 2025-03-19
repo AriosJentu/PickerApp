@@ -75,7 +75,7 @@ async def get_count_of_teams_(
         if not lobby:
             raise HTTPLobbyNotFound()
     
-    teams_count = await get_list_of_teams(db, id, name, lobby, only_count=True)
+    teams_count = await get_list_of_teams(db, id, lobby_id, name, only_count=True)
     return TeamListCountResponse(total_count=teams_count)
 
 
@@ -99,7 +99,7 @@ async def get_list_of_teams_(
         if not lobby:
             raise HTTPLobbyNotFound()
     
-    teams = await get_list_of_teams(db, id, name, lobby, sort_by, sort_order, limit, offset)
+    teams = await get_list_of_teams(db, id, lobby_id, name, sort_by, sort_order, limit, offset)
     return teams
 
 

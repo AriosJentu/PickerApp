@@ -56,7 +56,7 @@ LOBBY_FILTER_DATA = [
     ({"id":             1},             1),
     ({"name":           "2"},           1),
     ({"name":           "Test Lobby"},  LOBBIES_COUNT),
-    ({"host_id":        0},             LOBBIES_COUNT),
+    ({"host_id":        2},             LOBBIES_COUNT),
     ({"host_id":        1},             0),
     ({"algorithm_id":   1},             LOBBIES_COUNT),
     ({"sort_by":        "id"},          LOBBIES_COUNT),

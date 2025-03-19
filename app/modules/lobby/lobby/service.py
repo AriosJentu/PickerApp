@@ -6,26 +6,23 @@ from app.modules.lobby.lobby.models import Lobby
 from app.modules.lobby.lobby.enums import LobbyStatus
 from app.modules.lobby.lobby.schemas import LobbyCreate, LobbyUpdate
 
-from app.modules.lobby.lobby.crud_old import (
-    db_get_lobby_by_id,
-    db_create_lobby,
-    db_update_lobby,
-    db_delete_lobby,
-    db_get_list_of_lobbies,
-)
+from app.modules.lobby.lobby.crud import LobbyCRUD
 
 
 async def get_lobby_by_id(db: AsyncSession, lobby_id: int) -> Optional[Lobby]:
-    return await db_get_lobby_by_id(db, lobby_id)
+    crud = LobbyCRUD(db)
+    return await crud.get_by_id(lobby_id)
 
 
 async def create_lobby(db: AsyncSession, lobby: LobbyCreate) -> Lobby:
+    crud = LobbyCRUD(db)
     new_lobby = Lobby.from_create(lobby)
-    return await db_create_lobby(db, new_lobby)
+    return await crud.create(new_lobby)
 
 
 async def update_lobby(db: AsyncSession, lobby: Lobby, update_data: LobbyUpdate) -> Optional[Lobby]:
-    return await db_update_lobby(db, lobby, update_data)
+    crud = LobbyCRUD(db)
+    return await crud.update(lobby, update_data)
 
 
 async def close_lobby(db: AsyncSession, lobby: Lobby) -> Lobby:
@@ -33,7 +30,8 @@ async def close_lobby(db: AsyncSession, lobby: Lobby) -> Lobby:
 
 
 async def delete_lobby(db: AsyncSession, lobby: Lobby) -> bool:
-    return await db_delete_lobby(db, lobby)
+    crud = LobbyCRUD(db)
+    return await crud.delete(lobby)
 
 
 async def get_list_of_lobbies(
@@ -50,4 +48,7 @@ async def get_list_of_lobbies(
     only_active: Optional[bool] = True,
     only_count: Optional[bool] = False
 ) -> list[Optional[Lobby]] | int:
-    return await db_get_list_of_lobbies(db, id, name, host_id, algorithm_id, status, sort_by, sort_order, limit, offset, only_active, only_count)
+    
+    crud = LobbyCRUD(db)
+    filters = {"id": id, "name": name, "host_id": host_id, "algorithm_id": algorithm_id, "status": status, "only_active": only_active}
+    return await crud.get_list(filters, sort_by, sort_order, limit, offset, only_count)
