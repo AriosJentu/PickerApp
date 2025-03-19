@@ -34,13 +34,13 @@ class TokenService:
     async def create_access_token(self, user: User) -> Token:
         data = TokenManager.create_data(user.username, user.id)
         encode_data = TokenManager.get_encode_access_data(data)
-        return self.create_token(encode_data)
+        return await self.create_token(encode_data)
 
 
     async def create_refresh_token(self, user: User) -> Token:
         data = TokenManager.create_data(user.username, user.id)
         encode_data = TokenManager.get_encode_refresh_data(data)
-        return self.create_token(encode_data)
+        return await self.create_token(encode_data)
 
 
     async def deactivate_old_tokens(self, user: User, token_type: str = "all"):

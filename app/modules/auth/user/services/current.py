@@ -16,7 +16,7 @@ from app.modules.auth.user.services.user import UserService
 class CurrentUserService:
     def __init__(self,
             db: AsyncSession = Depends(get_async_session),
-            user_service: UserService = Depends(UserService), # TODO: Try to understand, why without type it finds `correct` data (I don't think so)
+            user_service: UserService = Depends(UserService),
             token_str: str = Depends(get_oauth2_scheme())
     ):
         self.user_service = user_service
@@ -28,7 +28,7 @@ class CurrentUserService:
             
         try:
             username = TokenManager.get_username_from_token(self.token_str, token_type)
-            user = await self.user_service.get_user_by_username(username)
+            user = await self.user_service.get_by_username(username)
             if user is None:
                 raise HTTPUserExceptionNotFound()
             
@@ -50,8 +50,8 @@ class CurrentUserService:
 
 
     async def get(self) -> User:
-        return await self.get_current_user_by_token_type(self.token_str, "access")
+        return await self.get_by_token_type("access")
 
 
     async def get_refresh(self) -> User:
-        return await self.get_current_user_by_token_type(self.token_str, "refresh")
+        return await self.get_by_token_type("refresh")

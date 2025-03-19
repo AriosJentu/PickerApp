@@ -87,7 +87,7 @@ class TokenManager:
     @classmethod
     def get_username_from_token(cls, token_str: str, token_type: str) -> str:
         try:
-            correct, payload = cls.is_correct_type(token_str, token_type)
+            correct, payload = cls.is_correct_type(token_str, token_type, True)
             if not correct:
                 raise ValueError("Invalid token")
         

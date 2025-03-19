@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 
 from app.modules.auth.user.services.user import UserService
-from app.modules.auth.user.service_old import get_current_user
+from app.modules.auth.user.services.current import CurrentUserService
 
 from app.modules.auth.token.schemas import TokenResponse, TokenStatus
 from app.modules.auth.user.access import RoleChecker
@@ -48,10 +48,10 @@ async def update_current_user_(
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_current_user_(
-    current_user: User = Depends(get_current_user),
-    user_service: UserService = Depends(UserService)
+    user_service: UserService = Depends(UserService),
+    current_user_service: CurrentUserService = Depends(CurrentUserService)
 ):
-    result = await user_service.delete(current_user)
+    result = await user_service.delete(await current_user_service.get())
     if not result:
         raise HTTPUserInternalError("Delete user error")
 
