@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Depends, status
 
-from app.modules.auth.user.services.user import UserService
-from app.modules.auth.user.services.current import CurrentUserService
-
 from app.modules.auth.token.schemas import TokenResponse, TokenStatus
 from app.modules.auth.user.access import RoleChecker
-from app.modules.auth.user.models import User
+from app.modules.auth.user.services.current import CurrentUserService
+from app.modules.auth.user.services.user import UserService
 from app.modules.auth.user.schemas import UserRead, UserUpdateSecure
 
 from app.modules.auth.user.exceptions import (
@@ -19,17 +17,18 @@ router = APIRouter()
 
 @router.get("/", response_model=UserRead)
 async def get_current_user_(
-    current_user: User = Depends(RoleChecker.user)
+    current_user_service: CurrentUserService = Depends(RoleChecker.user)
 ):
-    return current_user
+    return await current_user_service.get()
 
 
 @router.put("/", response_model=TokenResponse)
 async def update_current_user_(
     user_update: UserUpdateSecure,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     user_service: UserService = Depends(UserService)
 ): 
+    current_user = await current_user_service.get()
     if user_update.email: 
         user_by_email = await user_service.get_by_email(user_update.email)
         
@@ -58,8 +57,9 @@ async def delete_current_user_(
 
 @router.get("/check-token", response_model=TokenStatus)
 async def check_current_user_token(
-    current_user: User = Depends(RoleChecker.user)
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
 ):
+    current_user = await current_user_service.get()
     return TokenStatus(
         active=True,
         username=current_user.username,

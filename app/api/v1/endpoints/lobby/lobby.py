@@ -23,8 +23,8 @@ from app.modules.lobby.participant.schemas import (
 
 from app.modules.auth.user.access import AccessControl, RoleChecker
 from app.modules.auth.user.exceptions import HTTPUserExceptionNotFound
-from app.modules.auth.user.models import User
-from app.modules.auth.user.service_old import get_user_by_id
+from app.modules.auth.user.services.current import CurrentUserService
+from app.modules.auth.user.services.user import UserService
 
 from app.modules.lobby.lobby.service import (
     get_lobby_by_id,
@@ -66,9 +66,10 @@ router = APIRouter()
 @router.post("/", response_model=LobbyRead)
 async def create_lobby_(
     lobby: LobbyCreate,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
     algorithm = await get_algorithm_by_id(db, lobby.algorithm_id)
     if not algorithm:
         raise HTTPLobbyAlgorithmNotFound()
@@ -84,7 +85,7 @@ async def get_lobbies_count_(
     algorithm_id: Optional[int] = Query(default=None),
     status: Optional[LobbyStatus] = Query(default=None),
     only_active: Optional[bool] = Query(default=True),
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
     count = await get_list_of_lobbies(db, id, name, host_id, algorithm_id, status, only_active=only_active, only_count=True)
@@ -103,7 +104,7 @@ async def get_lobbies_list_(
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
     only_active: Optional[bool] = Query(default=True),
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
     lobbies = await get_list_of_lobbies(db, id, name, host_id, algorithm_id, status, sort_by, sort_order, limit, offset, only_active)
@@ -113,9 +114,10 @@ async def get_lobbies_list_(
 @router.get("/{lobby_id}", response_model=LobbyRead)
 async def get_lobby_info_(
     lobby_id: int,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
     lobby = await get_lobby_by_id(db, lobby_id)
     if not lobby:
         raise HTTPLobbyNotFound()
@@ -127,9 +129,11 @@ async def get_lobby_info_(
 async def update_lobby_(
     lobby_id: int,
     lobby_data: LobbyUpdate,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    current_user = await current_user_service.get()
     lobby = await get_lobby_by_id(db, lobby_id)
     if not lobby:
         raise HTTPLobbyNotFound()
@@ -147,9 +151,11 @@ async def update_lobby_(
 @router.put("/{lobby_id}/close", response_model=LobbyRead)
 async def close_lobby_(
     lobby_id: int,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    current_user = await current_user_service.get()
     lobby = await get_lobby_by_id(db, lobby_id)
     if not lobby:
         raise HTTPLobbyNotFound()
@@ -167,9 +173,11 @@ async def close_lobby_(
 @router.delete("/{lobby_id}", response_model=LobbyResponse)
 async def delete_lobby_(
     lobby_id: int,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    current_user = await current_user_service.get()
     lobby = await get_lobby_by_id(db, lobby_id)
     if not lobby:
         raise HTTPLobbyNotFound()
@@ -192,9 +200,10 @@ async def get_lobby_participants_count_(
     team_id: Optional[int] = Query(default=None),
     role: Optional[LobbyParticipantRole] = Query(default=None),
     is_active: Optional[bool] = Query(default=True),
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
+    
     lobby = await get_lobby_by_id(db, lobby_id)
     if not lobby:
         raise HTTPLobbyNotFound()
@@ -215,9 +224,10 @@ async def get_lobby_participants_(
     sort_order: Optional[str] = Query(default="asc"),
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
+    
     lobby = await get_lobby_by_id(db, lobby_id)
     if not lobby:
         raise HTTPLobbyNotFound()
@@ -231,9 +241,12 @@ async def add_participant_(
     lobby_id: int,
     user_id: int,
     team_id: Optional[int] = Query(default=None),
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
+    user_service: UserService = Depends(UserService)
 ):
+    
+    current_user = await current_user_service.get()
     lobby = await get_lobby_by_id(db, lobby_id)
 
     if not lobby:
@@ -242,7 +255,7 @@ async def add_participant_(
     condition = (lobby.host_id == current_user.id)
     AccessControl.has_access_or(current_user, UserRole.MODERATOR, condition, HTTPLobbyAccessDenied)
 
-    user = await get_user_by_id(db, user_id)
+    user = await user_service.get_by_id(user_id)
     if not user:
         raise HTTPUserExceptionNotFound()
     
@@ -267,9 +280,11 @@ async def edit_participant_(
     lobby_id: int,
     participant_id: int,
     update_data: LobbyParticipantUpdate,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    current_user = await current_user_service.get()
     lobby = await get_lobby_by_id(db, lobby_id)
 
     if not lobby:
@@ -292,9 +307,11 @@ async def edit_participant_(
 @router.post("/{lobby_id}/connect", response_model=LobbyParticipantWithLobbyRead)
 async def connect_to_lobby_(
     lobby_id: int,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    current_user = await current_user_service.get()
     lobby = await get_lobby_by_id(db, lobby_id)
 
     if not lobby:
@@ -314,9 +331,11 @@ async def connect_to_lobby_(
 @router.delete("/{lobby_id}/leave", response_model=LobbyParticipantWithLobbyRead)
 async def leave_lobby(
     lobby_id: int,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    current_user = await current_user_service.get()
     lobby = await get_lobby_by_id(db, lobby_id)
 
     if not lobby:
@@ -333,10 +352,11 @@ async def leave_lobby(
 async def kick_from_lobby_(
     lobby_id: int,
     participant_id: int,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
     
+    current_user = await current_user_service.get()
     lobby = await get_lobby_by_id(db, lobby_id)
 
     if not lobby:

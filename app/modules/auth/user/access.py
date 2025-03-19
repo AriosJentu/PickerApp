@@ -6,7 +6,7 @@ from app.core.config import settings
 
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.models import User
-from app.modules.auth.user.service_old import get_current_user, get_current_user_refresh
+from app.modules.auth.user.services.current import CurrentUserService
 from app.modules.auth.user.exceptions import HTTPUserUnauthorized, HTTPUserExceptionAccessDenied
 
 
@@ -73,17 +73,17 @@ class AccessControl:
 
     @classmethod
     def check_role(cls, required_role: UserRole):
-        def role_checker(current_user: User = Depends(get_current_user)):
-            cls.has_access(current_user, required_role)
-            return current_user
+        async def role_checker(current_user_service: CurrentUserService = Depends(CurrentUserService)):
+            cls.has_access(await current_user_service.get(), required_role)
+            return current_user_service
 
         return role_checker
 
     @classmethod
     def check_role_refresh(cls, required_role: UserRole):
-        def role_checker_refresh(current_user: User = Depends(get_current_user_refresh)):
-            cls.has_access(current_user, required_role)
-            return current_user
+        async def role_checker_refresh(current_user_service: CurrentUserService = Depends(CurrentUserService)):
+            cls.has_access(await current_user_service.get_refresh(), required_role)
+            return current_user_service
 
         return role_checker_refresh
 

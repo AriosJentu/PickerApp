@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.user.access import AccessControl, RoleChecker
 from app.modules.auth.user.enums import UserRole
-from app.modules.auth.user.models import User
+from app.modules.auth.user.services.current import CurrentUserService
 
 from app.modules.lobby.lobby.schemas import LobbyResponse
 from app.modules.lobby.team.schemas import (
@@ -41,9 +41,11 @@ router = APIRouter()
 @router.post("/", response_model=TeamReadWithLobby)
 async def create_team_(
     team_data: TeamCreate,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    current_user = await current_user_service.get()
     lobby = await get_lobby_by_id(db, team_data.lobby_id)
 
     if not lobby:
@@ -64,7 +66,7 @@ async def get_count_of_teams_(
     id: Optional[int] = Query(default=None),
     name: Optional[str] = Query(default=None),
     lobby_id: Optional[int] = Query(default=None),
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
     
@@ -88,7 +90,7 @@ async def get_list_of_teams_(
     sort_order: Optional[str] = Query(default="asc"),
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
     
@@ -106,9 +108,10 @@ async def get_list_of_teams_(
 @router.get("/{team_id}", response_model=TeamReadWithLobby)
 async def get_team_info_(
     team_id: int,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
     team = await get_team_by_id(db, team_id)
     if not team:
         raise HTTPTeamNotFound()
@@ -120,9 +123,11 @@ async def get_team_info_(
 async def update_team_(
     team_id: int,
     update_data: TeamUpdate,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    current_user = await current_user_service.get()
     team = await get_team_by_id(db, team_id)
     if not team:
         raise HTTPTeamNotFound()
@@ -145,9 +150,11 @@ async def update_team_(
 @router.delete("/{team_id}", response_model=LobbyResponse)
 async def delete_team_(
     team_id: int,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    
+    current_user = await current_user_service.get()
     team = await get_team_by_id(db, team_id)
     if not team:
         raise HTTPTeamNotFound()

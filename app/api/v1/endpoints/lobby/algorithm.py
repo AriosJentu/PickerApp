@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.user.access import AccessControl, RoleChecker
 from app.modules.auth.user.enums import UserRole
-from app.modules.auth.user.models import User
+from app.modules.auth.user.services.current import CurrentUserService
 
 from app.modules.lobby.algorithm.schemas import (
     AlgorithmCreate, 
@@ -39,7 +39,7 @@ router = APIRouter()
 @router.post("/", response_model=AlgorithmRead)
 async def create_algorithm_(
     algorithm_data: AlgorithmCreate,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
     algorithm = await create_algorithm(db, algorithm_data)
@@ -55,7 +55,7 @@ async def get_count_of_algorithms_(
     name: Optional[str] = Query(default=None),
     algorithm: Optional[str] = Query(default=None),
     teams_count: Optional[int] = Query(default=None),
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
     count = await get_list_of_algorithms(db, id, name, algorithm, teams_count, only_count=True)
@@ -72,7 +72,7 @@ async def get_algorithms_list_(
     sort_order: Optional[str] = Query(default="asc"),
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
     algorithms = await get_list_of_algorithms(db, id, name, algorithm, teams_count, sort_by, sort_order, limit, offset)
@@ -82,7 +82,7 @@ async def get_algorithms_list_(
 @router.get("/{algorithm_id}", response_model=AlgorithmRead)
 async def get_algorithm_(
     algorithm_id: int, 
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session)
 ):
     
@@ -97,9 +97,10 @@ async def get_algorithm_(
 async def update_algorithm_(
     algorithm_id: int,
     update_data: AlgorithmUpdate,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    current_user = await current_user_service.get()
     algorithm = await get_algorithm_by_id(db, algorithm_id)
     if not algorithm:
         raise HTTPLobbyAlgorithmNotFound()
@@ -118,9 +119,10 @@ async def update_algorithm_(
 @router.delete("/{algorithm_id}", response_model=AlgorithmResponse)
 async def delete_algorithm_(
     algorithm_id: int,
-    current_user: User = Depends(RoleChecker.user),
+    current_user_service: CurrentUserService = Depends(RoleChecker.user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    current_user = await current_user_service.get()
     algorithm = await get_algorithm_by_id(db, algorithm_id)
     if not algorithm:
         raise HTTPLobbyAlgorithmNotFound()
