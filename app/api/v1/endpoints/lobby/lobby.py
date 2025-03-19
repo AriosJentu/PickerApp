@@ -24,7 +24,7 @@ from app.modules.lobby.participant.schemas import (
 from app.modules.auth.user.access import AccessControl, RoleChecker
 from app.modules.auth.user.exceptions import HTTPUserExceptionNotFound
 from app.modules.auth.user.models import User
-from app.modules.auth.user.service import get_user_by_id
+from app.modules.auth.user.service_old import get_user_by_id
 
 from app.modules.lobby.lobby.service import (
     get_lobby_by_id,

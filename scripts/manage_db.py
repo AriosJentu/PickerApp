@@ -19,7 +19,7 @@ from app.modules.base import Base
 from app.modules.auth.auth.password import PasswordManager
 from app.modules.auth.user.schemas import UserUpdate
 from app.modules.auth.user.enums import UserRole
-from app.modules.auth.user.service import create_user
+from app.modules.auth.user.service_old import create_user
 
 
 def get_url_from_type(db_name: str = "main") -> str:

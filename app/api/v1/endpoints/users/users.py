@@ -18,7 +18,7 @@ from app.modules.auth.user.schemas import (
     UserListCountResponse,
 )
 
-from app.modules.auth.user.service import (
+from app.modules.auth.user.service_old import (
     get_user_by_params,
     deactivate_old_tokens_user,
     update_user,

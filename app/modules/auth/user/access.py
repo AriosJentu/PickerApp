@@ -6,7 +6,7 @@ from app.core.config import settings
 
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.models import User
-from app.modules.auth.user.service import get_current_user, get_current_user_refresh
+from app.modules.auth.user.service_old import get_current_user, get_current_user_refresh
 from app.modules.auth.user.exceptions import HTTPUserUnauthorized, HTTPUserExceptionAccessDenied
 
 

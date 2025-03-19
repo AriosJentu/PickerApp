@@ -10,7 +10,7 @@ from app.shared.filters import FilterField
 
 type UserExistType = tuple[bool, bool]
 type UserTupleType = tuple[User, User]
-type UserModelOrSchemas = User | UserCreate | UserUpdateSecure | UserUpdate
+type UserModelOrScheme = User | UserCreate | UserUpdateSecure | UserUpdate
 
 
 class UserCRUD(BaseCRUD[User]):
@@ -28,12 +28,12 @@ class UserCRUD(BaseCRUD[User]):
         super().__init__(db, User)
 
 
-    async def get_by_username_email(self, user: UserModelOrSchemas) -> UserTupleType:
+    async def get_by_username_email(self, user: UserModelOrScheme) -> UserTupleType:
         user_by_username = await self.get_by_key_value("username", user.username)
         user_by_email = await self.get_by_key_value("email", user.email)
         return user_by_username, user_by_email
 
 
-    async def is_user_exist(self, user: UserModelOrSchemas) -> UserExistType:
+    async def is_user_exist(self, user: UserModelOrScheme) -> UserExistType:
         user_by_username, user_by_email = await self.get_by_username_email(user)
         return user_by_username is not None, user_by_email is not None

@@ -4,7 +4,6 @@ from jose import jwt, JWTError, ExpiredSignatureError
 from uuid import uuid4
 
 from app.core.config import settings
-from app.modules.auth.token.exceptions import HTTPTokenExceptionInvalid, HTTPTokenExceptionExpired
 
 
 class TokenManager:
@@ -15,7 +14,7 @@ class TokenManager:
     
 
     @staticmethod
-    def create_token(data: dict, expires_in: timedelta, token_type: str) -> str:
+    def get_encode_data(data: dict, expires_in: timedelta, token_type: str) -> dict:
         expire = datetime.now(timezone.utc) + expires_in
     
         to_encode = data.copy()
@@ -24,20 +23,25 @@ class TokenManager:
             "token_type": token_type,
             "jti": str(uuid4())
         })
-        
-        return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    
+        return to_encode
 
 
     @classmethod
-    def create_access_token(cls, data: dict) -> str:
+    def get_encode_access_data(cls, data: dict) -> dict:
         delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        return cls.create_token(data, delta, "access")
-
-
+        return cls.get_encode_data(data, delta, "access")
+    
+    
     @classmethod
-    def create_refresh_token(cls, data: dict) -> str:
+    def get_encode_refresh_data(cls, data: dict) -> dict:
         delta = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-        return cls.create_token(data, delta, "refresh")
+        return cls.get_encode_data(data, delta, "refresh")
+
+
+    @staticmethod
+    def create_token(encode_data: dict) -> str:       
+        return jwt.encode(encode_data.copy(), settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
     @staticmethod
@@ -47,10 +51,10 @@ class TokenManager:
             return payload
         
         except ExpiredSignatureError:
-            raise HTTPTokenExceptionExpired()
+            raise ValueError("Token has expired")
         
         except JWTError:
-            raise HTTPTokenExceptionInvalid()
+            raise ValueError("Invalid token")
 
 
     @classmethod
@@ -58,18 +62,40 @@ class TokenManager:
         try:
             cls.decode_token(token_str)
         
-        except HTTPTokenExceptionExpired:
-            return True
-        
+        except ValueError as e:
+            if e.args[0] == "Token has expired":
+                return True
+            raise
+
         return False
+    
+    
+    @classmethod
+    def is_correct_type(cls, token_str: str, token_type: str, with_payload: bool = False) -> bool | tuple[bool, dict]:
+        try:
+            payload = cls.decode_token(token_str)
+            result = payload.get("token_type") == token_type
+            
+            if with_payload:
+                return result, payload
+            return result
+        
+        except ValueError:
+            raise
 
 
     @classmethod
-    def get_username_from_token(cls, token_str: str) -> str:
-        payload = cls.decode_token(token_str)
-        username = payload.get("sub")
+    def get_username_from_token(cls, token_str: str, token_type: str) -> str:
+        try:
+            correct, payload = cls.is_correct_type(token_str, token_type)
+            if not correct:
+                raise ValueError("Invalid token")
         
-        if not username:
-            raise HTTPTokenExceptionInvalid()
+            username = payload.get("sub")
+            if not username:
+                raise ValueError("Missing username in token")
+            
+            return username
         
-        return username
+        except ValueError:
+            raise

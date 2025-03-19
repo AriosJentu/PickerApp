@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies.database import get_async_session
 from app.dependencies.oauth import get_oauth2_scheme
 
-from app.modules.auth.user.service import (
+from app.modules.auth.user.service_old import (
     get_user_by_username,
     get_users_last_token,
     deactivate_old_tokens_user,

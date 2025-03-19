@@ -15,7 +15,7 @@ from app.modules.auth.user.models import User
 from app.modules.auth.user.schemas import UserCreate, UserUpdateSecure, UserUpdate
 from app.modules.auth.user.enums import UserRole
 
-from app.modules.auth.token.service import (
+from app.modules.auth.token.service_old import (
     create_access_token,
     create_refresh_token,
     verify_token, 
