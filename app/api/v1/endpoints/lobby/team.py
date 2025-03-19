@@ -8,8 +8,8 @@ from app.modules.auth.user.services.current import CurrentUserService
 
 from app.modules.lobby.lobby.schemas import LobbyResponse
 from app.modules.lobby.lobby.services.lobby import LobbyService
-from app.modules.lobby.team.services.team import TeamService
 
+from app.modules.lobby.team.services.team import TeamService
 from app.modules.lobby.team.schemas import (
     TeamCreate, 
     TeamUpdate, 
