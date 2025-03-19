@@ -44,7 +44,7 @@ async def deactivate_old_tokens(db: AsyncSession, user: User, token_type: str = 
 
 async def drop_inactive_tokens(db: AsyncSession, user: User) -> int:
     crud = TokenCRUD(db)
-    return await crud.drop_inactive_tokens(user.id)
+    return await crud.drop_inactive_tokens(user)
     # return await db_drop_inactive_tokens(db, user)
 
 
