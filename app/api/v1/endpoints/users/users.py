@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Query
 from app.modules.auth.token.services.user import UserTokenService
 from app.modules.auth.user.access import RoleChecker
 from app.modules.auth.user.enums import UserRole
-from app.modules.auth.user.models import User
 from app.modules.auth.user.validators import UserValidator
 from app.modules.auth.user.services.user import UserService
 from app.modules.auth.user.services.current import CurrentUserService
@@ -36,7 +35,16 @@ async def get_users_count_on_conditions_(
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
     user_service: UserService = Depends(UserService)
 ):
-    count = await user_service.get_list(id, role, username, email, external_id, only_count=True)
+    
+    filters = {
+        "id": id,
+        "role": role,
+        "username": username,
+        "email": email,
+        "external_id": external_id
+    }
+    
+    count = await user_service.get_list(filters, only_count=True)
     return UserListCountResponse(total_count=count)
 
 
@@ -54,7 +62,16 @@ async def get_list_of_users_on_conditions_(
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
     user_service: UserService = Depends(UserService)
 ):
-    users = await user_service.get_list(id, role, username, email, external_id, sort_by, sort_order, limit, offset)
+    
+    filters = {
+        "id": id,
+        "role": role,
+        "username": username,
+        "email": email,
+        "external_id": external_id
+    }
+
+    users = await user_service.get_list(filters, sort_by, sort_order, limit, offset)
     return users
 
 

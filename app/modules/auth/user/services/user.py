@@ -13,22 +13,21 @@ from app.modules.auth.user.exceptions import HTTPUserExceptionNoDataProvided
 from app.modules.auth.user.models import User
 from app.modules.auth.user.schemas import UserCreate, UserUpdateSecure, UserUpdate
 
+from app.shared.service import BaseService
 
-class UserService:
+
+class UserService(BaseService[User, UserCRUD]):
+
     def __init__(self, 
             db: AsyncSession = Depends(get_async_session),
             token_service: TokenService = Depends(TokenService),
             user_token_service: UserTokenService = Depends(UserTokenService),
             password_hasher: Callable[[str], str] = PasswordManager.hash
     ):
-        self.crud = UserCRUD(db)
+        super().__init__(User, UserCRUD, db)
         self.token_service = token_service
         self.user_token_service = user_token_service
         self.password_hasher = password_hasher
-
-
-    async def get_by_id(self, user_id: int) -> Optional[User]:
-        return await self.crud.get_by_id(user_id)
 
 
     async def get_by_username(self, username: str) -> Optional[User]:
@@ -62,8 +61,8 @@ class UserService:
         return None
 
 
-    async def is_user_exist(self, user: User) -> UserExistType:
-        return await self.crud.is_user_exist(user)
+    async def is_exist(self, user: User) -> UserExistType:
+        return await self.crud.is_exist(user)
 
 
     async def create(self, user: UserCreate) -> User:
@@ -99,20 +98,3 @@ class UserService:
         await self.user_token_service.deactivate_old_tokens(user)
         await self.token_service.drop_inactive_tokens(user)
         return await self.crud.delete(user)
-
-
-    async def get_list(self,
-        id: Optional[int] = None,
-        role: Optional[str] = None,
-        username: Optional[str] = None,
-        email: Optional[str] = None,
-        external_id: Optional[str] = None,
-        sort_by: Optional[str] = "id",
-        sort_order: Optional[str] = "asc",
-        limit: Optional[int] = 10,
-        offset: Optional[int] = 0,
-        only_count: Optional[bool] = False
-    ) -> list[Optional[User]] | int:
-        
-        filters = {"id": id, "role": role, "username": username, "email": email, "external_id": external_id}
-        return await self.crud.get_list(filters, sort_by, sort_order, limit, offset, only_count)

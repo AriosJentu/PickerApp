@@ -1,28 +1,18 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.user.access import AccessControl, RoleChecker
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.services.current import CurrentUserService
 
+from app.modules.lobby.algorithm.services.algorithm import AlgorithmService
 from app.modules.lobby.algorithm.schemas import (
     AlgorithmCreate, 
     AlgorithmRead,
     AlgorithmUpdate,
     AlgorithmResponse, 
     AlgorithmsListCountResponse,
-)
-
-from app.dependencies.database import get_async_session
-
-from app.modules.lobby.algorithm.service import (
-    get_algorithm_by_id,
-    create_algorithm,
-    update_algorithm,
-    delete_algorithm,
-    get_list_of_algorithms,
 )
 
 from app.modules.lobby.lobby.exceptions import (
@@ -40,9 +30,9 @@ router = APIRouter()
 async def create_algorithm_(
     algorithm_data: AlgorithmCreate,
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
-    db: AsyncSession = Depends(get_async_session)
+    algorithm_service: AlgorithmService = Depends(AlgorithmService)
 ):
-    algorithm = await create_algorithm(db, algorithm_data)
+    algorithm = await algorithm_service.create(algorithm_data)
     if not algorithm:
         raise HTTPAlgorithmCreatingFailed()
     
@@ -56,9 +46,17 @@ async def get_count_of_algorithms_(
     algorithm: Optional[str] = Query(default=None),
     teams_count: Optional[int] = Query(default=None),
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
-    db: AsyncSession = Depends(get_async_session)
+    algorithm_service: AlgorithmService = Depends(AlgorithmService)
 ):
-    count = await get_list_of_algorithms(db, id, name, algorithm, teams_count, only_count=True)
+    
+    filters = {
+        "id": id,
+        "name": name,
+        "algorithm": algorithm,
+        "teams_count": teams_count
+    }
+    
+    count = await algorithm_service.get_list(filters, only_count=True)
     return AlgorithmsListCountResponse(total_count=count)
 
 
@@ -73,9 +71,17 @@ async def get_algorithms_list_(
     limit: Optional[int] = Query(default=10, ge=1, le=100),
     offset: Optional[int] = Query(default=0, ge=0),
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
-    db: AsyncSession = Depends(get_async_session)
+    algorithm_service: AlgorithmService = Depends(AlgorithmService)
 ):
-    algorithms = await get_list_of_algorithms(db, id, name, algorithm, teams_count, sort_by, sort_order, limit, offset)
+    
+    filters = {
+        "id": id,
+        "name": name,
+        "algorithm": algorithm,
+        "teams_count": teams_count
+    }
+
+    algorithms = await algorithm_service.get_list(filters, sort_by, sort_order, limit, offset)
     return algorithms
 
 
@@ -83,10 +89,10 @@ async def get_algorithms_list_(
 async def get_algorithm_(
     algorithm_id: int, 
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
-    db: AsyncSession = Depends(get_async_session)
+    algorithm_service: AlgorithmService = Depends(AlgorithmService)
 ):
     
-    algorithm = await get_algorithm_by_id(db, algorithm_id)
+    algorithm = await algorithm_service.get_by_id(algorithm_id)
     if not algorithm:
         raise HTTPLobbyAlgorithmNotFound()
     
@@ -98,18 +104,17 @@ async def update_algorithm_(
     algorithm_id: int,
     update_data: AlgorithmUpdate,
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
-    db: AsyncSession = Depends(get_async_session),
+    algorithm_service: AlgorithmService = Depends(AlgorithmService)
 ):
     current_user = await current_user_service.get()
-    algorithm = await get_algorithm_by_id(db, algorithm_id)
+    algorithm = await algorithm_service.get_by_id(algorithm_id)
     if not algorithm:
         raise HTTPLobbyAlgorithmNotFound()
 
     condition = (algorithm.creator_id == current_user.id)
     AccessControl.has_access_or(current_user, UserRole.MODERATOR, condition, HTTPLobbyAlgorithmAccessDenied)
     
-    updated_algorithm = await update_algorithm(db, algorithm, update_data)
-
+    updated_algorithm = await algorithm_service.update(algorithm, update_data)
     if not updated_algorithm:
         raise HTTPLobbyAlgorithmUpdateDataNotProvided()
     
@@ -120,17 +125,17 @@ async def update_algorithm_(
 async def delete_algorithm_(
     algorithm_id: int,
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
-    db: AsyncSession = Depends(get_async_session),
+    algorithm_service: AlgorithmService = Depends(AlgorithmService)
 ):
     current_user = await current_user_service.get()
-    algorithm = await get_algorithm_by_id(db, algorithm_id)
+    algorithm = await algorithm_service.get_by_id(algorithm_id)
     if not algorithm:
         raise HTTPLobbyAlgorithmNotFound()
 
     condition = (algorithm.creator_id == current_user.id)
     AccessControl.has_access_or(current_user, UserRole.MODERATOR, condition, HTTPLobbyAlgorithmAccessDenied)
 
-    result = await delete_algorithm(db, algorithm)
+    result = await algorithm_service.delete(algorithm)
     if not result:
         raise HTTPLobbyInternalError("Delete algorithm error")
     

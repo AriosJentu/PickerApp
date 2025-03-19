@@ -12,16 +12,18 @@ from app.modules.auth.user.exceptions import HTTPUserExceptionNotFound
 from app.modules.auth.user.models import User
 from app.modules.auth.user.services.user import UserService
 
+from app.shared.service import BaseService
 
-class CurrentUserService:
+
+class CurrentUserService(BaseService[User, TokenCRUD]):
     def __init__(self,
             db: AsyncSession = Depends(get_async_session),
             user_service: UserService = Depends(UserService),
             token_str: str = Depends(get_oauth2_scheme())
     ):
+        super().__init__(User, TokenCRUD, db)
         self.user_service = user_service
         self.token_str = token_str
-        self.crud = TokenCRUD(db)
 
 
     async def get_by_token_type(self, token_type: str = "access") -> User:

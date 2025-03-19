@@ -32,7 +32,7 @@ async def register_user_(
     user: UserCreate,
     user_service: UserService = Depends(UserService)
 ):
-    username_exists, email_exists = await user_service.is_user_exist(user)
+    username_exists, email_exists = await user_service.is_exist(user)
 
     if username_exists:
         raise HTTPUserExceptionUsernameAlreadyExists()

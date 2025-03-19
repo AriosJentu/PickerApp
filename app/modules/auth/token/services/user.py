@@ -10,16 +10,19 @@ from app.modules.auth.token.models import Token
 from app.modules.auth.token.services.token import TokenService
 from app.modules.auth.user.models import User
 
+from app.shared.service import BaseService
+
+
 type UserTokens = tuple[Token, Token]
 
 
-class UserTokenService:
+class UserTokenService(BaseService[User, TokenCRUD]):
     
     def __init__(self,
             db: AsyncSession = Depends(get_async_session),
             token_service: TokenService = Depends(TokenService)
     ):
-        self.crud = TokenCRUD(db)
+        super().__init__(User, TokenCRUD, db)
         self.token_service = token_service
 
 

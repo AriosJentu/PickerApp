@@ -34,6 +34,6 @@ class UserCRUD(BaseCRUD[User]):
         return user_by_username, user_by_email
 
 
-    async def is_user_exist(self, user: UserModelOrScheme) -> UserExistType:
+    async def is_exist(self, user: UserModelOrScheme) -> UserExistType:
         user_by_username, user_by_email = await self.get_by_username_email(user)
         return user_by_username is not None, user_by_email is not None

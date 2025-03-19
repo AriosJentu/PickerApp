@@ -8,11 +8,13 @@ from app.modules.auth.token.crud import TokenCRUD
 from app.modules.auth.token.models import Token
 from app.modules.auth.token.utils import TokenManager
 
+from app.shared.service import BaseService
 
-class TokenService:
+
+class TokenService(BaseService[Token, TokenCRUD]):
 
     def __init__(self, db: AsyncSession = Depends(get_async_session)):
-        self.crud = TokenCRUD(db)
+        super().__init__(Token, TokenCRUD, db)
 
 
     def get_token_from_data(self, encode_data: dict, token_str: str) -> Token:
