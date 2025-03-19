@@ -21,12 +21,3 @@ class HTTPTokenExceptionExpired(HTTPTokenException):
             detail="Authorization token expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-
-class HTTPTokenExceptionInvalidType(HTTPTokenException):
-    def __init__(self):
-        super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authorization token type",
-            headers={"WWW-Authenticate": "Bearer"},
-        )

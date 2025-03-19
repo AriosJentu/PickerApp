@@ -64,10 +64,6 @@ class LobbyParticipantUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
-class LobbyParticipantUpdateWithUser(LobbyParticipantUpdate):
-    user_id: Optional[int] = None
-
-
 class LobbyResponse(BaseModel):
     id: int
     description: str

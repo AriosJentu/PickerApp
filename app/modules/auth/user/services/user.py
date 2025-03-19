@@ -7,7 +7,6 @@ from app.dependencies.database import get_async_session
 
 from app.modules.auth.auth.password import PasswordManager
 from app.modules.auth.token.services.user import UserTokenService, UserTokens
-from app.modules.auth.token.services.token import TokenService
 from app.modules.auth.user.crud import UserCRUD, UserExistType
 from app.modules.auth.user.exceptions import HTTPUserExceptionNoDataProvided
 from app.modules.auth.user.models import User
@@ -20,12 +19,10 @@ class UserService(BaseService[User, UserCRUD]):
 
     def __init__(self, 
             db: AsyncSession = Depends(get_async_session),
-            token_service: TokenService = Depends(TokenService),
             user_token_service: UserTokenService = Depends(UserTokenService),
             password_hasher: Callable[[str], str] = PasswordManager.hash
     ):
         super().__init__(User, UserCRUD, db)
-        self.token_service = token_service
         self.user_token_service = user_token_service
         self.password_hasher = password_hasher
 
@@ -95,6 +92,5 @@ class UserService(BaseService[User, UserCRUD]):
 
 
     async def delete(self, user: User) -> bool:
-        await self.user_token_service.deactivate_old_tokens(user)
-        await self.token_service.drop_inactive_tokens(user)
+        await self.user_token_service.delete_tokens(user)
         return await self.crud.delete(user)

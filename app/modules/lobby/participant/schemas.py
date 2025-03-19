@@ -18,7 +18,3 @@ class LobbyParticipantRead(BaseModel):
 
 class LobbyParticipantWithLobbyRead(LobbyParticipantRead):
     lobby: LobbyRead
-
-
-class LobbyWithParticipants(LobbyRead):
-    participants: list[LobbyParticipantRead]

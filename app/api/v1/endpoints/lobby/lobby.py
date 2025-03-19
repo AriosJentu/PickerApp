@@ -362,7 +362,7 @@ async def connect_to_lobby_(
 
 
 @router.delete("/{lobby_id}/leave", response_model=LobbyParticipantWithLobbyRead)
-async def leave_lobby(
+async def leave_lobby_(
     lobby_id: int,
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
     lobby_service: LobbyService = Depends(LobbyService),

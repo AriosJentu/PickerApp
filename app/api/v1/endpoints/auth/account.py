@@ -56,7 +56,7 @@ async def delete_current_user_(
 
 
 @router.get("/check-token", response_model=TokenStatus)
-async def check_current_user_token(
+async def check_current_user_token_(
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
 ):
     current_user = await current_user_service.get()

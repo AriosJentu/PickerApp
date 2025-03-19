@@ -18,6 +18,7 @@ USERS_NONEXISTANT_DATA = [
     {"get_email":       "nonexistant@blackhole.org"},
 ]
 
+# TODO: Use this variable
 USERS_UPDATE_VALID_DATA = [
     {"email":       "new_email@example.com"},
     {"username":    "somenewname"},
