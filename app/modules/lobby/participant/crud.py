@@ -17,7 +17,7 @@ class LobbyParticipantCRUD(BaseCRUD[LobbyParticipant]):
         "id": FilterField(int),
         "user_id": FilterField(int),
         "team_id": FilterField(int),
-        "lobby": FilterField(Lobby, operator=FilterField.empty),
+        "lobby": FilterField(Lobby, operator=FilterField.empty), # TODO: Try to understand, why it's not effective, and `lobby` will still be checked in global method `get_list`, and will probaly fail
         "role": FilterField(LobbyParticipantRole),
         "is_active": FilterField(bool),
         "all_db_participants": FilterField(bool, False)

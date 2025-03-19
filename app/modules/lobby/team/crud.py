@@ -18,7 +18,7 @@ class TeamCRUD(BaseCRUD[Lobby]):
     default_filters = {
         "id": FilterField(int),
         "name": FilterField(str),
-        "lobby": FilterField(Lobby, operator=lobby_filter)
+        "lobby": FilterField(Lobby, operator=lobby_filter) # TODO: Try to understand, why this function is not suppose to do what you expect from it, and how to improve it, maybe add `custom` field to ignore this in processign, but try use function `custom_filters`
     }
 
 
