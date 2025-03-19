@@ -16,10 +16,9 @@ from app.core.config import settings
 from app.dependencies.database import get_async_session
 
 from app.modules.base import Base
-from app.modules.auth.auth.password import PasswordManager
 from app.modules.auth.user.schemas import UserUpdate
 from app.modules.auth.user.enums import UserRole
-from app.modules.auth.user.service_old import create_user
+from app.modules.auth.user.services.user import UserService
 
 
 def get_url_from_type(db_name: str = "main") -> str:
@@ -125,8 +124,9 @@ async def create_admin():
     session = get_async_session()
     async for session in get_async_session():
         admin_data = UserUpdate(username="admin", email=settings.ADMIN_EMAIL, password=settings.ADMIN_PASSWORD, role=UserRole.ADMIN)
+        service = UserService(session)
         try:
-            await create_user(session, admin_data, PasswordManager.hash)
+            await service.create(admin_data)
             print("Administrator successfully created.")
 
         except IntegrityError as e:
@@ -143,7 +143,7 @@ def parse_args():
     parser.add_argument("--clear-table", nargs="+", help="Clears one or more tables (or 'all' for all tables)")
     parser.add_argument("--drop", action="store_true", help="Drops the selected database")
     parser.add_argument("--create", action="store_true", help="Creates the selected database")
-    parser.add_argument("--init-db", action="store_true", help="Creates tables in the selected database")
+    parser.add_argument("--init", action="store_true", help="Creates tables in the selected database")
     parser.add_argument("--create-admin", action="store_true", help="Creates an admin user in the selected database")
 
     return parser.parse_args()
@@ -159,7 +159,7 @@ async def main():
         drop_database(db_name)
     elif args.create:
         create_database(db_name)
-    elif args.init_db:
+    elif args.init:
         await init_db(db_name)
     elif args.create_admin:
         await create_admin()

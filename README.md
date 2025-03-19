@@ -40,8 +40,8 @@ python -m alembic history
 
 ## Clean tables and re-migrate
 ```zsh
-python scripts/drop_create_db.py --drop main
-python scripts/drop_create_db.py --create main
+python scripts/manage_db.py --drop --db main
+python scripts/manage_db.py --create --db main
 python -m alembic stamp head
 python -m alembic revision --autogenerate -m "Update models"
 python -m alembic upgrade head
@@ -49,7 +49,7 @@ python -m alembic upgrade head
 
 ## Create tables for testing
 ```zsh
-python scripts/drop_create_db.py --drop test
-python scripts/drop_create_db.py --create test
-python scripts/init_test_db.py
+python scripts/manage_db.py --drop --db test
+python scripts/manage_db.py --create --db test
+python scripts/manage_db.py --init --db test
 ```

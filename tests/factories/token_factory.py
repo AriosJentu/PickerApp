@@ -1,14 +1,15 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.user.models import User
-from app.modules.auth.user.service_old import create_user_tokens
+from app.modules.auth.token.services.token import TokenService
 
 
 class TokenFactory:
 
     def __init__(self, db_async: AsyncSession):
-        self.db_async = db_async
+        self.service = TokenService(db_async)
 
     async def create(self, user: User) -> tuple[str, str]:
-        access_token, refresh_token = await create_user_tokens(self.db_async, user)
+        access_token = await self.service.create_access_token(user)
+        refresh_token = await self.service.create_refresh_token(user)
         return access_token.token, refresh_token.token
