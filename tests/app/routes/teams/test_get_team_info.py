@@ -5,7 +5,7 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.modules.db.base import Team
+from app.modules.lobby.team.models import Team
 
 from tests.types import InputData
 from tests.constants import Roles

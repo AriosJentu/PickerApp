@@ -2,7 +2,7 @@
 from typing import Generic, TypeVar, Optional
 from dataclasses import dataclass
 
-from app.modules.db.base import User
+from app.modules.auth.user.models import User
 
 from tests.types import InputData
 

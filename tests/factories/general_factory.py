@@ -1,8 +1,12 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.db.base import User, Algorithm, Lobby, LobbyParticipant, Team
 from app.modules.auth.user.enums import UserRole
+from app.modules.auth.user.models import User
+from app.modules.lobby.algorithm.models import Algorithm
+from app.modules.lobby.lobby.models import Lobby
+from app.modules.lobby.participant.models import LobbyParticipant
+from app.modules.lobby.team.models import Team
 
 from tests.dataclasses import BaseUserData, BaseObjectData
 from tests.types import InputData

@@ -1,4 +1,4 @@
-from app.modules.db.base import User
+from app.modules.auth.user.models import User
 from app.modules.auth.user.enums import UserRole
 
 from tests.factories.user_factory import UserFactory

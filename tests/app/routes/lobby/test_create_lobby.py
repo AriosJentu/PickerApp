@@ -5,7 +5,7 @@ from fastapi import Response
 
 from httpx import AsyncClient
 
-from app.modules.db.base import Algorithm
+from app.modules.lobby.algorithm.models import Algorithm
 
 from tests.types import InputData
 from tests.constants import Roles

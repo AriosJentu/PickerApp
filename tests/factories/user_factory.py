@@ -1,10 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.db.base import User
-
 from app.modules.auth.auth.password import PasswordManager
+from app.modules.auth.user.crud_old import db_create_user
 from app.modules.auth.user.enums import UserRole
-from app.modules.auth.user.crud import db_create_user
+from app.modules.auth.user.models import User
 from app.modules.auth.user.schemas import UserUpdate
 
 

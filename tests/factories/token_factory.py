@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.db.base import User
+from app.modules.auth.user.models import User
 from app.modules.auth.user.service import create_user_tokens
 
 
