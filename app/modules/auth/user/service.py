@@ -3,13 +3,16 @@ from typing import Callable, Optional
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.db.base import User, Token
 from app.dependencies.database import get_async_session
 from app.dependencies.oauth import get_oauth2_scheme
+
+from app.core.security.token import jwt_process_username_from_payload
+
+from app.modules.auth.token.models import Token
+from app.modules.auth.user.models import User
 from app.modules.auth.user.schemas import UserCreate, UserUpdateSecure, UserUpdate
 from app.modules.auth.user.enums import UserRole
 
-from app.core.security.token import jwt_process_username_from_payload
 from app.modules.auth.token.service import (
     create_access_token,
     create_refresh_token,
@@ -18,8 +21,8 @@ from app.modules.auth.token.service import (
     drop_inactive_tokens,
 )
 
-from app.modules.auth.token.crud import db_get_users_last_token
-from app.modules.auth.user.crud import (
+from app.modules.auth.token.crud_old import db_get_users_last_token
+from app.modules.auth.user.crud_old import (
     db_create_user, 
     db_get_user_by_key_value, 
     db_is_user_exist, 

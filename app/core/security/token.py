@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError, ExpiredSignatureError
 from uuid import uuid4
 
-from app.modules.db.base import Token
+from app.modules.auth.token.models import Token
 
 from app.core.config import settings
 from app.modules.auth.token.exceptions import HTTPTokenExceptionInvalid, HTTPTokenExceptionExpired

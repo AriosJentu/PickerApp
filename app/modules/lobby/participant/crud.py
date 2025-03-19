@@ -1,109 +1,64 @@
-from typing import Optional
+from typing import Optional, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, func, asc, desc
-from sqlalchemy.orm import selectinload
 
 from app.modules.lobby.lobby.enums import LobbyParticipantRole
 from app.modules.lobby.lobby.models import Lobby
 from app.modules.lobby.participant.models import LobbyParticipant
-from app.modules.lobby.lobby.schemas import LobbyParticipantUpdate
+
+from app.shared.crud import BaseCRUD
+from app.shared.filters import FilterField
 
 
-async def db_create_lobby_participant(db: AsyncSession, participant: LobbyParticipant) -> LobbyParticipant:
-    db.add(participant)
-    await db.commit()
-    await db.refresh(participant)
-    return participant
+class LobbyParticipantCRUD(BaseCRUD[LobbyParticipant]):
+
+    default_filters = {
+        "id": FilterField(int),
+        "user_id": FilterField(int),
+        "team_id": FilterField(int),
+        "lobby": FilterField(Lobby, operator=FilterField.empty),
+        "role": FilterField(LobbyParticipantRole),
+        "is_active": FilterField(bool),
+        "all_db_participants": FilterField(bool, False)
+    }
 
 
-async def db_get_lobby_participant_by_key_value(db: AsyncSession, lobby: Lobby, key: str, value: str | int) -> Optional[LobbyParticipant]:
-    result = await db.execute(
-        select(LobbyParticipant)
-        .filter(
-            getattr(LobbyParticipant, key) == value,
-            LobbyParticipant.lobby_id == lobby.id
+    def __init__(self, db: AsyncSession):
+        super().__init__(db, LobbyParticipant)
+
+
+    async def get_by_key_value(self, lobby: Lobby, key: str, value: Any) -> Optional[LobbyParticipant]:
+        result = await self.db.execute(
+            select(self.model)
+            .filter(
+                getattr(self.model, key) == value,
+                self.model.lobby_id == lobby.id
+            )
         )
-    )
-    return result.scalars().first()
+
+        return result.scalars().first()
 
 
-async def db_get_lobby_participant_by_id(db: AsyncSession, lobby: Lobby, participant_id: int) -> Optional[LobbyParticipant]:
-    return await db_get_lobby_participant_by_key_value(db, lobby, "id", participant_id)
+    async def get_by_id(self, lobby: Lobby, value: int) -> Optional[LobbyParticipant]:
+        return await self.get_by_key_value(lobby, "id", value)
 
 
-async def db_get_lobby_participant_by_user_id(db: AsyncSession, lobby: Lobby, user_id: int, is_active: Optional[bool] = None) -> Optional[LobbyParticipant]:
-    
-    query = select(LobbyParticipant).filter(
-        LobbyParticipant.user_id == user_id,
-        LobbyParticipant.lobby_id == lobby.id
-    )
-    
-    if is_active is not None:
-        query = query.filter(LobbyParticipant.is_active == is_active)
+    async def get_by_user_id(self, lobby: Lobby, user_id: int, is_active: Optional[bool] = None) -> Optional[LobbyParticipant]:
+        query = select(self.model).filter(
+            self.model.user_id == user_id,
+            self.model.lobby_id == lobby.id
+        )
 
-    result = await db.execute(query)
-    return result.scalars().first()
+        if is_active is not None:
+            query = query.filter(self.model.is_active == is_active)
 
-
-async def db_update_lobby_participant(db: AsyncSession, participant: LobbyParticipant, update_data: LobbyParticipantUpdate) -> Optional[LobbyParticipant]:
-    update_dict = update_data.model_dump(exclude_unset=True)
-    if not update_dict:
-        return None
-    
-    await db.execute(update(LobbyParticipant).where(LobbyParticipant.id == participant.id).values(**update_dict))
-    await db.commit()
-
-    await db.refresh(participant)
-    return participant
+        result = await self.db.execute(query)
+        return result.scalars().first()
 
 
-async def db_get_list_of_lobby_participants(
-    db: AsyncSession,
-    id: Optional[int] = None,
-    user_id: Optional[int] = None,
-    team_id: Optional[int] = None,
-    lobby: Optional[Lobby] = None,
-    role: Optional[LobbyParticipantRole] = None,
-    is_active: Optional[bool] = None,
-    sort_by: Optional[str] = "id",
-    sort_order: Optional[str] = "asc",
-    limit: Optional[int] = 10,
-    offset: Optional[int] = 0,
-    all_db_participants: Optional[bool] = False,
-    only_count: Optional[bool] = False
-) -> list[Optional[LobbyParticipant]] | int:
-    query = select(LobbyParticipant).options(selectinload(LobbyParticipant.user))
-
-    if id:
-        query = query.where(LobbyParticipant.id == id)
-
-    if user_id:
-        query = query.where(LobbyParticipant.user_id == user_id)
-
-    if team_id:
-        query = query.where(LobbyParticipant.team_id == team_id)
-
-    if role:
-        query = query.where(LobbyParticipant.role == role)
-
-    if is_active is not None:
-        query = query.where(LobbyParticipant.is_active == is_active)
-
-    if not all_db_participants and lobby:
-        query = query.where(LobbyParticipant.lobby_id == lobby.id)
-
-    if only_count:
-        count_query = select(func.count()).select_from(query.subquery())
-        result = await db.execute(count_query)
-        return result.scalar()
-
-    sort_field = getattr(LobbyParticipant, sort_by, None)
-    if sort_field:
-        query = query.order_by(asc(sort_field) if sort_order == "asc" else desc(sort_field))
-
-    query = query.offset(offset).limit(limit)
-
-    result = await db.execute(query)
-    return result.scalars().all()
+    def custom_filters(self, filters: dict[str, Any]) -> list[Any]:
+        conditions = []
+        if filters.get("all_db_participants") is False and "lobby" in filters:
+            conditions.append(LobbyParticipant.lobby_id == filters["lobby"].id)
+        return conditions

@@ -2,11 +2,15 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.db.base import User, Lobby, LobbyParticipant, Team
+from app.modules.auth.user.models import User
+from app.modules.lobby.lobby.models import Lobby
+from app.modules.lobby.participant.models import LobbyParticipant
+from app.modules.lobby.team.models import Team
+
 from app.modules.lobby.lobby.enums import LobbyParticipantRole
 from app.modules.lobby.lobby.schemas import LobbyParticipantCreate, LobbyParticipantUpdate
 
-from app.modules.lobby.participant.crud import (
+from app.modules.lobby.participant.crud_old import (
     db_get_lobby_participant_by_id,
     db_get_lobby_participant_by_user_id,
     db_create_lobby_participant,

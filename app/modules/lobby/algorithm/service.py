@@ -2,10 +2,10 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.db.base import Algorithm
+from app.modules.lobby.algorithm.models import Algorithm
 from app.modules.lobby.algorithm.schemas import AlgorithmCreate, AlgorithmUpdate
 
-from app.modules.lobby.algorithm.crud import (
+from app.modules.lobby.algorithm.crud_old import (
     db_get_algorithm_by_id,
     db_create_algorithm,
     db_update_algorithm,

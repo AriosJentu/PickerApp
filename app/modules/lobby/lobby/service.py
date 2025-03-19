@@ -2,11 +2,11 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.db.base import Lobby
+from app.modules.lobby.lobby.models import Lobby
 from app.modules.lobby.lobby.enums import LobbyStatus
 from app.modules.lobby.lobby.schemas import LobbyCreate, LobbyUpdate
 
-from app.modules.lobby.lobby.crud import (
+from app.modules.lobby.lobby.crud_old import (
     db_get_lobby_by_id,
     db_create_lobby,
     db_update_lobby,

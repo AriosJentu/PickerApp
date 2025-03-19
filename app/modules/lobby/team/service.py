@@ -2,10 +2,11 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.db.base import Lobby, Team
+from app.modules.lobby.lobby.models import Lobby
+from app.modules.lobby.team.models import Team
 from app.modules.lobby.team.schemas import TeamCreate, TeamUpdate
 
-from app.modules.lobby.team.crud import (
+from app.modules.lobby.team.crud_old import (
     db_get_team_by_id,
     db_create_team,
     db_update_team,
