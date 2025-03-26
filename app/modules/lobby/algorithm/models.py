@@ -3,7 +3,7 @@ from typing import Self
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from app.core.base.base import Base
+from app.core.base.model import Base
 from app.modules.lobby.algorithm.schemas import AlgorithmCreate, AlgorithmUpdate
 
 class Algorithm(Base):

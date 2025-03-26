@@ -1,4 +1,4 @@
-from app.core.base.base import Base
+from app.core.base.model import Base
 
 from app.modules.auth.token.models import Token
 from app.modules.auth.user.models import User

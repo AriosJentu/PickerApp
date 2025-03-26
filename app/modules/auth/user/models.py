@@ -3,7 +3,7 @@ from typing import Self, Callable
 from sqlalchemy import Column, Integer, String, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 
-from app.core.base.base import Base
+from app.core.base.model import Base
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.schemas import UserCreate, UserUpdate, UserUpdateSecure
 

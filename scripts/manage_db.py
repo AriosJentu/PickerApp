@@ -15,7 +15,7 @@ from app.core.config import settings
 
 from app.dependencies.database import get_async_session
 
-from app.core.base.base import Base
+from app.core.base.model import Base
 from app.modules.auth.user.schemas import UserUpdate
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.services.user import UserService
