@@ -7,7 +7,7 @@ from app.modules.lobby.lobby.enums import LobbyParticipantRole
 from app.modules.lobby.participant.models import LobbyParticipant
 
 from app.core.base.crud import BaseCRUD
-from app.shared.filters import FilterField
+from app.shared.components.filters import FilterField
 
 
 class LobbyParticipantCRUD(BaseCRUD[LobbyParticipant]):

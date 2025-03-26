@@ -8,8 +8,8 @@ from sqlalchemy.sql.expression import and_
 
 from pydantic import BaseModel
 
-from app.modules.db.base import Base
-from app.shared.filters import FilterField
+from app.shared.db.base import Base
+from app.shared.components.filters import FilterField
 
 
 T = TypeVar("T", bound=Base)

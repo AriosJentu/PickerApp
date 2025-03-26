@@ -5,7 +5,7 @@ from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.schemas import UserCreate, UserUpdateSecure, UserUpdate
 
 from app.core.base.crud import BaseCRUD
-from app.shared.filters import FilterField
+from app.shared.components.filters import FilterField
 
 
 type UserExistType = tuple[bool, bool]

@@ -17,7 +17,7 @@ from app.main import app
 from app.core.config import settings
 
 from app.dependencies.database import get_async_session
-from app.modules.db.base import Base, User, Algorithm, Lobby, Team, LobbyParticipant
+from app.shared.db.base import Base, User, Algorithm, Lobby, Team, LobbyParticipant
 from app.modules.auth.user.enums import UserRole
 
 from tests.utils.types import RouteBaseFixture

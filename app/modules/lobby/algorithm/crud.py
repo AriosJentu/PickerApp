@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.lobby.algorithm.models import Algorithm
 
 from app.core.base.crud import BaseCRUD
-from app.shared.filters import FilterField
+from app.shared.components.filters import FilterField
 
 
 class AlgorithmCRUD(BaseCRUD[Algorithm]):

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.lobby.team.models import Team
 
 from app.core.base.crud import BaseCRUD
-from app.shared.filters import FilterField
+from app.shared.components.filters import FilterField
 
 
 class TeamCRUD(BaseCRUD[Team]):

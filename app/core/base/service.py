@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from app.dependencies.database import get_async_session
 from app.core.base.crud import BaseCRUD
-from app.modules.db.base import Base
+from app.shared.db.base import Base
 
 T = TypeVar("T", bound=Base)
 C = TypeVar("C", bound=BaseCRUD[T])

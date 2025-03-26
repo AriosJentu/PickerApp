@@ -6,7 +6,7 @@ from app.modules.lobby.lobby.enums import LobbyStatus
 from app.modules.lobby.lobby.models import Lobby
 
 from app.core.base.crud import BaseCRUD
-from app.shared.filters import FilterField
+from app.shared.components.filters import FilterField
 
 
 class LobbyCRUD(BaseCRUD[Lobby]):
