@@ -6,7 +6,7 @@ from app.dependencies.database import get_async_session
 from app.modules.lobby.team.crud import TeamCRUD
 from app.modules.lobby.team.models import Team
 
-from app.shared.service import BaseService
+from app.core.base.service import BaseService
 
 
 class TeamService(BaseService[Team, TeamCRUD]):

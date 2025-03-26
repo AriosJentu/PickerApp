@@ -9,7 +9,7 @@ from app.modules.lobby.lobby.schemas import LobbyParticipantCreate, LobbyPartici
 from app.modules.lobby.participant.crud import LobbyParticipantCRUD
 from app.modules.lobby.participant.models import LobbyParticipant
 
-from app.shared.service import BaseService
+from app.core.base.service import BaseService
 
 
 class LobbyParticipantService(BaseService[LobbyParticipant, LobbyParticipantCRUD]):

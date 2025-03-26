@@ -12,7 +12,7 @@ from app.modules.auth.user.exceptions import HTTPUserExceptionNoDataProvided
 from app.modules.auth.user.models import User
 from app.modules.auth.user.schemas import UserCreate, UserUpdateSecure, UserUpdate
 
-from app.shared.service import BaseService
+from app.core.base.service import BaseService
 
 
 class UserService(BaseService[User, UserCRUD]):

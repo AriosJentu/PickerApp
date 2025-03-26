@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.lobby.lobby.enums import LobbyStatus
 from app.modules.lobby.lobby.models import Lobby
 
-from app.shared.crud import BaseCRUD
+from app.core.base.crud import BaseCRUD
 from app.shared.filters import FilterField
 
 

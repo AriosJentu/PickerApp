@@ -3,7 +3,7 @@ from typing import Self
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 
-from app.modules.base import Base
+from app.core.base.base import Base
 from app.modules.lobby.lobby.enums import LobbyStatus 
 from app.modules.lobby.lobby.schemas import LobbyCreate, LobbyUpdate
 

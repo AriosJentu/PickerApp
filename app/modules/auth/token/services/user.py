@@ -10,7 +10,7 @@ from app.modules.auth.token.models import Token
 from app.modules.auth.token.services.token import TokenService
 from app.modules.auth.user.models import User
 
-from app.shared.service import BaseService
+from app.core.base.service import BaseService
 
 
 type UserTokens = tuple[Token, Token]

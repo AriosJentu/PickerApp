@@ -8,7 +8,7 @@ from sqlalchemy import update, delete
 from app.modules.auth.user.models import User
 from app.modules.auth.token.models import Token
 
-from app.shared.crud import BaseCRUD
+from app.core.base.crud import BaseCRUD
 
 
 class TokenCRUD(BaseCRUD[Token]):

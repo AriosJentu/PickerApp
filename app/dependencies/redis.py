@@ -1,13 +1,9 @@
-from redis import Redis
-from app.core.config import settings
+from typing import AsyncGenerator
+
+from redis.asyncio import Redis
+
+from app.core.redis import RedisClient
 
 
-redis_client = Redis(
-    host=settings.REDIS_HOST,
-    port=settings.REDIS_PORT,
-    db=settings.REDIS_DB,
-    decode_responses=True
-)
-
-def get_redis_client() -> Redis:
-    return redis_client
+async def get_redis_client() -> AsyncGenerator[Redis, None]:
+    yield RedisClient

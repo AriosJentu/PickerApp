@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.lobby.algorithm.models import Algorithm
 
-from app.shared.crud import BaseCRUD
+from app.core.base.crud import BaseCRUD
 from app.shared.filters import FilterField
 
 

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.dependencies.database import get_async_session
-from app.shared.crud import BaseCRUD
+from app.core.base.crud import BaseCRUD
 from app.modules.db.base import Base
 
 T = TypeVar("T", bound=Base)

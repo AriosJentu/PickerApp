@@ -12,7 +12,7 @@ from app.modules.auth.user.exceptions import HTTPUserExceptionNotFound
 from app.modules.auth.user.models import User
 from app.modules.auth.user.services.user import UserService
 
-from app.shared.service import BaseService
+from app.core.base.service import BaseService
 
 
 class CurrentUserService(BaseService[User, TokenCRUD]):

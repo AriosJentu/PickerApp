@@ -8,7 +8,7 @@ from app.modules.auth.token.crud import TokenCRUD
 from app.modules.auth.token.models import Token
 from app.modules.auth.token.utils import TokenManager
 
-from app.shared.service import BaseService
+from app.core.base.service import BaseService
 
 
 class TokenService(BaseService[Token, TokenCRUD]):

@@ -4,7 +4,7 @@ from app.modules.auth.user.models import User
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.schemas import UserCreate, UserUpdateSecure, UserUpdate
 
-from app.shared.crud import BaseCRUD
+from app.core.base.crud import BaseCRUD
 from app.shared.filters import FilterField
 
 

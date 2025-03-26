@@ -3,7 +3,7 @@ from typing import Self
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from app.modules.base import Base
+from app.core.base.base import Base
 from app.modules.lobby.team.schemas import TeamCreate, TeamUpdate
 
 

@@ -9,7 +9,7 @@ from app.modules.lobby.lobby.enums import LobbyStatus
 from app.modules.lobby.lobby.schemas import LobbyUpdate
 from app.modules.lobby.lobby.crud import LobbyCRUD
 
-from app.shared.service import BaseService
+from app.core.base.service import BaseService
 
 
 class LobbyService(BaseService[Lobby, LobbyCRUD]):

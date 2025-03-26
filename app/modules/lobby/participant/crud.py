@@ -6,7 +6,7 @@ from sqlalchemy.future import select
 from app.modules.lobby.lobby.enums import LobbyParticipantRole
 from app.modules.lobby.participant.models import LobbyParticipant
 
-from app.shared.crud import BaseCRUD
+from app.core.base.crud import BaseCRUD
 from app.shared.filters import FilterField
 
 
