@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 
 class PasswordManager:
 
-    _hasher = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    _hasher = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
     @classmethod

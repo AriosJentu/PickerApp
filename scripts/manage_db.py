@@ -20,6 +20,9 @@ from app.modules.auth.user.schemas import UserUpdate
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.services.user import UserService
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 def get_url_from_type(db_name: str = "main") -> str:
     if db_name == "main":
@@ -121,9 +124,11 @@ async def init_db(db_name: str = "main"):
 
 async def create_admin():
     
-    session = get_async_session()
+    admin_email = os.getenv("ADMIN_EMAIL")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+
     async for session in get_async_session():
-        admin_data = UserUpdate(username="admin", email=settings.ADMIN_EMAIL, password=settings.ADMIN_PASSWORD, role=UserRole.ADMIN)
+        admin_data = UserUpdate(username="admin", email=admin_email, password=admin_password, role=UserRole.ADMIN)
         service = UserService(session)
         try:
             await service.create(admin_data)

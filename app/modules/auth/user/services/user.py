@@ -1,6 +1,7 @@
 from typing import Callable, Optional
 
 from fastapi import Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_async_session
@@ -8,8 +9,9 @@ from app.dependencies.database import get_async_session
 from app.modules.auth.auth.password import PasswordManager
 from app.modules.auth.token.services.user import UserTokenService, UserTokens
 from app.modules.auth.user.crud import UserCRUD, UserExistType
-from app.modules.auth.user.exceptions import HTTPUserExceptionNoDataProvided
+from app.modules.auth.user.exceptions import HTTPUserExceptionNoDataProvided, HTTPUserExceptionIncorrectFormData
 from app.modules.auth.user.models import User
+from app.modules.auth.user.validators import UserValidator
 from app.modules.auth.user.schemas import UserCreate, UserUpdateSecure, UserUpdate
 
 from app.core.base.service import BaseService
@@ -25,6 +27,14 @@ class UserService(BaseService[User, UserCRUD]):
         super().__init__(User, UserCRUD, db)
         self.user_token_service = user_token_service
         self.password_hasher = password_hasher
+
+
+    def validate_form_data(self, form_data: OAuth2PasswordRequestForm) -> None:
+        try:
+            UserValidator.username(form_data.username)
+            UserValidator.password(form_data.password)
+        except ValueError as error:
+            raise HTTPUserExceptionIncorrectFormData(str(error))
 
 
     async def get_by_username(self, username: str) -> Optional[User]:

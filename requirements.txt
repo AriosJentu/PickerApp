@@ -1,20 +1,22 @@
 alembic
+
 asyncpg
 psycopg2
+redis
 
 fastapi
 uvicorn[standard]
-pydantic
+pydantic[email]
 pydantic-settings
 sqlalchemy
 
-redis
-
-passlib[bcrypt]
+passlib[argon2]
 python-jose[cryptography]
 
+greenlet
 httpx
 python-multipart
+python-dotenv
 
 pytest
 pytest-cov

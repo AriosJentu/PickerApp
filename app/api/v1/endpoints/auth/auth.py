@@ -14,13 +14,11 @@ from app.modules.auth.user.access import AccessControl, RoleChecker
 from app.modules.auth.user.services.current import CurrentUserService
 from app.modules.auth.user.services.user import UserService
 from app.modules.auth.user.schemas import UserCreate, UserRead
-from app.modules.auth.user.validators import UserValidator
 
 from app.modules.auth.user.exceptions import (
     HTTPUserExceptionUsernameAlreadyExists, 
     HTTPUserExceptionEmailAlreadyExists,
     HTTPUserExceptionIncorrectData,
-    HTTPUserExceptionIncorrectFormData,
     HTTPUserExceptionAlreadyLoggedIn,
 )
 
@@ -49,12 +47,7 @@ async def login_user_(
     user_service: UserService = Depends(UserService),
     user_token_service: UserTokenService = Depends(UserTokenService)
 ):
-    
-    try:
-        UserValidator.username(form_data.username)
-        UserValidator.password(form_data.password)
-    except ValueError as error:
-        raise HTTPUserExceptionIncorrectFormData(str(error))
+    user_service.validate_form_data(form_data)
 
     user = await user_service.get_by_username(form_data.username)
     if not user or not PasswordManager.verify(form_data.password, user.password):

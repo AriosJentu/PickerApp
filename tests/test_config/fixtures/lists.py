@@ -16,10 +16,8 @@ from tests.test_config.factories.algorithm_factory import AlgorithmFactory
 from tests.test_config.factories.lobby_factory import LobbyFactory
 from tests.test_config.factories.participant_factory import ParticipantFactory
 from tests.test_config.factories.team_factory import TeamFactory
-from tests.test_config.factories.token_factory import TokenFactory
 from tests.test_config.factories.user_factory import UserFactory
-
-from tests.test_config.utils.user_utils import create_user_with_tokens
+from tests.test_config.factories.general_factory import GeneralFactory
 
 
 @pytest_asyncio.fixture
@@ -32,14 +30,11 @@ async def create_test_users(user_factory: UserFactory) -> list[User]:
 
 
 @pytest_asyncio.fixture
-async def create_multiple_test_users_with_tokens(
-        user_factory: UserFactory, 
-        token_factory: TokenFactory
-) -> list[tuple[User, str]]:
+async def create_multiple_test_users_with_tokens(general_factory: GeneralFactory) -> list[tuple[User, str]]:
     
     users = []
     for i in range(USERS_COUNT):
-        user, access_token, _ = await create_user_with_tokens(user_factory, token_factory, prefix=f"testuser{i+1}")
+        user, access_token, _ = await general_factory.create_user_with_tokens(prefix=f"testuser{i+1}")
         users.append((user, access_token))
 
     return users

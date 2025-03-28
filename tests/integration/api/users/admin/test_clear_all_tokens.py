@@ -45,4 +45,3 @@ class TestClearTokens(BaseTestClearTokens):
     async def test_clear_tokens_unauthorized(self, client_async: AsyncClient):
         response = await self._send_delete_request(client_async)
         assert response.status_code == 401, f"Expected 401, got {response.status_code}"
-

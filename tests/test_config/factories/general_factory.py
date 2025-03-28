@@ -10,7 +10,6 @@ from app.modules.lobby.team.models import Team
 
 from tests.test_config.utils.dataclasses import BaseUserData, BaseObjectData
 from tests.test_config.utils.types import InputData
-from tests.test_config.utils.user_utils import create_user_with_tokens
 
 from tests.test_config.factories.algorithm_factory import AlgorithmFactory
 from tests.test_config.factories.lobby_factory import LobbyFactory
@@ -40,13 +39,23 @@ class GeneralFactory:
         self.participant_factory = participant_factory
 
 
+    async def create_user_with_tokens(self,
+            role: UserRole = UserRole.USER,
+            prefix: str = "testuser",
+            password: str = "SecurePassword1!"
+    ) -> tuple[User, str, str]:
+        user = await self.user_factory.create(prefix=prefix, role=role, password=password)
+        access_token, refresh_token = await self.token_factory.create(user)
+        return user, access_token, refresh_token
+
+
     async def create_base_user(self,
             role: UserRole = UserRole.USER,
             is_refresh_token: bool = False,
             prefix: str = "testuser",
             password: str = "SecurePassword1!"
     ) -> BaseUserData:
-        user, access_token, refresh_token = await create_user_with_tokens(self.user_factory, self.token_factory, role, prefix, password)
+        user, access_token, refresh_token = await self.create_user_with_tokens(role, prefix, password)
         headers = {"Authorization": f"Bearer {refresh_token if is_refresh_token else access_token}"}
         
         return BaseUserData(user, access_token, refresh_token, headers)
