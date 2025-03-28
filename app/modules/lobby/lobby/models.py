@@ -20,9 +20,3 @@ class Lobby(Base):
     algorithm = relationship("Algorithm", back_populates="lobbies", lazy="selectin")
     participants = relationship("LobbyParticipant", back_populates="lobby")
     teams = relationship("Team", back_populates="lobby", cascade="all, delete-orphan")
-
-
-    @classmethod
-    def from_create(cls, create: LobbyCreate | LobbyUpdate) -> Self:
-        dump = create.model_dump()
-        return cls(**dump)

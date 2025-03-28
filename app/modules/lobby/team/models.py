@@ -14,9 +14,3 @@ class Team(Base):
 
     lobby = relationship("Lobby", back_populates="teams", lazy="selectin")
     participants = relationship("LobbyParticipant", back_populates="team")
-
-
-    @classmethod
-    def from_create(cls, create: TeamCreate | TeamUpdate) -> Self:
-        dump = create.model_dump()
-        return cls(**dump)

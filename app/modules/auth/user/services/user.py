@@ -72,9 +72,7 @@ class UserService(BaseService[User, UserCRUD]):
         update_data: UserUpdateSecure | UserUpdate,
     ) -> User:
         
-        if update_data.password:
-            update_data.password = self.password_hasher(update_data.password)
-            
+        update_data = User.update_password(update_data, self.password_hasher)
         updated_user = await self.crud.update(user, update_data)
         if not updated_user:
             raise HTTPUserExceptionNoDataProvided("No update data provided")

@@ -1,8 +1,8 @@
 from typing import Self
-from enum import Enum
+from enum import IntEnum
 
 
-class UserRole(int, Enum):
+class UserRole(IntEnum):
     USER = 1
     MODERATOR = 2
     ADMIN = 3
@@ -10,5 +10,5 @@ class UserRole(int, Enum):
     def __str__(self):
         return self.name.lower()
     
-    def has_access(self, required_role: Self) -> bool:
-        return self.value >= required_role.value
+    def has_access(self, required: Self) -> bool:
+        return self >= required

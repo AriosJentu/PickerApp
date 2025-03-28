@@ -20,9 +20,3 @@ class LobbyParticipant(Base):
     user = relationship("User", back_populates="participants", lazy="selectin")
     lobby = relationship("Lobby", back_populates="participants", lazy="selectin")
     team = relationship("Team", back_populates="participants", lazy="selectin")
-
-
-    @classmethod
-    def from_create(cls, participant_create: LobbyParticipantCreate | LobbyParticipantUpdate) -> Self:
-        dump = participant_create.model_dump()
-        return cls(**dump)

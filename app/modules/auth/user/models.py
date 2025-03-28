@@ -8,6 +8,8 @@ from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.schemas import UserCreate, UserUpdate, UserUpdateSecure
 
 
+type UserScheme = UserCreate | UserUpdateSecure | UserUpdate
+
 class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
@@ -23,8 +25,18 @@ class User(Base):
     lobbies = relationship("Lobby", back_populates="host", cascade="all, delete-orphan")
     algorithms = relationship("Algorithm", back_populates="creator", cascade="all, delete-orphan")
 
+
     @classmethod
-    def from_create(cls, user_create: UserCreate | UserUpdate | UserUpdateSecure, password_hasher: Callable[[str], str]) -> Self:
+    def from_create(cls, user_create: UserScheme, password_hasher: Callable[[str], str]) -> Self:
         dump = user_create.model_dump()
         dump["password"] = password_hasher(user_create.password)
         return cls(**dump)
+
+    
+    @staticmethod
+    def update_password(user_update: UserScheme, password_hasher: Callable[[str], str]) -> UserScheme:
+        if user_update.password:
+            user_update.password = password_hasher(user_update.password)
+    
+        return user_update
+    

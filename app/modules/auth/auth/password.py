@@ -1,12 +1,12 @@
 import random
 import string
 
-from argon2 import PasswordHasher, exceptions
+from passlib.context import CryptContext
 
 
 class PasswordManager:
 
-    _hasher = PasswordHasher()
+    _hasher = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
     @classmethod
@@ -16,10 +16,7 @@ class PasswordManager:
 
     @classmethod
     def verify(cls, password: str, hashed_password: str) -> bool:
-        try:
-            return cls._hasher.verify(hashed_password, password)
-        except exceptions.VerifyMismatchError:
-            return False
+        return cls._hasher.verify(password, hashed_password)
 
 
     @classmethod

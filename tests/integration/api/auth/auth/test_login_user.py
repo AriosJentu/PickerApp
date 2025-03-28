@@ -75,3 +75,15 @@ class TestLoginUser(BaseTestLoginUser):
         assert response.status_code == 401, f"Expected 401, got {response.status_code}"
         assert json_data["detail"] == "Incorrect username or password", f"Expect 'Incorrect username or password', got '{json_data["detail"]}'"
     
+    
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("user_register_data", params.REGISTER_USER_VALID_DATA)
+    async def test_login_wrong_password(self, client_async: AsyncClient, user_register_data: InputData, existing_user: InputData):
+        wrong_password_data = existing_user.copy()
+        wrong_password_data["password"] = "WrongPassword123!"
+
+        response = await self._send_post_request(client_async, wrong_password_data)
+        json_data = response.json()
+
+        assert response.status_code == 401, f"Expected 401, got {response.status_code}"
+        assert json_data["detail"] == "Incorrect username or password", f"Expected error 'Incorrect username or password', got '{json_data["detail"]}'"

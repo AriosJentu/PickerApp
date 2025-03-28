@@ -17,9 +17,3 @@ class Algorithm(Base):
 
     lobbies = relationship("Lobby", back_populates="algorithm")
     creator = relationship("User", back_populates="algorithms", lazy="selectin")
-
-
-    @classmethod
-    def from_create(cls, create: AlgorithmCreate | AlgorithmUpdate) -> Self:
-        dump = create.model_dump()
-        return cls(**dump)

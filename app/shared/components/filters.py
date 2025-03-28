@@ -1,9 +1,9 @@
 from typing import Any, Callable, Optional
+
 from sqlalchemy.sql.expression import ColumnElement
 
 
 type Operator = Callable[[ColumnElement, Any], Optional[ColumnElement]]
-
 
 class FilterField:
 
