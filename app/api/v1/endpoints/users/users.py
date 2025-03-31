@@ -31,7 +31,6 @@ async def get_users_count_on_conditions_(
     role: Optional[UserRole] = Query(default=None),
     username: Optional[str] = Query(default=None),
     email: Optional[str] = Query(default=None),
-    external_id: Optional[str] = Query(default=None),
     current_user_service: CurrentUserService = Depends(RoleChecker.user),
     user_service: UserService = Depends(UserService)
 ):
@@ -40,8 +39,7 @@ async def get_users_count_on_conditions_(
         "id": id,
         "role": role,
         "username": username,
-        "email": email,
-        "external_id": external_id
+        "email": email
     }
     
     count = await user_service.get_list(filters, only_count=True)
@@ -54,7 +52,6 @@ async def get_list_of_users_on_conditions_(
     role: Optional[UserRole] = Query(default=None),
     username: Optional[str] = Query(default=None),
     email: Optional[str] = Query(default=None),
-    external_id: Optional[str] = Query(default=None),
     sort_by: Optional[str] = Query(default="id"),
     sort_order: Optional[str] = Query(default="asc"),
     limit: Optional[int] = Query(default=10, ge=1, le=100),
@@ -67,8 +64,7 @@ async def get_list_of_users_on_conditions_(
         "id": id,
         "role": role,
         "username": username,
-        "email": email,
-        "external_id": external_id
+        "email": email
     }
 
     users = await user_service.get_list(filters, sort_by, sort_order, limit, offset)

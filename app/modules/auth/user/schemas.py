@@ -5,11 +5,15 @@ from pydantic import BaseModel, EmailStr, field_serializer, field_validator
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.validators import UserValidator
 
+from app.modules.user.data.schemas import UserDataRead, UserDataCreate, UserDataUpdate
+
 
 class UserReadRegular(BaseModel):
     id: int
     username: str
     role: UserRole
+    data: Optional[UserDataRead] = None
+
 
     @field_serializer("role")
     def serialize_role(self, value: UserRole) -> str:
@@ -18,14 +22,13 @@ class UserReadRegular(BaseModel):
 
 class UserRead(UserReadRegular):
     email: EmailStr
-    external_id: Optional[str] = None
 
 
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
     password: str
-    external_id: Optional[str] = None
+    data: Optional[UserDataCreate] = None
 
 
     @field_validator("username")
@@ -47,7 +50,7 @@ class UserUpdateSecure(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-    external_id: Optional[str] = None
+    data: Optional[UserDataUpdate] = None
     
     
     @field_validator("username", mode="before")

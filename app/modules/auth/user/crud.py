@@ -19,8 +19,7 @@ class UserCRUD(BaseCRUD[User]):
         "id": FilterField(int),
         "role": FilterField(UserRole),
         "username": FilterField(str),
-        "email": FilterField(str),
-        "external_id": FilterField(str)
+        "email": FilterField(str)
     }
     
 
