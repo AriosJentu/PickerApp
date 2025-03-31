@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.database import get_async_session
 
-from app.modules.auth.auth.password import PasswordManager
 from app.modules.auth.token.services.user import UserTokenService, UserTokens
 from app.modules.auth.user.crud import UserCRUD, UserExistType
 from app.modules.auth.user.exceptions import HTTPUserExceptionNoDataProvided, HTTPUserExceptionIncorrectFormData
@@ -21,12 +20,10 @@ class UserService(BaseService[User, UserCRUD]):
 
     def __init__(self, 
             db: AsyncSession = Depends(get_async_session),
-            user_token_service: UserTokenService = Depends(UserTokenService),
-            password_hasher: Callable[[str], str] = PasswordManager.hash
+            user_token_service: UserTokenService = Depends(UserTokenService)
     ):
         super().__init__(User, UserCRUD, db)
         self.user_token_service = user_token_service
-        self.password_hasher = password_hasher
 
 
     def validate_form_data(self, form_data: OAuth2PasswordRequestForm) -> None:
@@ -73,7 +70,7 @@ class UserService(BaseService[User, UserCRUD]):
 
 
     async def create(self, user: UserCreate) -> User:
-        new_user = User.from_create(user, self.password_hasher)
+        new_user = User.from_create(user)
         return await self.crud.create(new_user)
 
 
@@ -82,7 +79,7 @@ class UserService(BaseService[User, UserCRUD]):
         update_data: UserUpdateSecure | UserUpdate,
     ) -> User:
         
-        update_data = User.update_password(update_data, self.password_hasher)
+        update_data = User.update_password(update_data)
         updated_user = await self.crud.update(user, update_data)
         if not updated_user:
             raise HTTPUserExceptionNoDataProvided("No update data provided")

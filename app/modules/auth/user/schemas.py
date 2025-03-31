@@ -69,11 +69,7 @@ class UserUpdate(UserUpdateSecure):
     role: Optional[UserRole] = None
 
 
-class UserResponce(BaseModel):
-    id: int
-    username: str
-    email: EmailStr
-    role: str
+class UserResponce(UserRead):
     detail: str
 
 

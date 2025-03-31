@@ -139,7 +139,6 @@ async def delete_user_from_base_(
         raise HTTPUserInternalError("Delete user from base error")
     
     response = user.to_dict()
-    response["role"] = str(user.role)
     return UserResponce(
         **response,
         detail=f"User with ID {user.id} has been deleted"
@@ -167,7 +166,6 @@ async def clear_user_tokens_(
     await user_token_service.deactivate_old_tokens(user)
 
     response = user.to_dict()
-    response["role"] = str(user.role)
     return UserResponce(
         **response,
         detail=f"Tokens for user with ID {user.id} has been deactivated"

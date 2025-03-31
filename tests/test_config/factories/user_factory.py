@@ -1,6 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.auth.auth.password import PasswordManager
 from app.modules.auth.user.crud import UserCRUD
 from app.modules.auth.user.enums import UserRole
 from app.modules.auth.user.models import User
@@ -14,7 +13,7 @@ class UserFactory:
 
     async def create_from_data(self, data: dict[str, str | UserRole]) -> User:
         user_create = UserUpdate(**data)
-        user = User.from_create(user_create, PasswordManager.hash)
+        user = User.from_create(user_create)
         return await self.crud.create(user)
     
     async def create(self, 

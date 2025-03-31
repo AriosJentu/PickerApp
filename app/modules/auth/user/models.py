@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 
 from app.core.base.model import Base
 from app.modules.auth.user.enums import UserRole
+from app.modules.auth.auth.password import PasswordManager
 from app.modules.auth.user.schemas import UserCreate, UserUpdate, UserUpdateSecure
 
 
@@ -27,16 +28,15 @@ class User(Base):
 
 
     @classmethod
-    def from_create(cls, user_create: UserScheme, password_hasher: Callable[[str], str]) -> Self:
+    def from_create(cls, user_create: UserScheme) -> Self:
         dump = user_create.model_dump()
-        dump["password"] = password_hasher(user_create.password)
+        dump["password"] = PasswordManager.hash(user_create.password)
         return cls(**dump)
 
     
     @staticmethod
-    def update_password(user_update: UserScheme, password_hasher: Callable[[str], str]) -> UserScheme:
+    def update_password(user_update: UserScheme) -> UserScheme:
         if user_update.password:
-            user_update.password = password_hasher(user_update.password)
+            user_update.password = PasswordManager.hash(user_update.password)
     
         return user_update
-    
