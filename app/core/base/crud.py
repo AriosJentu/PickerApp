@@ -45,8 +45,12 @@ class BaseCRUD(Generic[T]):
         return await self.get_by_key_value("id", value)
 
 
-    async def update(self, obj: T, update_data: BaseModel) -> Optional[T]:
-        update_dict = update_data.model_dump(exclude_unset=True)
+    async def update(self, obj: T, update_data: BaseModel, exclude: Optional[set] = None) -> Optional[T]:
+        
+        if not exclude:
+            exclude = set()
+
+        update_dict = update_data.model_dump(exclude_unset=True, exclude=exclude)
         if not update_dict:
             return None
 

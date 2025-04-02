@@ -32,15 +32,14 @@ class User(Base):
 
     @classmethod
     def from_create(cls, user_create: UserScheme) -> Self:
-        dump = user_create.model_dump()
+        dump = user_create.model_dump(exclude={"data"})
         dump["password"] = PasswordManager.hash(user_create.password)
 
-        data = dump.pop("data", None)
-        if not data:
-            data = {}
-
         user = cls(**dump)
-        user.data = UserData(**data)
+        if user_create.data:
+            user.data = UserData.from_create(user_create.data)
+        else:
+            user.data = UserData()
 
         return user
 

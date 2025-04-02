@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime
 
 from typing import Optional
 
@@ -49,6 +50,16 @@ def test_user_create_schema_valid(
 
 
 @pytest.mark.parametrize(
+    "data_for_user_data",
+    [
+        {
+            "first_name": "None",
+            "last_name": "None",
+            "created_at": datetime.now()
+        }
+    ]
+)
+@pytest.mark.parametrize(
     "user_data, is_valid, where",
     [
         ({"id": 1,      "username": "testuser",     "email": "some_email@example.com",  "role": UserRole.USER},      True,   ""),
@@ -63,11 +74,12 @@ def test_user_create_schema_valid(
     ]
 )
 def test_user_out_schema(
+        data_for_user_data: InputData,
         user_data: InputData, 
         is_valid: bool, 
         where: str
 ):
-
+    user_data["data"] = data_for_user_data
     if is_valid:
         user_out = UserRead(**user_data)
         assert user_out.id == int(user_data["id"])

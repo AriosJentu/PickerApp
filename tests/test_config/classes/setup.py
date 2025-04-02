@@ -82,3 +82,18 @@ class BaseTestSetup:
     @pytest.fixture
     async def base_participant(self, general_factory: GeneralFactory, base_user: BaseUserData, lobby: BaseObjectData[Lobby]) -> BaseObjectData[LobbyParticipant]:
         return await general_factory.create_participant_from_user(base_user, lobby.data)
+
+    @staticmethod
+    def assert_update_data(user_data: dict, update_data: dict):
+        if "username" in update_data:
+            assert user_data["username"] == update_data["username"], "Username was not updated"
+        
+        if "email" in update_data:
+            assert user_data["email"] == update_data["email"], "Email was not updated"
+        
+        if "data" in update_data:
+            assert "data" in user_data, "No 'data' field in response"
+
+            for field, expected_value in update_data["data"].items():
+                actual_value = user_data["data"].get(field)
+                assert actual_value == expected_value, f"UserData field '{field}' was not updated: expected '{str(expected_value)}', got '{str(actual_value)}'"

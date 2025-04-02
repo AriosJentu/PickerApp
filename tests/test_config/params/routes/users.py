@@ -18,11 +18,16 @@ USERS_NONEXISTANT_DATA = [
     {"get_email":       "nonexistant@blackhole.org"},
 ]
 
-# TODO: Use this variable
 USERS_UPDATE_VALID_DATA = [
     {"email":       "new_email@example.com"},
     {"username":    "somenewname"},
-    {"password":    "NewPassword123!"}
+    {"password":    "NewPassword123!"},
+    {
+        "data": {
+            "first_name":   "Updated",
+            "last_name":    "User"
+        }
+    },
 ]
 
 USERS_UPDATE_INVALID_DATA = [

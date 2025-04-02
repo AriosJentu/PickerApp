@@ -1,11 +1,8 @@
-from typing import Self
-
 from sqlalchemy import Column, Integer, Boolean, ForeignKey, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 
 from app.core.base.model import Base
 from app.modules.lobby.lobby.enums import LobbyParticipantRole
-from app.modules.lobby.lobby.schemas import LobbyParticipantCreate, LobbyParticipantUpdate
 
 
 class LobbyParticipant(Base):

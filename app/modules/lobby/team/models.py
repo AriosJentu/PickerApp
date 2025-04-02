@@ -1,10 +1,7 @@
-from typing import Self
-
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.core.base.model import Base
-from app.modules.lobby.team.schemas import TeamCreate, TeamUpdate
 
 
 class Team(Base):

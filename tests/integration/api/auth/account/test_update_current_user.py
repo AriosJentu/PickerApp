@@ -144,7 +144,5 @@ class TestUpdateUser(BaseTestUpdateUser):
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
         user_data = response.json()
-        if "email" in update_data:
-            assert user_data["email"] == update_data["email"], "Email was not updated"
-        if "username" in update_data:
-            assert user_data["username"] == update_data["username"], "Username was not updated"
+        self.assert_update_data(user_data, update_data)
+

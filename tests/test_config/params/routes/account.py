@@ -12,7 +12,13 @@ UPDATE_USER_DATA_VALID = [
     {"email":       "updated_email@example.com"},
     {"username":    "newusername"},
     {"password":    "NewPassword123!"},
-    {"email":       "updated_email@example.com",    "username": "newusername"}
+    {"email":       "updated_email@example.com",    "username": "newusername"},
+    {
+        "data": {
+            "first_name":   "Updated",
+            "last_name":    "User"
+        }
+    },
 ]
 
 UPDATE_USER_DATA_INVALID = [

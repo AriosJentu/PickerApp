@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Optional
 
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordRequestForm
@@ -8,10 +8,12 @@ from app.dependencies.database import get_async_session
 
 from app.modules.auth.token.services.user import UserTokenService, UserTokens
 from app.modules.auth.user.crud import UserCRUD, UserExistType
-from app.modules.auth.user.exceptions import HTTPUserExceptionNoDataProvided, HTTPUserExceptionIncorrectFormData
+from app.modules.auth.user.exceptions import HTTPUserExceptionNoDataProvided, HTTPUserExceptionIncorrectFormData, HTTPUserExceptionUserDataMissing
 from app.modules.auth.user.models import User
 from app.modules.auth.user.validators import UserValidator
 from app.modules.auth.user.schemas import UserCreate, UserUpdateSecure, UserUpdate
+
+from app.modules.user.data.services.data import UserDataService
 
 from app.core.base.service import BaseService
 
@@ -20,10 +22,12 @@ class UserService(BaseService[User, UserCRUD]):
 
     def __init__(self, 
             db: AsyncSession = Depends(get_async_session),
-            user_token_service: UserTokenService = Depends(UserTokenService)
+            user_token_service: UserTokenService = Depends(UserTokenService),
+            user_data_service: UserDataService = Depends(UserDataService)
     ):
         super().__init__(User, UserCRUD, db)
         self.user_token_service = user_token_service
+        self.user_data_service = user_data_service
 
 
     def validate_form_data(self, form_data: OAuth2PasswordRequestForm) -> None:
@@ -80,11 +84,17 @@ class UserService(BaseService[User, UserCRUD]):
     ) -> User:
         
         update_data = User.update_password(update_data)
-        updated_user = await self.crud.update(user, update_data)
-        if not updated_user:
+        updated_user = await self.crud.update(user, update_data, exclude={"data"})
+        if not updated_user and not update_data.data:
             raise HTTPUserExceptionNoDataProvided("No update data provided")
         
-        return updated_user
+        if update_data.data:
+            if user.data:
+                await self.user_data_service.update(user.data, update_data.data)
+            else:
+                raise HTTPUserExceptionUserDataMissing("User has no available data for update")
+
+        return updated_user or user
 
 
     async def update_with_tokens(self,

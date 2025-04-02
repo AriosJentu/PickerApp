@@ -38,11 +38,7 @@ class TestUpdateUser(BaseTestUpdateUser):
         json_data = response.json()
 
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        if "username" in update_data:
-            assert json_data["username"] == update_data["username"], "Username was not updated"
-        
-        if "email" in update_data:
-            assert json_data["email"] == update_data["email"], "Email was not updated"
+        self.assert_update_data(json_data, update_data)
 
 
     @pytest.mark.asyncio
@@ -57,6 +53,24 @@ class TestUpdateUser(BaseTestUpdateUser):
 
         assert response.status_code == 400, f"Expected 400, got {response.status_code}"
         assert "No data provided" in json_data["detail"], f"Expected 'No data provided', got '{json_data["detail"]}'"
+    
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("update_data, expected_error", params.USERS_UPDATE_INVALID_DATA)
+    @pytest.mark.parametrize("role", Roles.LIST)
+    async def test_update_user_validation_error(self,
+            client_async: AsyncClient,
+            base_user: BaseUserData,
+            base_admin: BaseUserData,
+            update_data: InputData,
+            expected_error: str,
+    ):
+        params = {"get_user_id": base_user.user.id}
+        response = await self._send_put_request(client_async, params, update_data, base_admin.headers)
+        json_data = response.json()
+
+        assert response.status_code == 422, f"Expected 422, got {response.status_code}"
+        assert expected_error.lower() in str(json_data).lower(), f"Expected '{expected_error}' in validation errors, got '{json_data["detail"]}'"
 
 
     @pytest.mark.asyncio

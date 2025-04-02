@@ -1,11 +1,11 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class LobbyParticipantRole(str, Enum):
+class LobbyParticipantRole(StrEnum):
     PLAYER      = "player"
     SPECTATOR   = "spectator"
 
 
-class LobbyStatus(str, Enum):
+class LobbyStatus(StrEnum):
     ACTIVE      = "active"
     ARCHIVED    = "archived"

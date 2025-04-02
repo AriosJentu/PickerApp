@@ -11,8 +11,20 @@ ROUTES = [
 ]
 
 REGISTER_USER_VALID_DATA = [
-    {"username":    "firstuser",    "email":    "firstuser@example.com",    "password": "SecurePassword1!"},
-    {"username":    "other_user",   "email":    "myname@example.com",       "password": "SecurePasswd123!"},
+    {
+        "username": "firstuser",
+        "email":    "firstuser@example.com",
+        "password": "SecurePassword1!"
+    },
+    {
+        "username": "other_user",
+        "email":    "myname@example.com",
+        "password": "SecurePasswd123!",
+        "data": {
+            "first_name":   "Hello",
+            "last_name":    "World"
+        }
+    },
 ]
 
 REGISTER_USER_INVALID_DATA = [
