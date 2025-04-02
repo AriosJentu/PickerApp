@@ -11,7 +11,7 @@ class TeamBase(BaseModel):
 
     
     @field_validator("name")
-    def validate_name(cls, name: str):
+    def validate_name(cls, name: str) -> str:
         return LobbyValidator.name(name, "Team")
 
 
@@ -36,6 +36,6 @@ class TeamUpdate(BaseModel):
 
 
     @field_validator("name", mode="before")
-    def validate_name(cls, name: Optional[str]):
+    def validate_name(cls, name: Optional[str]) -> Optional[str]:
         return LobbyValidator.name(name, "Team")
     

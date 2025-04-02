@@ -16,7 +16,7 @@ class LobbyBase(BaseModel):
 
 
     @field_validator("name")
-    def validate_name(cls, name: str):
+    def validate_name(cls, name: str) -> str:
         return LobbyValidator.name(name, "Lobby")
 
 
@@ -54,7 +54,7 @@ class LobbyUpdate(BaseModel):
 
 
     @field_validator("name", mode="before")
-    def validate_name(cls, name: Optional[str]):
+    def validate_name(cls, name: Optional[str]) -> Optional[str]:
         return LobbyValidator.name(name, "Lobby")
     
 

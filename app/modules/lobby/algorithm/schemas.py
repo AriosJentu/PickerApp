@@ -15,17 +15,17 @@ class AlgorithmBase(BaseModel):
     
 
     @field_validator("name")
-    def validate_name(cls, name: str):
+    def validate_name(cls, name: str) -> str:
         return LobbyValidator.name(name, "Algorithm")
     
 
     @field_validator("teams_count")
-    def validate_teams_count(cls, teams_count: int):
+    def validate_teams_count(cls, teams_count: int) -> int:
         return LobbyValidator.teams_count(teams_count)
     
 
     @model_validator(mode="after")
-    def validate_algorithm_data(cls, data: Self):
+    def validate_algorithm_data(cls, data: Self) -> Self:
         algorithm = data.algorithm
         teams_count = data.teams_count
 
@@ -60,17 +60,17 @@ class AlgorithmUpdate(BaseModel):
 
 
     @field_validator("name", mode="before")
-    def validate_name(cls, name: Optional[str]):
+    def validate_name(cls, name: Optional[str]) -> Optional[str]:
         return LobbyValidator.name(name, "Algorithm")
     
 
     @field_validator("teams_count", mode="before")
-    def validate_teams_count(cls, teams_count: Optional[int]):
+    def validate_teams_count(cls, teams_count: Optional[int]) -> Optional[int]:
         return LobbyValidator.teams_count(teams_count)
     
     
     @model_validator(mode="after")
-    def validate_algorithm_data(cls, data: Self):
+    def validate_algorithm_data(cls, data: Self) -> Self:
         algorithm = data.algorithm
         teams_count = data.teams_count
 
